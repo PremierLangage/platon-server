@@ -1,5 +1,4 @@
-"""
-ASGI config for plato project.
+"""ASGI config for plato project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
