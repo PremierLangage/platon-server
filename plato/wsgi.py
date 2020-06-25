@@ -1,5 +1,4 @@
-"""
-WSGI config for plato project.
+"""WSGI config for plato project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
