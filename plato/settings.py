@@ -204,6 +204,7 @@ CELERY_TIMEZONE = 'Europe/Paris'
 ################################################################################
 
 # Sandbox's settings
+####################
 # Seconds between polls of sandboxes usage. Must not be less than 30.
 SANDBOX_POLL_USAGE_EVERY = 15
 # Seconds between polls of sandboxes specifications. Must not be less than 300.
@@ -211,7 +212,7 @@ SANDBOX_POLL_SPECS_EVERY = 60 * 10
 
 ################################################################################
 
-if APPS_DIR not in sys.path:
+if APPS_DIR not in sys.path:  # pragma: no cover
     sys.path.append(APPS_DIR)
 
 # Allow a config file to be created in the same directory as settings.

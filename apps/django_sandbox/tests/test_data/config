@@ -1,1 +1,0 @@
-{'commands': ['python3 builder.py pl.json context.json'], 'result_path': 'context.json'}

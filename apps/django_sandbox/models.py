@@ -130,7 +130,7 @@ class Sandbox(models.Model):
                 receiving_packets=raw["network"]["received_packets"],
                 receiving_bytes=raw["network"]["received_bytes"]
             )
-        except ClientError:
+        except ClientError:  # pragma: no cover
             usage = await database_sync_to_async(Usage.objects.create)(
                 sandbox=self, reached=False
             )
@@ -193,30 +193,30 @@ class Sandbox(models.Model):
                     stdout=e["stdout"], stderr=e["stderr"], time=e["time"]
                 )
             
-            execution = await database_sync_to_async(Request.objects.create)(
+            request = await database_sync_to_async(Request.objects.create)(
                 sandbox=self, config=config, success=True, response=response,
                 user=user if user.is_authenticated else None
             )
         
-        except ClientError as e:
-            execution = await database_sync_to_async(Request.objects.create)(
+        except ClientError as e:   # pragma: no cover
+            request = await database_sync_to_async(Request.objects.create)(
                 sandbox=self, config=config, success=False, traceback=traceback.format_exc(),
                 response=None, user=user if user.is_authenticated else None
             )
             logger.warning(
-                f"Execution failed on sandbox {self}, see execution of id '{execution.pk}'",
+                f"Execution failed on sandbox {self}, see request of id '{request.pk}'",
                 exc_info=e
             )
         
         except SandboxDisabledError:
-            execution = await database_sync_to_async(Request.objects.create)(
+            request = await database_sync_to_async(Request.objects.create)(
                 sandbox=self, config=config, success=False, traceback=traceback.format_exc(),
                 response=None, user=user if user.is_authenticated else None
             )
             logger.warning(f"Execution failed on sandbox {self} because it was disabled,"
-                           f"see execution of id '{execution.pk}'")
+                           f"see request of id '{request.pk}'")
         
-        return execution
+        return request
     
     
     async def retrieve(self, environment: str, file: str = None) -> Optional[BinaryIO]:
@@ -228,7 +228,7 @@ class Sandbox(models.Model):
         If `file` is given, it must be the path of a file inside the
         environment, only this file will be downloaded."""
         if not self.enabled:
-            raise SandboxDisabledError("Cannot execute on a disabled sandbox")
+            raise SandboxDisabledError("Cannot retrieve from a disabled sandbox")
         
         async with ASandbox(self.url) as asandbox:
             return await asandbox.download(environment, file)
