@@ -9,7 +9,8 @@ from django_sandbox.exceptions import SandboxDisabledError
 from django_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs, Usage
 
 
-SANDBOX_URL = os.environ.get("SANDBOX_URL", "http://localhost:7000/")
+SANDBOX_URL = os.environ.get("SANDBOX_URL", "https://pl-sandbox-preprod.u-pem.fr/")
+#SANDBOX_URL = os.environ.get("SANDBOX_URL", "http://localhost:7000/")
 
 TEST_DATA_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data")
 
