@@ -209,7 +209,8 @@ CELERY_TIMEZONE = 'Europe/Paris'
 SANDBOX_POLL_USAGE_EVERY = 15
 # Seconds between polls of sandboxes specifications. Must not be less than 300.
 SANDBOX_POLL_SPECS_EVERY = 60 * 10
-
+# Default sandbox url
+SANDBOX_URL = 'http://localhost:7000/'
 ################################################################################
 
 if APPS_DIR not in sys.path:  # pragma: no cover

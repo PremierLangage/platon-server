@@ -4,6 +4,7 @@ import os
 import dgeq
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
+from django.conf import settings
 from django.contrib.auth.models import Permission, User
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TransactionTestCase
@@ -13,9 +14,7 @@ from django_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs, Usage
 from platon.routing import application
 
 
-#SANDBOX_URL = os.environ.get("SANDBOX_URL", "http://localhost:7000/")
-SANDBOX_URL = os.environ.get("SANDBOX_URL", "https://pl-sandbox-preprod.u-pem.fr/")
-
+SANDBOX_URL = settings.SANDBOX_URL
 
 
 class TaskTestCase(TransactionTestCase):

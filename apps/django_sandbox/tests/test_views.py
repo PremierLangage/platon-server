@@ -1,8 +1,9 @@
 import json
-import os
 
 import dgeq
+
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client, TransactionTestCase
@@ -11,21 +12,16 @@ from django.urls import reverse
 from common.enums import ErrorCode
 from django_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs
 
-
-#SANDBOX_URL = os.environ.get("SANDBOX_URL", "http://localhost:7000/")
-SANDBOX_URL = os.environ.get("SANDBOX_URL", "https://pl-sandbox-preprod.u-pem.fr/")
-
-
+SANDBOX_URL = settings.SANDBOX_URL
 
 class SandboxViewTestCase(TransactionTestCase):
-    
+
     def setUp(self):
         self.sandbox = Sandbox.objects.create(name="Test", url=SANDBOX_URL, enabled=True)
         self.user = User.objects.create_user("test", is_superuser=True)
         self.client = Client()
         self.client.force_login(self.user)
-    
-    
+
     def test_get_single(self):
         response = self.client.get(reverse("django_sandbox:sandbox", args=(self.sandbox.pk,)))
         expected = {
@@ -34,8 +30,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_collection(self):
         sandbox_dummy1 = Sandbox.objects.create(
             name="Dummy 1", url="http://localhost:7777", enabled=True
@@ -53,11 +49,11 @@ class SandboxViewTestCase(TransactionTestCase):
                 dgeq.serialize(sandbox_dummy1),
             ]
         }
-        
+
         self.assertEqual(200, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_get_404(self):
         response = self.client.get(reverse("django_sandbox:sandbox", args=(9999,)))
         expected = {
@@ -67,8 +63,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_403(self):
         response = Client().get(reverse("django_sandbox:sandbox", args=(self.sandbox.pk,)))
         expected = {
@@ -78,8 +74,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(403, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_post_ok(self):
         data = {
             "name":    "Dummy 1",
@@ -96,8 +92,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(201, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_post_400_invalid_json(self):
         response = self.client.post(
             reverse("django_sandbox:sandbox_collection"), data="{fhze}",
@@ -111,8 +107,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(400, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_post_400_validation_error(self):
         data = {
             "name": "Dummy 1",
@@ -129,8 +125,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(400, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_post_403(self):
         response = Client().post(
             reverse("django_sandbox:sandbox_collection"), data={},
@@ -143,8 +139,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(403, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_post_404_single(self):
         response = Client().post(
             reverse("django_sandbox:sandbox", args=(1,)), data={},
@@ -157,8 +153,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_delete(self):
         sandbox_dummy1 = Sandbox.objects.create(
             name="Dummy 1", url="http://localhost:7777", enabled=True
@@ -167,12 +163,12 @@ class SandboxViewTestCase(TransactionTestCase):
             "status": True,
             "row":    dgeq.serialize(sandbox_dummy1),
         }
-        
+
         response = self.client.delete(reverse("django_sandbox:sandbox", args=(sandbox_dummy1.pk,)))
         self.assertEqual(200, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_delete_404_sandbox_not_found(self):
         response = self.client.delete(reverse("django_sandbox:sandbox", args=(9999,)))
         expected = {
@@ -182,8 +178,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_delete_404_collection(self):
         response = self.client.delete(reverse("django_sandbox:sandbox_collection"))
         expected = {
@@ -193,8 +189,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_delete_403(self):
         response = Client().delete(reverse("django_sandbox:sandbox", args=(1,)))
         expected = {
@@ -204,8 +200,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(403, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_patch(self):
         sandbox_dummy1 = Sandbox.objects.create(
             name="Dummy 1", url="http://localhost:7777", enabled=True
@@ -223,8 +219,8 @@ class SandboxViewTestCase(TransactionTestCase):
         self.assertEqual(200, response.status_code)
         self.assertDictEqual(expected, response.json())
         self.assertEqual("Modified", response.json()["row"]["name"])
-    
-    
+
+
     def test_patch_404_collection(self):
         response = self.client.patch(
             reverse("django_sandbox:sandbox_collection"), data={},
@@ -237,8 +233,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_patch_404_sandbox_not_found(self):
         response = self.client.patch(
             reverse("django_sandbox:sandbox", args=(9999,)), data={},
@@ -251,8 +247,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_patch_400_invalid_json(self):
         response = self.client.patch(
             reverse("django_sandbox:sandbox", args=(self.sandbox.pk,)), data="{fhze}",
@@ -266,8 +262,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(400, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_patch_400_validation_error(self):
         sandbox_dummy1 = Sandbox.objects.create(
             name="Dummy 1", url="http://localhost:7777", enabled=True
@@ -284,8 +280,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(400, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_patch_403(self):
         response = Client().patch(
             reverse("django_sandbox:sandbox", args=(1,)), data={},
@@ -298,8 +294,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(403, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_put(self):
         sandbox_dummy1 = Sandbox.objects.create(
             name="Dummy 1", url="http://localhost:7777", enabled=True
@@ -320,8 +316,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertDictEqual(expected, response.json())
         self.assertEqual("Modified", response.json()["row"]["name"])
-    
-    
+
+
     def test_put_404_collection(self):
         response = self.client.put(
             reverse("django_sandbox:sandbox_collection"), data={},
@@ -334,8 +330,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_put_404_sandbox_not_found(self):
         response = self.client.put(
             reverse("django_sandbox:sandbox", args=(9999,)), data={},
@@ -348,8 +344,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_put_400_invalid_json(self):
         response = self.client.put(
             reverse("django_sandbox:sandbox", args=(self.sandbox.pk,)), data="{fhze}",
@@ -363,8 +359,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(400, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_put_400_validation_error(self):
         sandbox_dummy1 = Sandbox.objects.create(
             name="Dummy 1", url="http://localhost:7777", enabled=True
@@ -384,8 +380,8 @@ class SandboxViewTestCase(TransactionTestCase):
         }
         self.assertEqual(400, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_put_403(self):
         response = Client().put(
             reverse("django_sandbox:sandbox", args=(1,)), data={},
@@ -402,15 +398,15 @@ class SandboxViewTestCase(TransactionTestCase):
 
 
 class SandboxSpecsViewTestCase(TransactionTestCase):
-    
+
     def setUp(self):
         self.sandbox = Sandbox.objects.create(name="Test", url=SANDBOX_URL, enabled=True)
         self.specs = SandboxSpecs.objects.get(sandbox=self.sandbox)
         self.user = User.objects.create_user("test", is_superuser=True)
         self.client = Client()
         self.client.force_login(self.user)
-    
-    
+
+
     def test_get_single(self):
         response = self.client.get(reverse("django_sandbox:sandbox_specs", args=(self.specs.pk,)))
         expected = {
@@ -419,8 +415,8 @@ class SandboxSpecsViewTestCase(TransactionTestCase):
         }
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_collection(self):
         sandbox_dummy1 = Sandbox.objects.create(
             name="Dummy 1", url="http://localhost:7777", enabled=True
@@ -439,11 +435,11 @@ class SandboxSpecsViewTestCase(TransactionTestCase):
                 dgeq.serialize(SandboxSpecs.objects.get(sandbox=sandbox_dummy1)),
             ]
         }
-        
+
         self.assertEqual(200, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_get_404(self):
         response = self.client.get(reverse("django_sandbox:sandbox_specs", args=(9999,)))
         expected = {
@@ -453,8 +449,8 @@ class SandboxSpecsViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_403(self):
         response = Client().get(reverse("django_sandbox:sandbox_specs", args=(self.specs.pk,)))
         expected = {
@@ -468,15 +464,15 @@ class SandboxSpecsViewTestCase(TransactionTestCase):
 
 
 class ContainerSpecsViewTestCase(TransactionTestCase):
-    
+
     def setUp(self):
         self.sandbox = Sandbox.objects.create(name="Test", url=SANDBOX_URL, enabled=True)
         self.specs = ContainerSpecs.objects.get(sandbox=self.sandbox)
         self.user = User.objects.create_user("test", is_superuser=True)
         self.client = Client()
         self.client.force_login(self.user)
-    
-    
+
+
     def test_get_single(self):
         response = self.client.get(reverse("django_sandbox:container_specs", args=(self.specs.pk,)))
         expected = {
@@ -485,8 +481,8 @@ class ContainerSpecsViewTestCase(TransactionTestCase):
         }
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_collection(self):
         sandbox_dummy1 = Sandbox.objects.create(
             name="Dummy 1", url="http://localhost:7777", enabled=True
@@ -505,11 +501,11 @@ class ContainerSpecsViewTestCase(TransactionTestCase):
                 dgeq.serialize(ContainerSpecs.objects.get(sandbox=sandbox_dummy1)),
             ]
         }
-        
+
         self.assertEqual(200, response.status_code)
         self.assertDictEqual(expected, response.json())
-    
-    
+
+
     def test_get_404(self):
         response = self.client.get(reverse("django_sandbox:container_specs", args=(9999,)))
         expected = {
@@ -519,8 +515,8 @@ class ContainerSpecsViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_403(self):
         response = Client().get(reverse("django_sandbox:container_specs", args=(self.specs.pk,)))
         expected = {
@@ -534,15 +530,15 @@ class ContainerSpecsViewTestCase(TransactionTestCase):
 
 
 class UsageViewTestCase(TransactionTestCase):
-    
+
     def setUp(self):
         self.sandbox = Sandbox.objects.create(name="Test", url=SANDBOX_URL, enabled=True)
         self.user = User.objects.create_user("test", is_superuser=True)
         self.usage = async_to_sync(self.sandbox.poll_usage)()
         self.client = Client()
         self.client.force_login(self.user)
-    
-    
+
+
     def test_get_single(self):
         response = self.client.get(reverse("django_sandbox:usage", args=(self.usage.pk,)))
         # Encode and decode the expected output so that the date format match
@@ -552,8 +548,8 @@ class UsageViewTestCase(TransactionTestCase):
         }))
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_collection(self):
         usage1 = async_to_sync(self.sandbox.poll_usage)()
         usage2 = async_to_sync(self.sandbox.poll_usage)()
@@ -571,8 +567,8 @@ class UsageViewTestCase(TransactionTestCase):
         }))
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_404(self):
         response = self.client.get(reverse("django_sandbox:usage", args=(9999,)))
         expected = {
@@ -582,8 +578,8 @@ class UsageViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_403(self):
         response = Client().get(reverse("django_sandbox:usage", args=(self.usage.pk,)))
         expected = {
@@ -597,7 +593,7 @@ class UsageViewTestCase(TransactionTestCase):
 
 
 class ResponseViewTestCase(TransactionTestCase):
-    
+
     def setUp(self):
         self.sandbox = Sandbox.objects.create(name="Test", url=SANDBOX_URL, enabled=True)
         self.user = User.objects.create_user("test", is_superuser=True)
@@ -606,8 +602,8 @@ class ResponseViewTestCase(TransactionTestCase):
         ).response
         self.client = Client()
         self.client.force_login(self.user)
-    
-    
+
+
     def test_get_single(self):
         response = self.client.get(reverse("django_sandbox:response", args=(self.response.pk,)))
         expected = {
@@ -616,8 +612,8 @@ class ResponseViewTestCase(TransactionTestCase):
         }
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_collection(self):
         response1 = async_to_sync(self.sandbox.execute)(self.user, {"commands": ["true"]}).response
         response2 = async_to_sync(self.sandbox.execute)(self.user, {"commands": ["true"]}).response
@@ -634,8 +630,8 @@ class ResponseViewTestCase(TransactionTestCase):
         }
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_404(self):
         response = self.client.get(reverse("django_sandbox:response", args=(9999,)))
         expected = {
@@ -645,8 +641,8 @@ class ResponseViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_403(self):
         response = Client().get(reverse("django_sandbox:response", args=(self.response.pk,)))
         expected = {
@@ -660,7 +656,7 @@ class ResponseViewTestCase(TransactionTestCase):
 
 
 class CommandResultViewTestCase(TransactionTestCase):
-    
+
     def setUp(self):
         self.sandbox = Sandbox.objects.create(name="Test", url=SANDBOX_URL, enabled=True)
         self.user = User.objects.create_user("test", is_superuser=True)
@@ -669,8 +665,8 @@ class CommandResultViewTestCase(TransactionTestCase):
         ).response.execution.all().first()
         self.client = Client()
         self.client.force_login(self.user)
-    
-    
+
+
     def test_get_single(self):
         command_result = self.client.get(
             reverse("django_sandbox:command_result", args=(self.command_result.pk,))
@@ -681,8 +677,8 @@ class CommandResultViewTestCase(TransactionTestCase):
         }
         self.assertEqual(200, command_result.status_code)
         self.assertEqual(expected, command_result.json())
-    
-    
+
+
     def test_get_collection(self):
         commands = async_to_sync(self.sandbox.execute)(
             self.user, {"commands": ["true", "true"]}
@@ -700,8 +696,8 @@ class CommandResultViewTestCase(TransactionTestCase):
         }
         self.assertEqual(200, command_result.status_code)
         self.assertEqual(expected, command_result.json())
-    
-    
+
+
     def test_get_404(self):
         command_result = self.client.get(reverse("django_sandbox:command_result", args=(9999,)))
         expected = {
@@ -711,8 +707,8 @@ class CommandResultViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, command_result.status_code)
         self.assertEqual(expected, command_result.json())
-    
-    
+
+
     def test_get_403(self):
         command = Client().get(
             reverse("django_sandbox:command_result", args=(self.command_result.pk,))
@@ -728,15 +724,15 @@ class CommandResultViewTestCase(TransactionTestCase):
 
 
 class RequestViewTestCase(TransactionTestCase):
-    
+
     def setUp(self):
         self.sandbox = Sandbox.objects.create(name="Test", url=SANDBOX_URL, enabled=True)
         self.user = User.objects.create_user("test", is_superuser=True)
         self.request = async_to_sync(self.sandbox.execute)(self.user, {"commands": ["true"]})
         self.client = Client()
         self.client.force_login(self.user)
-    
-    
+
+
     def test_get_single(self):
         response = self.client.get(reverse("django_sandbox:request", args=(self.request.pk,)))
         # Encode and decode the expected output so that the date format match
@@ -746,8 +742,8 @@ class RequestViewTestCase(TransactionTestCase):
         }))
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_collection(self):
         request1 = async_to_sync(self.sandbox.execute)(self.user, {"commands": ["true"]})
         request2 = async_to_sync(self.sandbox.execute)(self.user, {"commands": ["true"]})
@@ -766,8 +762,8 @@ class RequestViewTestCase(TransactionTestCase):
         }))
         self.assertEqual(200, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_404(self):
         response = self.client.get(reverse("django_sandbox:request", args=(9999,)))
         expected = {
@@ -777,8 +773,8 @@ class RequestViewTestCase(TransactionTestCase):
         }
         self.assertEqual(404, response.status_code)
         self.assertEqual(expected, response.json())
-    
-    
+
+
     def test_get_403(self):
         response = Client().get(reverse("django_sandbox:request", args=(self.request.pk,)))
         expected = {
