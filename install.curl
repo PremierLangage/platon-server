@@ -1,0 +1,12 @@
+
+git clone https://github.com/premierlangage/platon-server.git 
+cd platon-server
+python3 -m venv env
+source env/bin/activate
+sh bin/install.sh
+sh bin/redis-docker.sh
+sh bin/celeri.py &
+
+echo " A vous de jouer : ./manage test"
+
+
