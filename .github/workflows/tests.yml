@@ -1,0 +1,66 @@
+name: Python package
+
+on:
+  push:
+    branches:
+      - '*'
+      - '*/*'
+  pull_request:
+    branches:
+      - '*'
+      - '*/*'
+  schedule:
+    - cron:  '0 6 * * 1'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    name: Python ${{ matrix.python-version }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+
+      - name: Install Tox
+        run: |
+          pip install tox
+
+      - name: Install the Sandbox
+        run : |
+          git clone https://github.com/PremierLangage/sandbox.git
+          cd sandbox/
+          ./bin/install.sh
+          python3 manage.py runserver 7000 &> /dev/null &
+          cd ..
+
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgresql-action@v1.0.0
+        with:
+          postgresql db: 'django_platon'
+          postgresql user: 'django'
+          postgresql password: 'django_password'
+
+      - name: Install Platon Server
+        run: |
+          ./bin/install.sh
+
+      - name: Run redis
+          ./bin/redis-docker.sh
+
+      - name: Run Tox
+        run: tox
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == 3.8
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
