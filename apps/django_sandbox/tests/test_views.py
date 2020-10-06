@@ -12,7 +12,8 @@ from common.enums import ErrorCode
 from django_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs
 
 
-SANDBOX_URL = os.environ.get("SANDBOX_URL", "http://localhost:7000/")
+#SANDBOX_URL = os.environ.get("SANDBOX_URL", "http://localhost:7000/")
+SANDBOX_URL = os.environ.get("SANDBOX_URL", "https://pl-sandbox-preprod.u-pem.fr/")
 
 
 
