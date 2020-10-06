@@ -1,1 +1,1 @@
-celery -A plato worker --beat --scheduler django --loglevel=info
+celery -A platon worker --beat --scheduler django --loglevel=info

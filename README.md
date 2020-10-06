@@ -1,4 +1,4 @@
-# plato
+# PLaTon
 
 Créer un répertoire de votre choix puis dedans la commande suivante :
 

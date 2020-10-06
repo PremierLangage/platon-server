@@ -10,7 +10,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TransactionTestCase
 
 from django_sandbox.models import Sandbox
-from plato.routing import application
+from platon.routing import application
 
 
 #SANDBOX_URL = os.environ.get("SANDBOX_URL", "http://localhost:7000/")
