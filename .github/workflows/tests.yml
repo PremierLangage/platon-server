@@ -15,19 +15,26 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8]
-
-    name: Python ${{ matrix.python-version }}
-
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: django
+          POSTGRES_PASSWORD: django_password
+          POSTGRES_DB: django_platon
+        ports:
+          - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+  
+    name: Python 3.8
     steps:
       - uses: actions/checkout@v2
 
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.8
           architecture: 'x64'
 
       - name: Install Tox
@@ -42,13 +49,6 @@ jobs:
           python3 manage.py runserver 7000 &> /dev/null &
           cd ..
 
-      - name: Setup PostgreSQL
-        uses: Harmon758/postgresql-action@v1.0.0
-        with:
-          postgresql db: 'django_platon'
-          postgresql user: 'django'
-          postgresql password: 'django_password'
-
       - name: Install Platon Server
         run: |
           ./bin/install.sh
@@ -60,7 +60,6 @@ jobs:
         run: tox
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == 3.8
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage.xml
