@@ -54,7 +54,7 @@ jobs:
           ./bin/install.sh
 
       - name: Run redis
-        run: ./bin/redis-docker.sh
+        run: ./bin/redis_docker.sh
 
       - name: Run Tox
         run: tox
