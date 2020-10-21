@@ -1,5 +1,7 @@
-# Plato config file
+# Platon
 platon/config.py
+static/*
+media/*
 
 
 # Pycharm
