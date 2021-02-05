@@ -1,12 +1,12 @@
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import Permission, User
-from django.test import TestCase
+from django.contrib.auth.models import User
+from django.test import TransactionTestCase
 
 from common import async_db
 
 
 
-class HasPermAsyncTestCase(TestCase):
+class HasPermAsyncTestCase(TransactionTestCase):
     
     async def test_ok(self):
         superuser = await database_sync_to_async(User.objects.create_user)(
