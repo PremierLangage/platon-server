@@ -2,6 +2,10 @@
 platon/config.py
 static/*
 media/*
+tmp/*
+
+# Deepcode
+.dccache
 
 
 # Pycharm
