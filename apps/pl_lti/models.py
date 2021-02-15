@@ -6,20 +6,27 @@ from django.http import Http404
 
 # Create your models here.
 
+class LMS(models.Model):
+    """LMS model"""
+
+    guid = models.CharField(max_length=200, null=True, blank=True)
+    name = models.CharField(max_length=200, null=True, blank=True)
+    url = models.CharField(max_length=200, null=True, blank=True)
+    outcome = models.URLField(max_length=200, null=True, blank=True)
+    client_id = models.CharField(max_length=200, null=True, blank=True)
+    client_secret = models.CharField(max_length=200, null=True, blank=True)
 
 
-class LTIModel(models.Model):
-    """Mixin for models that can be created through LTI.
+class LTIUser(models.Model):
+    """LTIUser"""
     
-    This Mixin add an optionnal id corresponding to the ID of the object on the consumer's server
-    and the name of the consumer itself must be a key of settings.LTI_OAUTH_CREDENTIALS.
-    """
+    pl_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    lsm_guid = models.CharField(max_length=200, null=True, blank=True)
+    lms =  models.ForeignKey(LMS, related_name="user_lms", on_delete=models.CASCADE)
+
+
+class LTICourse(models.Model):
+    """LTICourse"""
     
-    CONSUMER = ((i, i) for i in settings.LTI_OAUTH_CREDENTIALS.keys())
-    consumer_id = models.CharField(max_length=200, null=True, blank=True)
-    consumer = models.CharField(max_length=200, choices=CONSUMER, null=True, blank=True)
-    
-    
-    class Meta:
-        abstract = True
-        unique_together = ("consumer", "consumer_id")
+    lsm_guid = models.CharField(max_length=200, null=True, blank=True)
+    lms =  models.ForeignKey(LMS, related_name="course_lms", on_delete=models.CASCADE)
