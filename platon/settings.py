@@ -54,6 +54,7 @@ THIRD_PARTY_APPS = [
 ]
 PROJECT_APPS = [
     'django_sandbox',
+    'pl_auth',
 ]
 INSTALLED_APPS = PREREQ_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
