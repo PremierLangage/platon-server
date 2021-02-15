@@ -6,6 +6,7 @@ from django.http import Http404
 
 # Create your models here.
 
+
 class LMS(models.Model):
     """LMS model"""
 
@@ -18,15 +19,15 @@ class LMS(models.Model):
 
 
 class LTIUser(models.Model):
-    """LTIUser"""
+    """LTIUser acts as the link between the LMS user and the Platon user  """
     
     pl_user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     lsm_guid = models.CharField(max_length=200, null=True, blank=True)
-    lms =  models.ForeignKey(LMS, related_name="user_lms", on_delete=models.CASCADE)
+    lms = models.ForeignKey(LMS, related_name="user_lms", on_delete=models.CASCADE)
 
 
 class LTICourse(models.Model):
-    """LTICourse"""
+    """LTICourse Acts as the link between the LMSCourse and the Platoncourse"""
     
     lsm_guid = models.CharField(max_length=200, null=True, blank=True)
-    lms =  models.ForeignKey(LMS, related_name="course_lms", on_delete=models.CASCADE)
+    lms = models.ForeignKey(LMS, related_name="course_lms", on_delete=models.CASCADE)
