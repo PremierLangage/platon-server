@@ -18,9 +18,13 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from rest_framework import urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/sandbox/', include('django_sandbox.urls')),
+
+    path('api/auth/', include('pl_auth.urls', namespace='pl_auth')),
+    path('api/sandbox/', include('django_sandbox.urls', namespace='pl_sandbox')),
+
     path('', TemplateView.as_view(template_name='index.html'))
 ]
