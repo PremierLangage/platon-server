@@ -15,14 +15,18 @@ class Profile(models.Model):
 
 
     def is_admin(self):
-        """Returns whether the user is an administrator (Role or django su / staff)."""
+        """
+        Returns whether the user is an administrator
+        (Role or django su / staff).
+        """
         return self.user.is_superuser or self.user.is_staff or self.role == Role.ADMINISTRATOR
 
 
     def save(self, *args, **kwargs):
         """Saves the profile to the database"""
 
-        # Fix the IntegrityError when creating a new user and modifying default profile.
+        # Fix the IntegrityError when creating
+        # a new user and modifying default profile.
         if self.pk is None:
             p = Profile.objects.filter(user=self.user)
             p.delete()
@@ -36,10 +40,9 @@ class Profile(models.Model):
 
 
 @receiver(post_save, sender=User)
-def create_or_update_user_profile(sender, instance, created, **kwargs):
+def create_or_update_user_profile(sender, instance: User, created, **kwargs):
     """When a new user is saved, create or save it's corresponding profile."""
     if created:
         Profile.objects.create(user=instance)
     else:
         instance.profile.save()
-
