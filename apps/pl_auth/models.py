@@ -22,6 +22,11 @@ class Profile(models.Model):
         return self.user.is_superuser or self.user.is_staff or self.role == Role.ADMINISTRATOR
 
 
+    def is_teacher(self):
+        """Returns whether the user is a teacher"""
+        return self.role in Role.TEACHING_STAFF_ROLES
+
+
     def save(self, *args, **kwargs):
         """Saves the profile to the database"""
 

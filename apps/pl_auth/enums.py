@@ -18,6 +18,15 @@ class Role(Enum):
     ADMINISTRATOR = 6
     TEACHING_ASSISTANT = 7
 
+    TEACHING_STAFF_ROLES = [
+        MENTOR,
+        MANAGER,
+        INSTRUCTOR,
+        ADMINISTRATOR,
+        CONTENT_DEVELOPER,
+        TEACHING_ASSISTANT,
+    ]
+
     class Label:
         LEARNER = 'Learner'
         INSTRUCTOR = 'Instructor'
