@@ -70,6 +70,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    
+    # App middlewares
+    'pl_lti.middleware.LTIAuthMiddleware',
 ]
 
 # URL
@@ -160,6 +163,14 @@ DATABASES = {
     }
 }
 
+
+
+# Authentication
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'pl_lti.backends.LTIAuthBackend',
+)
+
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
@@ -168,6 +179,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
 ]
+
 
 # Django Rest Framework
 # https://www.django-rest-framework.org

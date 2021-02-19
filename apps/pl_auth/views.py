@@ -1,5 +1,5 @@
 from common.errors import RestError
-from common.mixins import AsyncView
+from common.mixins import CsrfExemptSessionAuthentication
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from rest_framework import generics, mixins, status
@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from pl_auth.forms import SignInForm
-from pl_auth.utils import CsrfExemptSessionAuthentication
 
 from .serializers import UserSerializer
 
