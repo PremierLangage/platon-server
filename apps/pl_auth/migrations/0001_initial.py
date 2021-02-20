@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 import enumfields.fields
-import pl_auth.enums
+import pl_lti.roles
 
 
 class Migration(migrations.Migration):
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='Profile',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('role', enumfields.fields.EnumIntegerField(default=0, enum=pl_auth.enums.Role)),
+                ('role', enumfields.fields.EnumIntegerField(default=0, enum=pl_lti.roles.Role)),
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to=settings.AUTH_USER_MODEL)),
             ],
         ),
