@@ -11,11 +11,13 @@ import logging
 
 from django.contrib import auth
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.deprecation import MiddlewareMixin
 from django.http import HttpRequest
+from django.utils.deprecation import MiddlewareMixin
+
+from pl_lti.utils import is_lti_request
 
 from .params import LTIParams
-from .signals import  connect_from_lti
+from .signals import connect_from_lti_role
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +31,6 @@ class LTIAuthMiddleware(MiddlewareMixin):
     persist the user in the session and LTI object will be added to request object.
     If the request is not an LTI launch request, do nothing.
     """
-
-
-    def is_lti_request(self, request: HttpRequest):
-        if request.method != 'POST':
-            return False
-        return request.POST.get('lti_message_type') == 'basic-lti-launch-request'
 
 
     def ensure_auth_middleware(self, request: HttpRequest):
@@ -52,7 +48,7 @@ class LTIAuthMiddleware(MiddlewareMixin):
     def process_request(self, request: HttpRequest):
         self.ensure_auth_middleware(request)
         send_signal = False
-        if self.is_lti_request(request):
+        if is_lti_request(request):
             user = auth.authenticate(request=request)
             if user is not None:
                 auth.login(request, user)
@@ -61,4 +57,4 @@ class LTIAuthMiddleware(MiddlewareMixin):
                 send_signal = True
         setattr(request, 'LTI', request.session.get('LTI', {}))
         if send_signal:
-            connect_from_lti.send(sender=self.__class__, request=request)
+            connect_from_lti_role.send(sender=self.__class__, request=request)

@@ -7,8 +7,8 @@ from django.http.request import HttpRequest
 from enumfields import EnumIntegerField
 
 from pl_lti.params import LTIParams
-from pl_lti.roles import Role
-from pl_lti.signals import connect_from_lti
+from pl_lti.role import Role
+from pl_lti.signals import connect_from_lti_role
 
 
 class Profile(models.Model):
@@ -56,13 +56,13 @@ def create_or_update_user_profile(sender, instance: User, created, **kwargs):
         instance.profile.save()
 
 
-@receiver(connect_from_lti)
-def update_user_profile_from_lti(sender, request: HttpRequest, **kwargs):
+@receiver(connect_from_lti_role)
+def update_user_profile_from_lti_role(sender, request: HttpRequest, **kwargs):
     """
     When a user join platon from a LMS using lti protocol,
     update it's profile according to the lti params
     """
 
     params = LTIParams.from_dict(request.LTI)
-    request.user.profile.role = Role.parse_from_lti(params)
+    request.user.profile.role = Role.from_lti_role(params.roles)
     request.user.profile.save()

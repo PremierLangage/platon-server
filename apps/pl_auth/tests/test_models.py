@@ -7,7 +7,7 @@
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from pl_lti.roles import Role
+from pl_lti.role import Role
 
 
 class ModelsTestCase(TestCase):

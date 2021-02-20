@@ -1,7 +1,7 @@
 import django
 from django.contrib.auth.models import User
 
-from pl_auth.enums import Role
+from pl_lti.role import Role
 from pl_lti.models import LMS
 
 globals().update(locals())

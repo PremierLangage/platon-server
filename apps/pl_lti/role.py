@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#  role.py
+#
+#  Authors:
+#       - Mamadou CISSE <mciissee.@gmail.com>
+#
+
 from enum import unique
 from functools import total_ordering
 from typing import List
@@ -54,19 +63,19 @@ class Role(Enum):
 
 
     @classmethod
-    def parse_from_lti(cls, params: LTIParams) -> 'Role':
+    def from_lti_role(cls, roles: str) -> 'Role':
         """
-        Parses `params.roles` to find a valid LTI role name.
+        Extract a valid Role from `roles`
 
         Parameters
         ----------
-        params : `LTIParams`
-            LTI request parameters.
+        roles : `str`
+            A comma separated list of roles as specified in the LTI specifications.
             
-        Raises
-        ------
-        ValueError
-            Raised if params.role does not correspond to a valid LTI role.
+        Returns
+        -------
+        role: `Role`
+        The parsed role or `Role.LEARNER`
         """ 
 
         def parse(role: str) -> str:
@@ -74,10 +83,15 @@ class Role(Enum):
             # Learner |
             # urn:lti:role:ims/lis/Learner |
             # urn:lti:role:ims/lis/Learner/NonCreditLearner
-            return role.replace('urn:lti:role:ims/lis/', '').split('/')[0]
+            return (
+                role.replace("urn:lti:instrole:ims/lis/", "")
+                    .replace("urn:lti:sysrole:ims/lis/", "")
+                    .replace("urn:lti:role:ims/lis/", "")
+                    .strip()
+                ).split('/')[0]
         
         roles: List[str] = [
-            parse(role) for role in params.roles.split(',')
+            parse(r) for r in roles.split(',')
         ]
     
         role_map = {
@@ -94,5 +108,4 @@ class Role(Enum):
         for name, role in role_map.items():
             if name in roles:
                 return role
-
-        raise ValueError('Received unknown lti role: ' + params.roles)
+        return Role.LEARNER
