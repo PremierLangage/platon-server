@@ -28,6 +28,10 @@ class MinDurationValidator:
         return self.duration == other.duration
 
 
+    def __ne__(self, other) -> bool:
+        return self.duration != other.duration
+
+
 
 @deconstructible
 class MaxDurationValidator:
@@ -49,6 +53,10 @@ class MaxDurationValidator:
     
     def __eq__(self, other) -> bool:
         return self.duration == other.duration
+
+
+    def __ne__(self, other) -> bool:
+        return self.duration != other.duration
 
 
 

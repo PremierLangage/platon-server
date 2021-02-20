@@ -7,10 +7,17 @@ dgeq>=0.3.7, <1.0.0
 django>=3.1.1, <4.0.0
 django-celery-beat>=2.0.0, <3.0.0
 django_extensions>=3.0.9, <4.0.0
+django-enumfields>=2.0.0, <3.0.0
+django-filter>=2.4.0, <3.0.0
+djangorestframework>=3.12.2, <4.0.0
 isodate>=0.6.0, <1.0.0
 jinja2>=2.11.2, <3.0.0
+mock>=4.0.3,<5.0.0
+oauth2>=1.9.0, <2.0.0
 psycopg2-binary>=2.8.6, <3.0.0
 python-dateutil>=2.8.1, <3.0.0
 sandbox-api>=1.1.0, <2.0.0
 whitenoise>=5.2.0, <6.0.0
+
+markdown # neeed for djangorestframework
 tox

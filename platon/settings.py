@@ -51,9 +51,12 @@ THIRD_PARTY_APPS = [
     'channels',
     'django_celery_beat',
     'django_extensions',
+    'rest_framework',
 ]
 PROJECT_APPS = [
     'django_sandbox',
+    'pl_auth',
+    'pl_lti',
 ]
 INSTALLED_APPS = PREREQ_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
@@ -67,6 +70,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    
+    # App middlewares
+    'pl_lti.middleware.LTIAuthMiddleware',
 ]
 
 # URL
@@ -157,6 +163,14 @@ DATABASES = {
     }
 }
 
+
+
+# Authentication
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'pl_lti.backends.LTIAuthBackend',
+)
+
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
@@ -165,6 +179,37 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
 ]
+
+
+# Django Rest Framework
+# https://www.django-rest-framework.org
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+
+    # https://www.django-rest-framework.org/api-guide/renderers/#api-reference
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+    # https://www.django-rest-framework.org/api-guide/parsers/#api-reference
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ),
+    # https://www.django-rest-framework.org/api-guide/authentication/#api-reference
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    # https://www.django-rest-framework.org/api-guide/permissions/#api-reference
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
+    'PAGE_SIZE': 100,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
