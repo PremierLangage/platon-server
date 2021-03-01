@@ -73,7 +73,7 @@ class LTIUser(models.Model):
 
 
     def __str__(self) -> str:
-        return f'{self.user.get_full_name()} {self.lms_guid}'
+        return f'{self.user.get_full_name()} {self.lms_user_id}'
 
 
 class LTICourse(models.Model):
