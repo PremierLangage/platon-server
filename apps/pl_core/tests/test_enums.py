@@ -1,7 +1,7 @@
 from django.http import Http404
 from django.test import TestCase
 
-from common import enums
+from pl_core import enums
 
 
 

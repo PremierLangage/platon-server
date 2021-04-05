@@ -1,4 +1,4 @@
-from common.mixins import CsrfExemptSessionAuthentication
+from pl_core.mixins import CsrfExemptSessionAuthentication
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response

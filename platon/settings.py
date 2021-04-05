@@ -13,6 +13,8 @@ import logging
 import os
 import sys
 
+import dj_database_url
+
 
 ################################################################################
 #                              Django's Settings                               #
@@ -27,7 +29,10 @@ APPS_DIR = os.path.realpath(os.path.join(BASE_DIR, "apps"))
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '-90k)h+jqn8^82(om*zr(1dl^39kr4g&0_84bsdaueo7u6+)s+'
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    '-90k)h+jqn8^82(om*zr(1dl^39kr4g&0_84bsdaueo7u6+)s+'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -36,7 +41,7 @@ DEBUG = False
 TESTING = sys.argv[1:2] == ['test']
 
 # Allowed Hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # Application definition
 PREREQ_APPS = [
@@ -45,17 +50,20 @@ PREREQ_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.postgres',
     'django.contrib.staticfiles',
 ]
 THIRD_PARTY_APPS = [
     'channels',
     'django_celery_beat',
     'django_extensions',
+    'drf_yasg',
     'rest_framework',
 ]
 PROJECT_APPS = [
     'django_sandbox',
     'pl_auth',
+    'pl_core',
     'pl_lti',
 ]
 INSTALLED_APPS = PREREQ_APPS + THIRD_PARTY_APPS + PROJECT_APPS
@@ -155,17 +163,21 @@ ASGI_APPLICATION = 'platon.routing.application'
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.postgresql',
-        'NAME':     'django_platon',
-        'USER':     'django',
-        'PASSWORD': 'django_password',
-        'HOST':     '127.0.0.1',
-        'PORT':     '5432',
+        'NAME':     os.getenv('DATABASE_NAME', 'django_platon'),
+        'USER':     os.getenv('DATABASE_USERNAME', 'django'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'django_password'),
+        'HOST':     os.getenv('DATABASE_HOST', '127.0.0.1'),
+        'PORT':     os.getenv('DATABASE_PORT', '5432'),
     }
 }
 
+# Update database configuration with $DATABASE_URL.
+db_from_env = dj_database_url.config(conn_max_age=500)
+DATABASES['default'].update(db_from_env)
 
 
 # Authentication
+
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'pl_lti.backends.LTIAuthBackend',
@@ -192,6 +204,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
     # https://www.django-rest-framework.org/api-guide/parsers/#api-reference
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
@@ -201,10 +214,11 @@ REST_FRAMEWORK = {
     # https://www.django-rest-framework.org/api-guide/authentication/#api-reference
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     # https://www.django-rest-framework.org/api-guide/permissions/#api-reference
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'PAGE_SIZE': 100,
@@ -237,7 +251,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG':  {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [(os.getenv('REDIS_URL', '127.0.0.1'), 6379)],
         },
     },
 }

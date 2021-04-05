@@ -76,7 +76,7 @@ class Role(Enum):
         -------
         role: `Role`
         The parsed role or `Role.LEARNER`
-        """ 
+        """
 
         def parse(role: str) -> str:
             # role =

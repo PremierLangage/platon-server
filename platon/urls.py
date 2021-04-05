@@ -14,17 +14,32 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls import url
 from django.contrib import admin
-from django.urls import include, path
-from django.views.generic import TemplateView
+from django.urls import include, path, re_path
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 
+schema_view = get_schema_view(
+   openapi.Info(
+      title="PLaTon API",
+      default_version='v1',
+      description="Documentation of PLaTon apis",
+      terms_of_service="https://www.google.com/policies/terms/",
+      license=openapi.License(name="CeCILL-B"),
+   ),
+   public=True,
+   permission_classes=[permissions.AllowAny],
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-
+    path('api/admin/', admin.site.urls),
     path('api/lti/', include('pl_lti.urls', namespace='pl_lti')),
     path('api/auth/', include('pl_auth.urls', namespace='pl_auth')),
     path('api/sandbox/', include('django_sandbox.urls', namespace='pl_sandbox')),
-
-    path('', TemplateView.as_view(template_name='index.html'))
+    
+    url(r'^api/docs/swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    url(r'^api/docs/swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    url(r'^api/docs/redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

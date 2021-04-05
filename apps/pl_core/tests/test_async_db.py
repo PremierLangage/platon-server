@@ -2,7 +2,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
 from django.test import TransactionTestCase
 
-from common import async_db
+from pl_core import async_db
 
 
 

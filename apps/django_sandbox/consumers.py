@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import PermissionDenied
 
-from common.async_db import has_perm_async
+from pl_core.async_db import has_perm_async
 
 
 

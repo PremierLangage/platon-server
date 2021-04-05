@@ -9,7 +9,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client, TransactionTestCase
 from django.urls import reverse
 
-from common.enums import ErrorCode
+from pl_core.enums import ErrorCode
 from django_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs
 
 SANDBOX_URL = settings.SANDBOX_URL

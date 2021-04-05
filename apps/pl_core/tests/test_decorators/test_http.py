@@ -2,7 +2,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 
-from common.decorators import http
+from pl_core.decorators import http
 
 
 
