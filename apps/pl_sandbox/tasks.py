@@ -6,7 +6,7 @@ from celery import shared_task
 from channels.layers import get_channel_layer
 from django.core.serializers.json import DjangoJSONEncoder
 
-from django_sandbox.models import Sandbox
+from pl_sandbox.models import Sandbox
 
 
 logger = logging.getLogger(__name__)

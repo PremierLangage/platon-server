@@ -23,7 +23,7 @@ class SandboxView(AsyncView):
     async def get(self, request, pk: Optional[int] = None):
         """Allow to get a single or a collection of `Sandbox`."""
         try:
-            if not await has_perm_async(request.user, "django_sandbox.view_sandbox"):
+            if not await has_perm_async(request.user, "pl_sandbox.view_sandbox"):
                 raise PermissionDenied("Missing view permission on Sandbox")
             
             if pk is not None:
@@ -64,7 +64,7 @@ class SandboxView(AsyncView):
             if pk is not None:
                 raise Http404("Page not found")
             
-            if not await has_perm_async(request.user, "django_sandbox.create_sandbox"):
+            if not await has_perm_async(request.user, "pl_sandbox.create_sandbox"):
                 raise PermissionDenied("Missing create permission on Sandbox")
             
             kwargs = json.loads(request.body)
@@ -118,7 +118,7 @@ class SandboxView(AsyncView):
         try:
             if pk is None:
                 raise Http404("Page not found")
-            if not await has_perm_async(request.user, "django_sandbox.delete_sandbox"):
+            if not await has_perm_async(request.user, "pl_sandbox.delete_sandbox"):
                 raise PermissionDenied("Missing delete permission on Sandbox")
             
             sandbox = await database_sync_to_async(Sandbox.objects.get)(pk=pk)
@@ -162,7 +162,7 @@ class SandboxView(AsyncView):
             if pk is None:
                 raise Http404("Page not found")
             
-            if not await has_perm_async(request.user, "django_sandbox.change_sandbox"):
+            if not await has_perm_async(request.user, "pl_sandbox.change_sandbox"):
                 raise PermissionDenied("Missing change permission on Sandbox")
             
             sandbox = await database_sync_to_async(Sandbox.objects.get)(pk=pk)
@@ -228,7 +228,7 @@ class SandboxView(AsyncView):
             if pk is None:
                 raise Http404("Page not found")
             
-            if not await has_perm_async(request.user, "django_sandbox.change_sandbox"):
+            if not await has_perm_async(request.user, "pl_sandbox.change_sandbox"):
                 raise PermissionDenied("Missing change permission on Sandbox")
             
             # Check that the sandbox exists
@@ -300,7 +300,7 @@ class SandboxSpecsView(AsyncView):
     
     async def get(self, request, pk: Optional[int] = None):
         try:
-            if not await has_perm_async(request.user, "django_sandbox.view_sandboxspecs"):
+            if not await has_perm_async(request.user, "pl_sandbox.view_sandboxspecs"):
                 raise PermissionDenied("Missing view permission on SandboxSpecs")
             
             if pk is not None:
@@ -344,7 +344,7 @@ class ContainerSpecsView(AsyncView):
     
     async def get(self, request, pk: Optional[int] = None):
         try:
-            if not await has_perm_async(request.user, "django_sandbox.view_containerspecs"):
+            if not await has_perm_async(request.user, "pl_sandbox.view_containerspecs"):
                 raise PermissionDenied("Missing view permission on ContainerSpecs")
             
             if pk is not None:
@@ -388,7 +388,7 @@ class UsageView(AsyncView):
     
     async def get(self, request, pk: Optional[int] = None):
         try:
-            if not await has_perm_async(request.user, "django_sandbox.view_usage"):
+            if not await has_perm_async(request.user, "pl_sandbox.view_usage"):
                 raise PermissionDenied("Missing view permission on Usage")
             
             if pk is not None:
@@ -432,7 +432,7 @@ class ResponseView(AsyncView):
     
     async def get(self, request, pk: Optional[int] = None):
         try:
-            if not await has_perm_async(request.user, "django_sandbox.view_response"):
+            if not await has_perm_async(request.user, "pl_sandbox.view_response"):
                 raise PermissionDenied("Missing view permission on Response")
             
             if pk is not None:
@@ -476,7 +476,7 @@ class CommandResultView(AsyncView):
     
     async def get(self, request, pk: Optional[int] = None):
         try:
-            if not await has_perm_async(request.user, "django_sandbox.view_commandresult"):
+            if not await has_perm_async(request.user, "pl_sandbox.view_commandresult"):
                 raise PermissionDenied("Missing view permission on CommandResult")
             
             if pk is not None:
@@ -520,7 +520,7 @@ class RequestView(AsyncView):
     
     async def get(self, request, pk: Optional[int] = None):
         try:
-            if not await has_perm_async(request.user, "django_sandbox.view_request"):
+            if not await has_perm_async(request.user, "pl_sandbox.view_request"):
                 raise PermissionDenied("Missing view permission on Request")
             
             if pk is not None:

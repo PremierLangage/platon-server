@@ -14,7 +14,7 @@ class UsageConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
         """Connect this consumer."""
-        if not await has_perm_async(self.scope["user"], "django_sandbox.view_usage"):
+        if not await has_perm_async(self.scope["user"], "pl_sandbox.view_usage"):
             raise PermissionDenied()
         
         self.sandbox_id = self.scope['url_route']['kwargs']['pk']
@@ -51,7 +51,7 @@ class SandboxSpecsConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
         """Connect this consumer."""
-        if not await has_perm_async(self.scope["user"], "django_sandbox.view_sandboxspecs"):
+        if not await has_perm_async(self.scope["user"], "pl_sandbox.view_sandboxspecs"):
             raise PermissionDenied()
         
         self.sandbox_id = self.scope['url_route']['kwargs']['pk']
@@ -87,7 +87,7 @@ class ContainerSpecsConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
         """Connect this consumer."""
-        if not await has_perm_async(self.scope["user"], "django_sandbox.view_containerspecs"):
+        if not await has_perm_async(self.scope["user"], "pl_sandbox.view_containerspecs"):
             raise PermissionDenied()
         
         self.sandbox_id = self.scope['url_route']['kwargs']['pk']

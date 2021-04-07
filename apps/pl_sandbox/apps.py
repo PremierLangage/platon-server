@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 
-class DjangoSandboxConfig(AppConfig):
-    name = 'django_sandbox'
+class PlSandboxConfig(AppConfig):
+    name = 'pl_sandbox'
     
     
     def ready(self):
@@ -45,7 +45,7 @@ class DjangoSandboxConfig(AppConfig):
         IntervalSchedule = apps.get_model(
             app_label='django_celery_beat', model_name='IntervalSchedule'
         )
-        Sandbox = apps.get_model(app_label='django_sandbox', model_name='Sandbox')
+        Sandbox = apps.get_model(app_label='pl_sandbox', model_name='Sandbox')
         
         # Retrieving / creating schedules needed for periodic tasks
         usage_schedule, created = IntervalSchedule.objects.get_or_create(
@@ -73,7 +73,7 @@ class DjangoSandboxConfig(AppConfig):
             except PeriodicTask.DoesNotExist:
                 logger.info(f"Creating periodic task to poll usage of sandbox {sandbox}")
                 PeriodicTask.objects.create(
-                    name=task_name, interval=usage_schedule, task='django_sandbox.tasks.poll_usage',
+                    name=task_name, interval=usage_schedule, task='pl_sandbox.tasks.poll_usage',
                     args=json.dumps([sandbox.pk])
                 )
             
@@ -84,5 +84,5 @@ class DjangoSandboxConfig(AppConfig):
                 logger.info(f"Creating periodic task to poll specifications of sandbox {sandbox}")
                 PeriodicTask.objects.create(
                     name=task_name, interval=specs_schedule, args=json.dumps([sandbox.pk]),
-                    task='django_sandbox.tasks.poll_specifications',
+                    task='pl_sandbox.tasks.poll_specifications',
                 )

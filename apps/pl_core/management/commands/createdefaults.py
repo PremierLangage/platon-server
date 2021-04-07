@@ -6,7 +6,7 @@ import django
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
-from django_sandbox.models import Sandbox
+from pl_sandbox.models import Sandbox
 from pl_lti.models import LMS
 from pl_lti.role import Role
 

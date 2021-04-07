@@ -9,12 +9,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
-import logging
 import os
 import sys
 
 import dj_database_url
-
 
 ################################################################################
 #                              Django's Settings                               #
@@ -35,7 +33,7 @@ SECRET_KEY = os.getenv(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = (os.getenv('DEBUG', 'false').lower() == 'true')
 
 # Set to true when 'python3 manage.py test' is used
 TESTING = sys.argv[1:2] == ['test']
@@ -53,6 +51,7 @@ PREREQ_APPS = [
     'django.contrib.postgres',
     'django.contrib.staticfiles',
 ]
+
 THIRD_PARTY_APPS = [
     'channels',
     'django_celery_beat',
@@ -60,12 +59,14 @@ THIRD_PARTY_APPS = [
     'drf_yasg',
     'rest_framework',
 ]
+
 PROJECT_APPS = [
-    'django_sandbox',
     'pl_auth',
     'pl_core',
     'pl_lti',
+    'pl_sandbox',
 ]
+
 INSTALLED_APPS = PREREQ_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
 # Middleware Definition
@@ -163,13 +164,15 @@ ASGI_APPLICATION = 'platon.routing.application'
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.postgresql',
-        'NAME':     os.getenv('DATABASE_NAME', 'django_platon'),
-        'USER':     os.getenv('DATABASE_USERNAME', 'django'),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'django_password'),
-        'HOST':     os.getenv('DATABASE_HOST', '127.0.0.1'),
-        'PORT':     os.getenv('DATABASE_PORT', '5432'),
+        'NAME':     os.getenv('DB_NAME', 'django_platon'),
+        'USER':     os.getenv('DB_USERNAME', 'django'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'django_password'),
+        'HOST':     os.getenv('DB_HOST', '127.0.0.1'),
+        'PORT':     os.getenv('DB_PORT', '5432'),
     }
 }
+# https://docs.djangoproject.com/en/3.2/releases/3.2/#customizing-type-of-auto-created-primary-keys
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Update database configuration with $DATABASE_URL.
 db_from_env = dj_database_url.config(conn_max_age=500)
@@ -246,19 +249,23 @@ STATICFILES_DIRS = [
 ################################################################################
 
 # Channel layer
+
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+
 # https://channels.readthedocs.io/en/latest/topics/channel_layers.html
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG':  {
-            "hosts": [(os.getenv('REDIS_URL', '127.0.0.1'), 6379)],
+            "hosts": [(REDIS_HOST, 6379)],
         },
     },
 }
 
 # Celery
-CELERY_BROKER_URL = 'redis://localhost:6379'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:6379'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:6379'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -275,17 +282,8 @@ SANDBOX_POLL_USAGE_EVERY = 15
 # Seconds between polls of sandboxes specifications. Must not be less than 300.
 SANDBOX_POLL_SPECS_EVERY = 60 * 10
 # Default sandbox url
-SANDBOX_URL = 'http://localhost:7000/'
+SANDBOX_URL = os.getenv('SANDBOX_URL', 'http://localhost:7000/')
 ################################################################################
 
 if APPS_DIR not in sys.path:  # pragma: no cover
     sys.path.append(APPS_DIR)
-
-# Allow a config file to be created in the same directory as settings.
-# It will override keys in settings
-try:
-    from .config import *
-except Exception:
-    logger = logging.getLogger(__name__)
-    logger.exception("No config file found.")
-    pass

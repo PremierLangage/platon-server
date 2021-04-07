@@ -3,7 +3,7 @@ from django.urls import path, re_path
 from . import consumers, views
 
 
-app_name = 'django_sandbox'
+app_name = 'pl_sandbox'
 
 urlpatterns = [
     path('sandbox/<int:pk>/', views.SandboxView.as_view(), name='sandbox'),

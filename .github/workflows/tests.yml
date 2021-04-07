@@ -16,17 +16,29 @@ jobs:
   test:
     runs-on: ubuntu-latest
     services:
+      redis:
+        # Docker Hub image
+        image: redis:6
+        ports:
+          - 6379:6379
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       postgres:
-        image: postgres:10.8
+        # Docker Hub image
+        image: postgres:13
         env:
           POSTGRES_USER: django
           POSTGRES_PASSWORD: django_password
           POSTGRES_DB: django_platon
         ports:
           - 5432:5432
-        # needed because the postgres container does not provide a healthcheck
+        # Set health checks to wait until postgres has started
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-  
+
     name: Python 3.8
     steps:
       - uses: actions/checkout@v2
@@ -37,7 +49,7 @@ jobs:
           python-version: 3.8
           architecture: 'x64'
 
-      - name: Install the Sandbox
+      - name: Install Sandbox
         run : |
           git clone https://github.com/PremierLangage/sandbox.git
           cd sandbox/
@@ -45,14 +57,17 @@ jobs:
           python3 manage.py runserver 7000 &> /dev/null &
           cd ..
 
-      - name: Install Platon Server
+      - name: Install Dependencies
         run: |
-          ./bin/install.sh
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
 
-      - name: Run redis
-        run: ./bin/redis_docker.sh
+      - name: Run Migrations
+        run: |
+          python3 manage.py waitdb
+          python3 manage.py migrate
 
-      - name: Run Tox
+      - name: Run Tests
         run: tox
 
       - name: Upload coverage to Codecov

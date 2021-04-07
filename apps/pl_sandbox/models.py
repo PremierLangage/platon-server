@@ -17,7 +17,7 @@ from django.dispatch import receiver
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from sandbox_api import ASandbox
 
-from django_sandbox.exceptions import SandboxDisabledError
+from pl_sandbox.exceptions import SandboxDisabledError
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class Sandbox(models.Model):
         return f"<Sandbox - {self.name} ({self.pk})>"
     
     
-    @receiver(post_save, sender='django_sandbox.Sandbox')
+    @receiver(post_save, sender='pl_sandbox.Sandbox')
     def create_periodic_tasks(sender, instance, created, **kwargs):
         """Create a periodic tasks to poll specs and usage of this Sandbox."""
         if created:
@@ -55,12 +55,12 @@ class Sandbox(models.Model):
             logger.info(f"Creating periodic task to poll usage of sandbox {instance}")
             PeriodicTask.objects.create(
                 name=f"sandbox_poll_usage_{instance.pk}", interval=usage_schedule,
-                task='django_sandbox.tasks.poll_usage', args=json.dumps([instance.pk])
+                task='pl_sandbox.tasks.poll_usage', args=json.dumps([instance.pk])
             )
             logger.info(f"Creating periodic task to poll specifications of sandbox {instance}")
             PeriodicTask.objects.create(
                 name=f"sandbox_poll_specifications_{instance.pk}", interval=specs_schedule,
-                task='django_sandbox.tasks.poll_specifications', args=json.dumps([instance.pk])
+                task='pl_sandbox.tasks.poll_specifications', args=json.dumps([instance.pk])
             )
     
     

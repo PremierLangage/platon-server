@@ -14,5 +14,5 @@ class HasPermAsyncTestCase(TransactionTestCase):
         )
         user = await database_sync_to_async(User.objects.create_user)("user")
         
-        self.assertTrue(await async_db.has_perm_async(superuser, "django_sandbox:view_usage"))
-        self.assertFalse(await async_db.has_perm_async(user, "django_sandbox:view_usage"))
+        self.assertTrue(await async_db.has_perm_async(superuser, "pl_sandbox:view_usage"))
+        self.assertFalse(await async_db.has_perm_async(user, "pl_sandbox:view_usage"))

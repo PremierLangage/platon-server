@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_sandbox', '0001_initial'),
+        ('pl_sandbox', '0001_initial'),
     ]
 
     operations = [

@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 from django.test import TransactionTestCase
 from django_celery_beat.models import PeriodicTask
 
-from django_sandbox.exceptions import SandboxDisabledError
-from django_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs, Usage
+from pl_sandbox.exceptions import SandboxDisabledError
+from pl_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs, Usage
 
 
 SANDBOX_URL = settings.SANDBOX_URL

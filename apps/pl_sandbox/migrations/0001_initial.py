@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
                 ('receiving_bytes', models.BigIntegerField(blank=True, null=True)),
                 ('process', models.PositiveSmallIntegerField(blank=True, null=True)),
                 ('container', models.PositiveSmallIntegerField(blank=True, null=True)),
-                ('sandbox', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='usages', to='django_sandbox.sandbox')),
+                ('sandbox', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='usages', to='pl_sandbox.sandbox')),
             ],
             options={
                 'ordering': ['-date', 'sandbox'],
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
                 ('memory_ram', models.BigIntegerField(blank=True, default=None, null=True)),
                 ('memory_swap', models.BigIntegerField(blank=True, default=None, null=True)),
                 ('memory_storage', models.JSONField(blank=True, default=None, null=True)),
-                ('sandbox', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='server_specs', to='django_sandbox.sandbox')),
+                ('sandbox', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='server_specs', to='pl_sandbox.sandbox')),
             ],
             options={
                 'verbose_name': 'Sandbox Specifications',
@@ -96,8 +96,8 @@ class Migration(migrations.Migration):
                 ('success', models.BooleanField()),
                 ('traceback', models.TextField(default='')),
                 ('config', models.JSONField()),
-                ('response', models.OneToOneField(null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='request', to='django_sandbox.response')),
-                ('sandbox', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='executions', to='django_sandbox.sandbox')),
+                ('response', models.OneToOneField(null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='request', to='pl_sandbox.response')),
+                ('sandbox', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='executions', to='pl_sandbox.sandbox')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='executions', to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -125,7 +125,7 @@ class Migration(migrations.Migration):
                 ('reading_bytes', models.JSONField(blank=True, default=None, null=True)),
                 ('libraries', models.JSONField(blank=True, default=None, null=True)),
                 ('bin', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=64), blank=True, default=None, null=True, size=None)),
-                ('sandbox', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='container_specs', to='django_sandbox.sandbox')),
+                ('sandbox', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='container_specs', to='pl_sandbox.sandbox')),
             ],
             options={
                 'verbose_name': 'Container Specifications',
@@ -141,7 +141,7 @@ class Migration(migrations.Migration):
                 ('stdout', models.TextField(default='')),
                 ('stderr', models.TextField(default='')),
                 ('time', models.FloatField()),
-                ('response', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='execution', to='django_sandbox.response')),
+                ('response', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='execution', to='pl_sandbox.response')),
             ],
         ),
         migrations.AddIndex(

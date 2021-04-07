@@ -9,8 +9,8 @@ from django.contrib.auth.models import Permission, User
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TransactionTestCase
 
-from django_sandbox import tasks
-from django_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs, Usage
+from pl_sandbox import tasks
+from pl_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs, Usage
 from platon.routing import application
 
 

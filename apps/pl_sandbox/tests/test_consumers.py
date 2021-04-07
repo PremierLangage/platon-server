@@ -10,7 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TransactionTestCase
 
-from django_sandbox.models import Sandbox
+from pl_sandbox.models import Sandbox
 from platon.routing import application
 
 

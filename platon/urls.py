@@ -37,7 +37,7 @@ urlpatterns = [
     path('api/admin/', admin.site.urls),
     path('api/lti/', include('pl_lti.urls', namespace='pl_lti')),
     path('api/auth/', include('pl_auth.urls', namespace='pl_auth')),
-    path('api/sandbox/', include('django_sandbox.urls', namespace='pl_sandbox')),
+    path('api/sandbox/', include('pl_sandbox.urls', namespace='pl_sandbox')),
     
     url(r'^api/docs/swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     url(r'^api/docs/swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
