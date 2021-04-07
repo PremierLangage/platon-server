@@ -1,5 +1,5 @@
 aiohttp~=3.6.2
-asgiref~=3.2.10
+asgiref~=3.3.4
 celery[redis]~=4.4.7
 channels==3.0.3
 channels_redis~=3.2.0
@@ -8,7 +8,7 @@ dj-database-url~=0.5.0
 django-celery-beat~=2.0.0
 django-enumfields~=2.0.0
 django-filter~=2.4.0
-django~=3.1.1
+django~=3.2
 django_extensions~=3.0.9
 djangorestframework~=3.12.2
 djangorestframework-simplejwt~=4.6.0
