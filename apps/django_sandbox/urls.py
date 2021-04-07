@@ -29,7 +29,7 @@ urlpatterns = [
 ]
 
 websocket_urlpatterns = [
-    re_path(r'ws/sandbox/usage/(?P<pk>\d+)/$', consumers.UsageConsumer),
-    re_path(r'ws/sandbox/sandbox_specs/(?P<pk>\d+)/$', consumers.SandboxSpecsConsumer),
-    re_path(r'ws/sandbox/container_specs/(?P<pk>\d+)/$', consumers.ContainerSpecsConsumer),
+    re_path(r'ws/sandbox/usage/(?P<pk>\d+)/$', consumers.UsageConsumer.as_asgi()),
+    re_path(r'ws/sandbox/sandbox_specs/(?P<pk>\d+)/$', consumers.SandboxSpecsConsumer.as_asgi()),
+    re_path(r'ws/sandbox/container_specs/(?P<pk>\d+)/$', consumers.ContainerSpecsConsumer.as_asgi()),
 ]
