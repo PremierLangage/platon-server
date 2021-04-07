@@ -28,4 +28,3 @@ class LTIParamsTestCase(TestCase):
             params,
             LTIParams.from_dict(params.to_dict())
         )
-

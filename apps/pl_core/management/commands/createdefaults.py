@@ -12,8 +12,9 @@ from pl_lti.role import Role
 
 logger = logging.getLogger(__name__)
 
+
 class Command(BaseCommand):
-    """Django command to pause execution until db is available"""
+    """Django command to create default data before starting the server"""
  
     def handle(self, *args, **options):
         path = os.path.join(settings.SETTINGS_DIR, 'config.json')

@@ -71,7 +71,7 @@ class Role(Enum):
         ----------
         roles : `str`
             A comma separated list of roles as specified in the LTI specifications.
-            
+
         Returns
         -------
         role: `Role`
@@ -88,12 +88,12 @@ class Role(Enum):
                     .replace("urn:lti:sysrole:ims/lis/", "")
                     .replace("urn:lti:role:ims/lis/", "")
                     .strip()
-                ).split('/')[0]
-        
+            ).split('/')[0]
+
         roles: List[str] = [
             parse(r) for r in roles.split(',')
         ]
-    
+
         role_map = {
             'Learner': Role.LEARNER,
             'Instructor': Role.INSTRUCTOR,

@@ -22,15 +22,15 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="PLaTon API",
-      default_version='v1',
-      description="Documentation of PLaTon apis",
-      terms_of_service="https://www.google.com/policies/terms/",
-      license=openapi.License(name="CeCILL-B"),
-   ),
-   public=True,
-   permission_classes=[permissions.AllowAny],
+    openapi.Info(
+        title="PLaTon API",
+        default_version='v1',
+        description="Documentation of PLaTon apis",
+        terms_of_service="https://www.google.com/policies/terms/",
+        license=openapi.License(name="CeCILL-B"),
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny],
 )
 
 urlpatterns = [
