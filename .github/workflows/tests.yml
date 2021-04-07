@@ -66,6 +66,7 @@ jobs:
         run: |
           python3 manage.py waitdb
           python3 manage.py migrate
+          python3 manage.py createdefaults
 
       - name: Run Tests
         run: tox
