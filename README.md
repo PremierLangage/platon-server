@@ -1,3 +1,1 @@
-# PLaTon
-
-TODO
+# Documentation comming soon

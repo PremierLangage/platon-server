@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import sys
+import logging
 
 import dj_database_url
 
@@ -303,3 +304,12 @@ SANDBOX_URL = os.getenv('SANDBOX_URL', 'http://localhost:7000/')
 
 if APPS_DIR not in sys.path:  # pragma: no cover
     sys.path.append(APPS_DIR)
+
+
+try:
+    from .config import *
+except Exception:
+    if "VERBOSE" in os.environ:
+        logger = logging.getLogger(__name__)
+        logger.exception("No config file found.")
+    pass
