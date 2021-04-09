@@ -31,7 +31,7 @@ def find_lms(params: LTIParams) -> LMS:
         params (LTIParams): A LTI request parameters.
 
     Raises:
-        PermissionDenied: If 
+        PermissionDenied: If
         PermissionDenied: [description]
 
     Returns:
@@ -123,7 +123,7 @@ def parse_lti_request(request) -> Tuple[LMS, LTIParams]:
 
     Returns:
         [tuple]: An (lms, params) tuple where lms is the lms
-        where the request coming from and params the parameters of the request. 
+        where the request coming from and params the parameters of the request.
     """
 
     params = LTIParams.from_dict(request.POST.dict())

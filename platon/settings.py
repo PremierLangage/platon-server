@@ -9,10 +9,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
-import logging
 import os
 import sys
+import logging
 
+import dj_database_url
 
 ################################################################################
 #                              Django's Settings                               #
@@ -27,16 +28,19 @@ APPS_DIR = os.path.realpath(os.path.join(BASE_DIR, "apps"))
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '-90k)h+jqn8^82(om*zr(1dl^39kr4g&0_84bsdaueo7u6+)s+'
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    '-90k)h+jqn8^82(om*zr(1dl^39kr4g&0_84bsdaueo7u6+)s+'
+).strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = (os.getenv('DEBUG', 'false').strip().lower() == 'true')
 
 # Set to true when 'python3 manage.py test' is used
 TESTING = sys.argv[1:2] == ['test']
 
 # Allowed Hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').strip().split(',')
 
 # Application definition
 PREREQ_APPS = [
@@ -45,19 +49,27 @@ PREREQ_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.postgres',
     'django.contrib.staticfiles',
 ]
+
 THIRD_PARTY_APPS = [
     'channels',
     'django_celery_beat',
     'django_extensions',
+    'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl_drf',
+    'drf_yasg',
     'rest_framework',
 ]
+
 PROJECT_APPS = [
-    'django_sandbox',
     'pl_auth',
+    'pl_core',
     'pl_lti',
+    'pl_sandbox',
 ]
+
 INSTALLED_APPS = PREREQ_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
 # Middleware Definition
@@ -155,17 +167,23 @@ ASGI_APPLICATION = 'platon.routing.application'
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.postgresql',
-        'NAME':     'django_platon',
-        'USER':     'django',
-        'PASSWORD': 'django_password',
-        'HOST':     '127.0.0.1',
-        'PORT':     '5432',
+        'NAME':     os.getenv('DB_NAME', 'django_platon').strip(),
+        'USER':     os.getenv('DB_USERNAME', 'django').strip(),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'django_password').strip(),
+        'HOST':     os.getenv('DB_HOST', '127.0.0.1').strip(),
+        'PORT':     os.getenv('DB_PORT', '5432').strip(),
     }
 }
+# https://docs.djangoproject.com/en/3.2/releases/3.2/#customizing-type-of-auto-created-primary-keys
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+# Update database configuration with $DATABASE_URL.
+db_from_env = dj_database_url.config(conn_max_age=500)
+DATABASES['default'].update(db_from_env)
 
 
 # Authentication
+
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'pl_lti.backends.LTIAuthBackend',
@@ -192,6 +210,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
     # https://www.django-rest-framework.org/api-guide/parsers/#api-reference
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
@@ -201,14 +220,28 @@ REST_FRAMEWORK = {
     # https://www.django-rest-framework.org/api-guide/authentication/#api-reference
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     # https://www.django-rest-framework.org/api-guide/permissions/#api-reference
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'PAGE_SIZE': 100,
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+}
+
+
+# Elasticsearch
+# https://django-elasticsearch-dsl.readthedocs.io/en/latest/settings.html
+
+ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', '127.0.0.1').strip()
+ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_PORT', '9200').strip()
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': f'{ELASTICSEARCH_HOST}:{ELASTICSEARCH_PORT}'
+    },
 }
 
 # Internationalization
@@ -232,19 +265,24 @@ STATICFILES_DIRS = [
 ################################################################################
 
 # Channel layer
+
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1').strip()
+REDIS_PORT = os.getenv('REDIS_PORT', '6379').strip()
+
 # https://channels.readthedocs.io/en/latest/topics/channel_layers.html
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG':  {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [(REDIS_HOST, int(REDIS_PORT))],
         },
     },
 }
 
 # Celery
-CELERY_BROKER_URL = 'redis://localhost:6379'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -261,17 +299,17 @@ SANDBOX_POLL_USAGE_EVERY = 15
 # Seconds between polls of sandboxes specifications. Must not be less than 300.
 SANDBOX_POLL_SPECS_EVERY = 60 * 10
 # Default sandbox url
-SANDBOX_URL = 'http://localhost:7000/'
+SANDBOX_URL = os.getenv('SANDBOX_URL', 'http://localhost:7000/')
 ################################################################################
 
 if APPS_DIR not in sys.path:  # pragma: no cover
     sys.path.append(APPS_DIR)
 
-# Allow a config file to be created in the same directory as settings.
-# It will override keys in settings
+
 try:
     from .config import *
 except Exception:
-    logger = logging.getLogger(__name__)
-    logger.exception("No config file found.")
+    if "VERBOSE" in os.environ:
+        logger = logging.getLogger(__name__)
+        logger.exception("No config file found.")
     pass

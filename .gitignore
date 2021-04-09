@@ -1,5 +1,6 @@
 # Platon
 platon/config.py
+platon/config.json
 static/*
 media/*
 tmp/*
@@ -144,7 +145,6 @@ dmypy.json
 
 
 # IDE - VSCode
-.vscode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

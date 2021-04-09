@@ -1,5 +1,4 @@
-from common.errors import RestError
-from common.mixins import CsrfExemptSessionAuthentication
+from pl_core.errors import RestError
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from rest_framework import generics, mixins, status
@@ -15,7 +14,6 @@ from .serializers import UserSerializer
 class SignInView(APIView):
     """View that handle sign in request."""
 
-    authentication_classes = (CsrfExemptSessionAuthentication,)
 
     def post(self, request: Request):
         form = SignInForm(request.data)
@@ -51,10 +49,12 @@ class SignInView(APIView):
 class SignOutView(APIView):
     """View that handle sign out request."""
 
-    authentication_classes = (CsrfExemptSessionAuthentication,)
+    # authentication_classes = (CsrfExemptSessionAuthentication,)
 
     def post(self, request: Request):
+        print(request.user.is_authenticated)
         logout(request)
+        print(request.user.is_authenticated)
         return Response({
             'detail': 'successfully logged out'
         }, status=status.HTTP_200_OK)
@@ -74,9 +74,7 @@ class LoggedUserDetailView(APIView):
 
 
 class UserListView(mixins.ListModelMixin, generics.GenericAPIView):
-    """View that allow to retrieve the informations
-    of all the registerd users
-    """
+    """View that allow to retrieve the informations of all the registerd users"""
 
     queryset = User.objects.all()
     serializer_class = UserSerializer

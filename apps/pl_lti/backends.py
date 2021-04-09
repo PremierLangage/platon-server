@@ -32,5 +32,5 @@ class LTIAuthBackend(ModelBackend):
                 )
                 logger.info(f"LTI: Succesfully authenticated {user.username}.")
                 return user
-            except:
-                logger.error("LTI: Authentication failed.")
+            except Exception as e:
+                logger.error("LTI: Authentication failed." + str(e))
