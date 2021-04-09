@@ -30,16 +30,16 @@ APPS_DIR = os.path.realpath(os.path.join(BASE_DIR, "apps"))
 SECRET_KEY = os.getenv(
     'SECRET_KEY',
     '-90k)h+jqn8^82(om*zr(1dl^39kr4g&0_84bsdaueo7u6+)s+'
-)
+).strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (os.getenv('DEBUG', 'false').lower() == 'true')
+DEBUG = (os.getenv('DEBUG', 'false').strip().lower() == 'true')
 
 # Set to true when 'python3 manage.py test' is used
 TESTING = sys.argv[1:2] == ['test']
 
 # Allowed Hosts
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').strip().split(',')
 
 # Application definition
 PREREQ_APPS = [
@@ -56,6 +56,8 @@ THIRD_PARTY_APPS = [
     'channels',
     'django_celery_beat',
     'django_extensions',
+    'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl_drf',
     'drf_yasg',
     'rest_framework',
 ]
@@ -164,11 +166,11 @@ ASGI_APPLICATION = 'platon.routing.application'
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.postgresql',
-        'NAME':     os.getenv('DB_NAME', 'django_platon'),
-        'USER':     os.getenv('DB_USERNAME', 'django'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'django_password'),
-        'HOST':     os.getenv('DB_HOST', '127.0.0.1'),
-        'PORT':     os.getenv('DB_PORT', '5432'),
+        'NAME':     os.getenv('DB_NAME', 'django_platon').strip(),
+        'USER':     os.getenv('DB_USERNAME', 'django').strip(),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'django_password').strip(),
+        'HOST':     os.getenv('DB_HOST', '127.0.0.1').strip(),
+        'PORT':     os.getenv('DB_PORT', '5432').strip(),
     }
 }
 # https://docs.djangoproject.com/en/3.2/releases/3.2/#customizing-type-of-auto-created-primary-keys
@@ -228,6 +230,19 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 }
 
+
+# Elasticsearch
+# https://django-elasticsearch-dsl.readthedocs.io/en/latest/settings.html
+
+ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', '127.0.0.1').strip()
+ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_PORT', '9200').strip()
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': f'{ELASTICSEARCH_HOST}:{ELASTICSEARCH_PORT}'
+    },
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 LANGUAGE_CODE = 'fr-FR'
@@ -250,22 +265,23 @@ STATICFILES_DIRS = [
 
 # Channel layer
 
-REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1').strip()
+REDIS_PORT = os.getenv('REDIS_PORT', '6379').strip()
 
 # https://channels.readthedocs.io/en/latest/topics/channel_layers.html
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG':  {
-            "hosts": [(REDIS_HOST, 6379)],
+            "hosts": [(REDIS_HOST, int(REDIS_PORT))],
         },
     },
 }
 
 # Celery
 
-CELERY_BROKER_URL = f'redis://{REDIS_HOST}:6379'
-CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:6379'
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

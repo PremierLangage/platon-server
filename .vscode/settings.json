@@ -1,0 +1,7 @@
+{
+    "python.analysis.autoImportCompletions": false,
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.extraPaths": ["apps"],
+    "python.formatting.provider": "autopep8",
+}

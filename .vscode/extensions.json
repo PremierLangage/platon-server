@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "eamodio.gitlens",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "shamanu4.django-intellisense",
+        "vivaxy.vscode-conventional-commits",
+    ]
+}
