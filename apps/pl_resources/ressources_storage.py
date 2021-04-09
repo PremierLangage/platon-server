@@ -9,6 +9,3 @@ class RessourceStorage(FileSystemStorage):
     def update(file, content):
         with file.open("w+") as f:
             f.write(content)
-
-
-
