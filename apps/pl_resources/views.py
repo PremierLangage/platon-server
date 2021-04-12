@@ -52,7 +52,7 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
 
 
 class CircleDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
-    """View that allow to retrieve the informations of a single user"""
+    """View that allow to retrieve the informations of a single circle"""
     queryset = Circle.objects.all()
     serializer_class = CircleSerializer
 
@@ -80,7 +80,7 @@ class CircleDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.
 
 
 class CircleResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
-    """View that allow to retrieve the informations of a single user"""
+    """View that allow to retrieve the informations of a single circle"""
     queryset = Circle.objects.all()
     serializer_class = CircleResourceSerializer
 
