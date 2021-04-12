@@ -11,10 +11,10 @@ REST API of <a href="https://github.com/PremierLangage/platon">PLaTon</a> writte
 </p>
 
 <p align="center">
-    <a href="https://codecov.io/gh/PremierLangage/platon-server">
+    <a href="https://github.com/PremierLangage/platon-server/actions/">
         <img src="https://github.com/PremierLangage/platon-server/workflows/Tests/badge.svg" alt="Tests">
     </a>
-    <a href="https://github.com/PremierLangage/platon-server/actions/">
+    <a href="https://codecov.io/gh/PremierLangage/platon-server">
         <img src="https://codecov.io/gh/PremierLangage/platon-server/branch/master/graph/badge.svg" alt="codecov">
     </a>
     <a href="https://www.codefactor.io/repository/github/premierlangage/platon-server/overview/master">
