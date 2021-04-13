@@ -266,8 +266,5 @@ try:
 except Exception:
     logger = logging.getLogger(__name__)
     logger.exception("No config file found.")
-
-    # Location of resources
     
-
     pass
