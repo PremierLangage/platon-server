@@ -20,7 +20,7 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
-    def post(self, request: Request, pk):
+    def post(self, request: Request):
         
         id_parent = request.data.get('parent_id')
         path = request.data.get('path')
