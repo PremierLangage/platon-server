@@ -24,6 +24,9 @@ SETTINGS_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SETTINGS_DIR)
 APPS_DIR = os.path.realpath(os.path.join(BASE_DIR, "apps"))
 
+# Location of resources
+MEDIA_ROOT = os.path.realpath(os.path.join(BASE_DIR, "resources"))
+
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
