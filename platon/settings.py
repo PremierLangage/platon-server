@@ -24,8 +24,8 @@ SETTINGS_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SETTINGS_DIR)
 APPS_DIR = os.path.realpath(os.path.join(BASE_DIR, "apps"))
 
-# Location of resources
-MEDIA_ROOT = os.path.realpath(os.path.join(BASE_DIR, "resources"))
+# Default location of resources
+MEDIA_ROOT = "/resources"
 
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -262,7 +262,12 @@ if APPS_DIR not in sys.path:  # pragma: no cover
 # It will override keys in settings
 try:
     from .config import *
+    MEDIA_ROOT = RESOURCE_PATH
 except Exception:
     logger = logging.getLogger(__name__)
     logger.exception("No config file found.")
+
+    # Location of resources
+    
+
     pass
