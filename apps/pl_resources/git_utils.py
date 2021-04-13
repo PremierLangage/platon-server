@@ -1,7 +1,7 @@
 from git import Repo
 
 
-class gitUtils():
+class GitUtils():
 
     @staticmethod
     def create_repo(path):

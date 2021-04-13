@@ -45,6 +45,7 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
                 RestError('circle/not-found'),
                 status=status.HTTP_400_BAD_REQUEST
             )
+        circle.create_resource()
         serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

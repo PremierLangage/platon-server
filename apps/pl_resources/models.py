@@ -6,17 +6,25 @@ from django.db.models import Model
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-
+from django.conf import settings
 from .ressources_storage import RessourceStorage
+from .git_utils import GitUtils
+#from settings import MEDIA_ROOT
 
 
 
 class Resource(models.Model):
-    """Resource yep"""
+    """Resource """
     name = models.CharField(max_length=30, blank=True)
     path = models.CharField(max_length=30, blank=True)
     description = models.CharField(max_length=200, blank=True)
     tags = models.CharField(max_length=150, blank=True)
+
+    def create_resource(self):
+        """Create new repo with """
+        GitUtils.create_repo(settings.MEDIA_ROOT + "/" + self.name)
+
+
     
 
 
@@ -24,23 +32,6 @@ class Circle(Resource):
     """Represents a unique circle"""
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
     users = models.ManyToManyField(User)
-
-
-    @classmethod
-    async def create_circle(cls, path, name, id_parent=None):
-
-        # TODO checker chaque user dans users, et le récupérer grâce à son id
-        parent = None
-        if id_parent:
-            try:
-                parent = await database_sync_to_async(cls.objects.get)(id=id_parent)
-            except Circle.DoesNotExist:
-                raise Circle.DoesNotExist
-            except Circle.MultipleObjectsReturned:
-                raise Circle.MultipleObjectsReturned
-            
-        return await database_sync_to_async(cls.objects.create)(name=name, parent=parent)
-
 
 
 class File(models.Model):
