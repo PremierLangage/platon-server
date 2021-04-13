@@ -6,7 +6,6 @@ from django.db.models import Model
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from django.conf import settings
 from .ressources_storage import RessourceStorage
 from .git_utils import GitUtils
 
@@ -20,7 +19,7 @@ class Resource(models.Model):
 
     def create_resource(self):
         """Create new repo with """
-        GitUtils.create_repo(settings.MEDIA_ROOT + "/" + self.name)
+        GitUtils.create_repo(self.name)
 
 
 class Circle(Resource):
