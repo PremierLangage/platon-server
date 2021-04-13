@@ -4,6 +4,7 @@ from git import Repo
 
 from django.conf import settings
 
+
 class GitUtils():
 
     @staticmethod
@@ -13,7 +14,7 @@ class GitUtils():
         # Create repositorie
         repo = Repo.init(os.path.join(settings.MEDIA_ROOT, name))
 
-        # Initilize repositorie 
+        # Initilize repositorie
         filename = os.path.join(settings.MEDIA_ROOT, "README")
         open(filename, 'wb').close()
         repo.index.add(['.'])
