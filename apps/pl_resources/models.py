@@ -49,6 +49,7 @@ class File(models.Model):
         
         new_file = cls.objects.create(resource=resource, document=None)
         new_file.document.save(filename, ContentFile(content))
+        GitUtils.commit(resource.name, "update")
 
 
     @classmethod
@@ -60,6 +61,8 @@ class File(models.Model):
             return
         with r.resource.open("w+") as f:
             f.write(content)
+        GitUtils.commit(resource.name, "update")
+
     
 
     def __str__(self):

@@ -7,5 +7,13 @@ class RessourceStorage(FileSystemStorage):
 
     @staticmethod
     def update(file, content):
+        """Update file"""
         with file.open("w+") as f:
             f.write(content)
+    
+
+
+
+    
+
+

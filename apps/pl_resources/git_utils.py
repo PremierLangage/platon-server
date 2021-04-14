@@ -35,7 +35,7 @@ class GitUtils():
 
  
     @staticmethod
-    def commit(repo_name: str, branch_name: str,  files_add = ['.'], message_commit: str):
+    def commit(repo_name: str, message_commit: str,  files_add = ['.']):
         """add and commit file `files_add` on repo `repo_name` 
         with location settings.MEDIA_ROOT"""
         repo = Repo(os.path.join(settings.MEDIA_ROOT, repo_name))
