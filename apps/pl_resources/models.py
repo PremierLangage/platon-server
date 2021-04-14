@@ -13,7 +13,7 @@ from .git_utils import GitUtils
 class Resource(models.Model):
     """Resource """
     name = models.CharField(max_length=30, blank=True)
-    path = models.CharField(max_length=30, blank=True)
+    path = models.CharField(max_length=100, blank=True)
     description = models.CharField(max_length=200, blank=True)
     tags = models.CharField(max_length=150, blank=True)
 
@@ -34,21 +34,21 @@ class File(models.Model):
         null=True,
         on_delete=models.CASCADE,
         related_name='files')
+    path_file = models.CharField(max_length=100, blank=True)
     document = models.FileField(storage=RessourceStorage())
 
     
     @classmethod
-    async def create_file(cls, id_resource, filename, content):
+     def create_file(cls, id_resource, filename, content):
         # TODO exeption when create
         try:
-            resource = await database_sync_to_async(cls.objects.get)(id=id_resource)
+            resource = cls.objects.get(id=id_resource)
         except Resource.DoesNotExist:
             raise Resource.DoesNotExist
         except Resource.MultipleObjectsReturned:
             raise Resource.MultipleObjectsReturned
         
-        new_file = await database_sync_to_async(
-            cls.objects.create)(resource=resource, document=None)
+        new_file = cls.objects.create(resource=resource, document=None)
         new_file.document.save(filename, ContentFile(content))
 
 
