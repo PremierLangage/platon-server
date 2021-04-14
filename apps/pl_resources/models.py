@@ -34,13 +34,12 @@ class File(models.Model):
         null=True,
         on_delete=models.CASCADE,
         related_name='files')
-    path_file = models.CharField(max_length=100, blank=True)
     document = models.FileField(storage=RessourceStorage())
 
     
     @classmethod
      def create_file(cls, id_resource, filename, content):
-        # TODO exeption when create
+        """Filename est le relativepath depuis MEADIROOT"""
         try:
             resource = cls.objects.get(id=id_resource)
         except Resource.DoesNotExist:
