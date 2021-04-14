@@ -38,7 +38,7 @@ class File(models.Model):
 
     
     @classmethod
-     def create_file(cls, id_resource, filename, content):
+    def create_file(cls, id_resource, filename, content):
         """Filename est le relativepath depuis MEADIROOT"""
         try:
             resource = cls.objects.get(id=id_resource)

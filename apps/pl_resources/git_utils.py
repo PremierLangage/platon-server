@@ -9,8 +9,8 @@ class GitUtils():
 
     @staticmethod
     def create_repo(repo_name):
-    """ Initialize new repo with name `repo_name` and
-        with location settings.MEDIA_ROOT. 
+        """ Initialize new repo with name `repo_name` and
+        with location settings.MEDIA_ROOT.
         Add README file for initialize repository for gitPython
         """
         path_repo = os.path.join(settings.MEDIA_ROOT, repo_name)
@@ -27,7 +27,7 @@ class GitUtils():
 
     @staticmethod
     def create_branch(repo_name, branch_name):
-        """create new branch with name `branch_name` on repo `repo_name` 
+        """create new branch with name `branch_name` on repo `repo_name`
         with location settings.MEDIA_ROOT"""
         repo = Repo(os.path.join(settings.MEDIA_ROOT, repo_name))
         new_branch = repo.create_head(branch_name)
@@ -35,8 +35,8 @@ class GitUtils():
 
  
     @staticmethod
-    def commit(repo_name: str, message_commit: str,  files_add = ['.']):
-        """add and commit file `files_add` on repo `repo_name` 
+    def commit(repo_name: str, message_commit: str, files_add=['.']):
+        """add and commit file `files_add` on repo `repo_name`
         with location settings.MEDIA_ROOT"""
         repo = Repo(os.path.join(settings.MEDIA_ROOT, repo_name))
         repo.index.add(files_add)
