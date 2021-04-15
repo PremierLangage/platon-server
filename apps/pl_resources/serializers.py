@@ -16,3 +16,10 @@ class CircleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Circle
         fields = ('id', 'name', 'path', 'description')
+
+
+class ResourceSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Resource
+        fields = ('id', 'name', 'path', 'description')

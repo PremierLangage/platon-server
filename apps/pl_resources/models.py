@@ -39,7 +39,7 @@ class File(models.Model):
     
     @classmethod
     def create_file(cls, id_resource, filename, content):
-        """Filename est le relativepath depuis MEADIROOT"""
+        """Filename est le relativepath depuis MEADIA ROOT"""
         try:
             resource = cls.objects.get(id=id_resource)
         except Resource.DoesNotExist:
