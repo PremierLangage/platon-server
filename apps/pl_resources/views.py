@@ -13,6 +13,125 @@ from .serializers import CircleSerializer, CircleResourceSerializer
 from .models import Circle
 
 
+
+class ResourcesList(mixins.ListModelMixin, generics.GenericAPIView):
+    queryset = Resource.objects.all()
+    serializer_class = ResourceSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request: Request):
+        
+        id_parent = request.data.get('parent_id')
+        path = request.data.get('path')
+        name = request.data.get('name')
+        description = request.data.get('description')
+        tags = request.data.get('tags')
+
+        parent = None
+        
+        if id_parent is not None:
+            parent = Circle.objects.get(id=id_parent)
+        
+        circle = Circle.objects.create(
+            parent=parent, name=name,
+            description=description,
+            tags=tags,
+            path=path
+        )
+        
+        if not circle:
+            return Response(
+                RestError('circle/not-found'),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        circle.create_resource()
+        serializer = CircleSerializer(circle)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
+    """View that allow to retrieve the informations of a single circle"""
+    queryset = Resource.objects.all()
+    serializer_class = ResourceSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+
+class ResourceTag(mixins.ListModelMixin, generics.GenericAPIView):
+    queryset = Resource.objects.all()
+    serializer_class = ResourceSerializer
+
+
+    def post(self, request: Request):
+        
+        id_parent = request.data.get('parent_id')
+        path = request.data.get('path')
+        name = request.data.get('name')
+        description = request.data.get('description')
+        tags = request.data.get('tags')
+
+        parent = None
+        
+        if id_parent is not None:
+            parent = Circle.objects.get(id=id_parent)
+        
+        circle = Circle.objects.create(
+            parent=parent, name=name,
+            description=description,
+            tags=tags,
+            path=path
+        )
+        
+        if not circle:
+            return Response(
+                RestError('circle/not-found'),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        circle.create_resource()
+        serializer = CircleSerializer(circle)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class ResourceFolder(mixins.ListModelMixin, generics.GenericAPIView):
+    queryset = Circle.objects.all()
+    serializer_class = CircleSerializer
+
+
+    def post(self, request: Request):
+        
+        id_parent = request.data.get('parent_id')
+        path = request.data.get('path')
+        name = request.data.get('name')
+        description = request.data.get('description')
+        tags = request.data.get('tags')
+
+        parent = None
+        
+        if id_parent is not None:
+            parent = Circle.objects.get(id=id_parent)
+        
+        circle = Circle.objects.create(
+            parent=parent, name=name,
+            description=description,
+            tags=tags,
+            path=path
+        )
+        
+        if not circle:
+            return Response(
+                RestError('circle/not-found'),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        circle.create_resource()
+        serializer = CircleSerializer(circle)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+# ====== TODO move in circle activity ==================
+
 class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = Circle.objects.all()
     serializer_class = CircleSerializer
@@ -80,13 +199,7 @@ class CircleDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.
         return self.partial_update(request, pk=pk)
 
 
-class CircleResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
-    """View that allow to retrieve the informations of a single circle"""
-    queryset = Circle.objects.all()
-    serializer_class = CircleResourceSerializer
 
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
 
 
 class CircleResourceTree(generics.ListAPIView):
