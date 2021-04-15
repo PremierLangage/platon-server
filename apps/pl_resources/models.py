@@ -21,6 +21,9 @@ class Resource(models.Model):
         """Create new repo with """
         GitUtils.create_repo(self.name)
 
+    def tag(self):
+        GitUtils.tag(self.name)
+
 
 class Circle(Resource):
     """Represents a unique circle"""
