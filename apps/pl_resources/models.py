@@ -25,6 +25,30 @@ class Resource(models.Model):
         GitUtils.tag(self.name)
 
 
+    @classmethod
+    def create_folder(cls, pk: int):
+        # TODO create folders
+        try:
+            r = cls.objects.get(id=pk)
+        except cls.DoesNotExist:
+            return
+        # TODO check s'il a le droit
+        # Lui donner le bon path
+        # créer le folder
+
+
+    @classmethod
+    def delete_folder(cls, pk: int):
+        # TODO remove folders and files ....
+        try:
+            r = cls.objects.get(id=pk)
+        except cls.DoesNotExist:
+            return
+        # TODO check s'il a le droit
+        # Lui donner le bon path
+        # créer le folder
+
+
 class Circle(Resource):
     """Represents a unique circle"""
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
@@ -56,16 +80,14 @@ class File(models.Model):
 
 
     @classmethod
-    async def update_file(cls, id_file: int, content: str):
-        # TODO create file in specific folders
+    def update_file(cls, id_file: int, content: str):
         try:
-            r = await database_sync_to_async(cls.objects.get)(id=id_file)
+            r = cls.objects.get(id=id_file)
         except cls.DoesNotExist:
             return
         with r.resource.open("w+") as f:
             f.write(content)
         GitUtils.commit(resource.name, "update")
-
     
 
     def __str__(self):
