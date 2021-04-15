@@ -70,6 +70,12 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
 
 
 
+    def get(self, request, *args, **kwargs):
+        #TODO rajouter des méthodes pour serialiser file ou juste les envoyer dans un json
+        return self.retrieve(request, *args, **kwargs)
+
+
+
 class ResourcesList(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = Resource.objects.all()
     serializer_class = ResourceSerializer
