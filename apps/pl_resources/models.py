@@ -26,25 +26,15 @@ class Resource(models.Model):
         GitUtils.tag(self.name)
 
 
-    @classmethod
-    def create_folder(cls, pk: int, path: str):
-        # TODO create folders
-        try:
-            resource = cls.objects.get(id=pk)
-        except cls.DoesNotExist:
-            return
-        
+    def create_folder(self, pk: int, path: str):
+
         # TODO check s'il a le droit
-        FilesUtils.create_folder(resource.name, path)
+        FilesUtils.create_folder(self.name, path)
 
 
-    @classmethod
-    def delete_folder(cls, pk: int, path: str):
+    def delete_folder(self, pk: int, path: str):
         # TODO remove folders and files ....
-        try:
-            resource = cls.objects.get(id=pk)
-        except cls.DoesNotExist:
-            return
+        return
         # TODO check s'il a le droit
         # supprimer tous les files 
         # FilesUtils.delete_folder(resource.name, path)
@@ -73,20 +63,18 @@ class File(models.Model):
             resource = cls.objects.get(id=id_resource)
         except Resource.DoesNotExist:
             raise Resource.DoesNotExist
-        except Resource.MultipleObjectsReturned:
-            raise Resource.MultipleObjectsReturned
         
         new_file = cls.objects.create(resource=resource, document=None)
         new_file.document.save(filename, ContentFile(content))
         GitUtils.commit(resource.name, "update")
+        return new_file
 
 
-    @classmethod
-    def update_file(cls, id_file: int, content: str):
+    def update_file(self, content: str):
         try:
             r = cls.objects.get(id=id_file)
         except cls.DoesNotExist:
-            return
+            raise Resource.DoesNotExist
         with r.resource.open("w+") as f:
             f.write(content)
         GitUtils.commit(resource.name, "update")
