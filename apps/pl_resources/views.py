@@ -9,7 +9,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import CircleSerializer, CircleResourceSerializer, FileSerializer, ResourceSerializer
+from .serializers import FileSerializer, ResourceSerializer
+from .serializers import CircleSerializer, CircleResourceSerializer
 from .models import Circle, File, Resource
 
 
@@ -52,7 +53,7 @@ class FileList(mixins.ListModelMixin, generics.GenericAPIView):
 
 class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = Resource.objects.all()
-    serializer_class = ResourceSerializer
+    serializer_class = FileSerializer
 
     def patch(self, request: Request, pk, fpk):
         """Update a file"""
@@ -88,7 +89,7 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
 
 
     def get(self, request, *args, **kwargs):
-        #TODO rajouter des méthodes pour serialiser file ou juste les envoyer dans un json
+        """return a serialized file"""
         return self.retrieve(request, *args, **kwargs)
 
 
@@ -124,14 +125,14 @@ class ResourceTag(mixins.ListModelMixin, generics.GenericAPIView):
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            )    
+            )
         
         serializer = ResourceSerializer(resource)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ResourceFolder(mixins.ListModelMixin, generics.GenericAPIView):
-     queryset = Resource.objects.all()
+    queryset = Resource.objects.all()
     serializer_class = ResourceSerializer
 
     def post(self, request: Request, pk):
@@ -141,7 +142,7 @@ class ResourceFolder(mixins.ListModelMixin, generics.GenericAPIView):
             return Response(
                 RestError('resource/pass/missing'),
                 status=status.HTTP_400_BAD_REQUEST
-            ) 
+            )
 
         try:
             resource = Resource.objects.get(id=pk)
@@ -178,7 +179,6 @@ class ResourceFolder(mixins.ListModelMixin, generics.GenericAPIView):
             )
         
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 
 # ====== TODO move in circle activity ==================

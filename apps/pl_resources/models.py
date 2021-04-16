@@ -36,7 +36,7 @@ class Resource(models.Model):
         # TODO remove folders and files ....
         return
         # TODO check s'il a le droit
-        # supprimer tous les files 
+        # supprimer tous les files
         # FilesUtils.delete_folder(resource.name, path)
         # commit la resource
 

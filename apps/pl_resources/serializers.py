@@ -24,6 +24,7 @@ class ResourceSerializer(serializers.ModelSerializer):
         model = Resource
         fields = ('id', 'name', 'path', 'description')
 
+
 class FileSerializer(serializers.ModelSerializer):
     
     class Meta:

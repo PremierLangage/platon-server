@@ -1,4 +1,4 @@
-import shutil'
+import shutil
 
 from pathlib import Path
 
@@ -24,4 +24,3 @@ class FilesUtils():
         path_repo = os.path.join(settings.MEDIA_ROOT, repo_name)
         path = os.path.join(path_repo, relative_path)
         shutil.rmtree(path, ignore_errors=True)
-
