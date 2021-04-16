@@ -8,6 +8,7 @@ from rest_framework import serializers
 
 from .ressources_storage import RessourceStorage
 from .git_utils import GitUtils
+from .file_utils import FilesUtils
 
 
 class Resource(models.Model):
@@ -26,27 +27,28 @@ class Resource(models.Model):
 
 
     @classmethod
-    def create_folder(cls, pk: int):
+    def create_folder(cls, pk: int, path: str):
         # TODO create folders
         try:
-            r = cls.objects.get(id=pk)
+            resource = cls.objects.get(id=pk)
         except cls.DoesNotExist:
             return
+        
         # TODO check s'il a le droit
-        # Lui donner le bon path
-        # créer le folder
+        FilesUtils.create_folder(resource.name, path)
 
 
     @classmethod
-    def delete_folder(cls, pk: int):
+    def delete_folder(cls, pk: int, path: str):
         # TODO remove folders and files ....
         try:
-            r = cls.objects.get(id=pk)
+            resource = cls.objects.get(id=pk)
         except cls.DoesNotExist:
             return
         # TODO check s'il a le droit
-        # Lui donner le bon path
-        # créer le folder
+        # supprimer tous les files 
+        # FilesUtils.delete_folder(resource.name, path)
+        # commit la resource
 
 
 class Circle(Resource):
