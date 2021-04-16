@@ -1,4 +1,4 @@
-from .models import Circle
+from .models import Circle, Resource, File
 from rest_framework import serializers
 
 
@@ -23,3 +23,9 @@ class ResourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resource
         fields = ('id', 'name', 'path', 'description')
+
+class FileSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = File
+        fields = ('id', 'resource', 'document')

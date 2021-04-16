@@ -9,47 +9,45 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import CircleSerializer, CircleResourceSerializer
+from .serializers import CircleSerializer, CircleResourceSerializer, FileSerializer, ResourceSerializer
 from .models import Circle, File, Resource
 
 
 class FileList(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = Resource.objects.all()
-    serializer_class = ResourceSerializer
+    serializer_class = FileSerializer
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
 
-    def post(self, request: Request):
+    def post(self, request: Request, pk):
         """ create new file"""
-        # TODO faire la méthode
-        id_parent = request.data.get('parent_id')
-        path = request.data.get('path')
-        name = request.data.get('name')
-        description = request.data.get('description')
-        tags = request.data.get('tags')
 
-        parent = None
-        
-        if id_parent is not None:
-            parent = Circle.objects.get(id=id_parent)
-        
-        circle = Circle.objects.create(
-            parent=parent, name=name,
-            description=description,
-            tags=tags,
-            path=path
-        )
-        
-        if not circle:
+        content = request.data.get('content')
+        filename = request.data.get('filename')
+        if not content:
             return Response(
-                RestError('circle/not-found'),
+                RestError('resource/content/missing'),
                 status=status.HTTP_400_BAD_REQUEST
             )
-        circle.create_resource()
-        serializer = CircleSerializer(circle)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        if not filename:
+            return Response(
+                RestError('resource/filename/missing'),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            f = File.create_file(pk, filename, content)
+            serializer = FileSerializer(f)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Resource.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
@@ -58,15 +56,20 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
 
     def patch(self, request: Request, pk, fpk):
         """Update a file"""
-        # TODO faire cette méthode
 
         content = request.data.get('content')
         if not content:
-            # TODO send exception
+            return Response(
+                RestError('resource/pass/missing'),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             resource = Resource.objects.get(id=pk)
-            myfile = File.objects.get(id=fpk, resource=resource)
-            myfile.update_file(content)
+            f = File.objects.get(id=fpk, resource=resource)
+            f.update_file(content)
+
+            
 
         except Resource.DoesNotExist:
             return Response(
@@ -80,9 +83,8 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        serializer = ResourceSerializer(resource)
+        serializer = FileSerializer(f)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 
     def get(self, request, *args, **kwargs):
@@ -168,7 +170,6 @@ class ResourceFolder(mixins.ListModelMixin, generics.GenericAPIView):
         try:
             resource = Resource.objects.get(id=pk)
             resource.delete_folder(pk, path)
-            # TODO delete folder and file in folder
 
         except Resource.DoesNotExist:
             return Response(
@@ -218,7 +219,6 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
         serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-        
 
 
 class CircleDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
@@ -247,9 +247,6 @@ class CircleDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.
         """update resource of circle"""
         # TODO changement de file.
         return self.partial_update(request, pk=pk)
-
-
-
 
 
 class CircleResourceTree(generics.ListAPIView):
