@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import CircleSerializer, CircleResourceSerializer
-from .models import Circle
+from .models import Circle, File, Resource
 
 
 class FileList(mixins.ListModelMixin, generics.GenericAPIView):
@@ -59,11 +59,26 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
     def patch(self, request: Request, pk, fpk):
         """Update a file"""
         # TODO faire cette méthode
+
+        content = request.data.get('content')
+        if not content:
+            # TODO send exception
         try:
-            resource = Resource.objects.get(id=id_resource)
-            resource.tag()
+            resource = Resource.objects.get(id=pk)
+            myfile = File.objects.get(id=fpk, resource=resource)
+            myfile.update_file(content)
+
         except Resource.DoesNotExist:
-            raise Resource.DoesNotExist
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except File.DoesNotExist:
+            return Response(
+                RestError('file/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
         
         serializer = ResourceSerializer(resource)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -100,11 +115,14 @@ class ResourceTag(mixins.ListModelMixin, generics.GenericAPIView):
     def patch(self, request: Request, pk):
         """Create a new tag"""
         try:
-            resource = Resource.objects.get(id=id_resource)
-            resource.tag()
+            resource = Resource.objects.get(id=pk)
+            resource.tag(pk, path)
+
         except Resource.DoesNotExist:
-            raise Resource.DoesNotExist
-        
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )    
         
         serializer = ResourceSerializer(resource)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -116,24 +134,47 @@ class ResourceFolder(mixins.ListModelMixin, generics.GenericAPIView):
 
     def post(self, request: Request, pk):
         """Create a new folder"""
+        path = request.data.get('path')
+        if not path:
+            return Response(
+                RestError('resource/pass/missing'),
+                status=status.HTTP_400_BAD_REQUEST
+            ) 
+
         try:
-            resource = Resource.objects.get(id=id_resource)
-            # TODO create folder
+            resource = Resource.objects.get(id=pk)
+            resource.create_folder(pk, path)
+
         except Resource.DoesNotExist:
-            raise Resource.DoesNotExist
-        
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
         
         serializer = ResourceSerializer(resource)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
     def delete(self, request: Request, pk):
-        """delete folder and file in folders"""
+        """delete folder and file in folders. `path` is required in request.
+        `path`is relative path from git repo to folder """
+        path = request.data.get('path')
+        if not path:
+            return Response(
+                RestError('resource/pass/missing'),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
-            resource = Resource.objects.get(id=id_resource)
+            resource = Resource.objects.get(id=pk)
+            resource.delete_folder(pk, path)
             # TODO delete folder and file in folder
+
         except Resource.DoesNotExist:
-            raise Resource.DoesNotExist
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
         
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -171,7 +212,7 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
         if not circle:
             return Response(
                 RestError('circle/not-found'),
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_404_NOT_FOUND
             )
         circle.create_resource()
         serializer = CircleSerializer(circle)
