@@ -17,6 +17,6 @@ urlpatterns = [
     path('<int:pk>/tag/', views.ResourceTag.as_view(), name='resources-tag'),
     path('<int:pk>/folder/', views.ResourceFolder.as_view(), name='resources-folder'),
     
-    path('<int:pk>/files/', views.FilesList.as_view(), name='files-list'),
+    path('<int:pk>/files/', views.FileList.as_view(), name='files-list'),
     path('<int:pk>/files/<int:fpk>/', views.FileDetail.as_view(), name='files-detail'),
 ]
