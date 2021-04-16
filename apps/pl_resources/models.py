@@ -1,8 +1,13 @@
+import os
+
 from django.core.files.base import ContentFile
 from django.db import models
 from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
 from django.db.models import Model
+from django.conf import settings
+
+
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
@@ -60,23 +65,23 @@ class File(models.Model):
     def create_file(cls, id_resource, filename, content):
         """Filename est le relativepath depuis MEADIA ROOT"""
         try:
-            resource = cls.objects.get(id=id_resource)
+            resource = Resource.objects.get(id=id_resource)
         except Resource.DoesNotExist:
             raise Resource.DoesNotExist
-        
+        #path_repo = os.path.join(settings.MEDIA_ROOT, resource.name)
+        real_filename = path = os.path.join( resource.name, filename)
         new_file = cls.objects.create(resource=resource, document=None)
-        new_file.document.save(filename, ContentFile(content))
+        new_file.document.save(real_filename, ContentFile(content))
         GitUtils.commit(resource.name, "update")
         return new_file
 
 
-    def update_file(self, content: str):
-        try:
-            r = cls.objects.get(id=id_file)
-        except cls.DoesNotExist:
-            raise Resource.DoesNotExist
-        with r.resource.open("w+") as f:
-            f.write(content)
+    def update_file(self, content: str, resource):
+        print("-----on update et le nom est ::: ---------->", self.document.name )
+        RessourceStorage.update(self.document, content)
+
+        
+        #self.document.save(self.document.name ,ContentFile(content), save=False)    
         GitUtils.commit(resource.name, "update")
     
 

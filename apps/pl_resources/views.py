@@ -61,14 +61,14 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
         content = request.data.get('content')
         if not content:
             return Response(
-                RestError('resource/pass/missing'),
+                RestError('resource/content/missing'),
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
             resource = Resource.objects.get(id=pk)
             f = File.objects.get(id=fpk, resource=resource)
-            f.update_file(content)
+            f.update_file(content, resource)
 
             
 
