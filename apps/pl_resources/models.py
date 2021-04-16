@@ -76,12 +76,9 @@ class File(models.Model):
         return new_file
 
 
-    def update_file(self, content: str, resource):
-        print("-----on update et le nom est ::: ---------->", self.document.name )
-        RessourceStorage.update(self.document, content)
-
-        
-        #self.document.save(self.document.name ,ContentFile(content), save=False)    
+    def update_file(self, content: str):
+        """ update file"""
+        RessourceStorage.update(self.document, content) 
         GitUtils.commit(resource.name, "update")
     
 
