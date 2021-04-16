@@ -68,8 +68,7 @@ class File(models.Model):
             resource = Resource.objects.get(id=id_resource)
         except Resource.DoesNotExist:
             raise Resource.DoesNotExist
-        #path_repo = os.path.join(settings.MEDIA_ROOT, resource.name)
-        real_filename = path = os.path.join( resource.name, filename)
+        real_filename = os.path.join(resource.name, filename)
         new_file = cls.objects.create(resource=resource, document=None)
         new_file.document.save(real_filename, ContentFile(content))
         GitUtils.commit(resource.name, "update")
@@ -78,7 +77,7 @@ class File(models.Model):
 
     def update_file(self, content: str):
         """ update file"""
-        RessourceStorage.update(self.document, content) 
+        RessourceStorage.update(self.document, content)
         GitUtils.commit(resource.name, "update")
     
 

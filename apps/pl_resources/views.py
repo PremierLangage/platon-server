@@ -68,7 +68,7 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
         try:
             resource = Resource.objects.get(id=pk)
             f = File.objects.get(id=fpk, resource=resource)
-            f.update_file(content)     
+            f.update_file(content)
 
         except Resource.DoesNotExist:
             return Response(
