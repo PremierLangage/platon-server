@@ -10,3 +10,9 @@ class RessourceStorage(FileSystemStorage):
         """Update file"""
         with file.open("w+") as f:
             f.write(content)
+
+
+    @staticmethod
+    def open(file):
+        with file.open("r+") as f:
+            return f.readlines()

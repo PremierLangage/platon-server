@@ -79,6 +79,11 @@ class File(models.Model):
         """ update file"""
         RessourceStorage.update(self.document, content)
         GitUtils.commit(resource.name, "update")
+
+    
+    def get_file(self):
+        """return content of the file. And crete file is not exist"""
+        return {self.document.name: RessourceStorage.open(self.document)}
     
 
     def __str__(self):

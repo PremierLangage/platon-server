@@ -86,9 +86,24 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-    def get(self, request, *args, **kwargs):
-        """return a serialized file"""
-        return self.retrieve(request, *args, **kwargs)
+    def get(self, request: Request, pk, fpk):
+        """return content of the file"""
+        try:
+            resource = Resource.objects.get(id=pk)
+            f = File.objects.get(id=fpk, resource=resource)
+            return JsonResponse(f.get_file(), status=status.HTTP_200_OK)
+
+        except Resource.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except File.DoesNotExist:
+            return Response(
+                RestError('file/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
+
 
 
 
@@ -152,7 +167,7 @@ class ResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
 
         
         else:
-            return return Response(
+            return Response(
                 RestError('resource/content/missing'),
                 status=status.HTTP_400_BAD_REQUEST
             )
