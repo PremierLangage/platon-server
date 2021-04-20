@@ -83,7 +83,7 @@ class File(models.Model):
     
     def get_file(self):
         """return content of the file. And crete file is not exist"""
-        return {self.document.name: RessourceStorage.open(self.document)}
+        return {self.document.name: RessourceStorage.open_file(self.document)}
     
 
     def __str__(self):

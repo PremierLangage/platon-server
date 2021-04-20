@@ -29,4 +29,4 @@ class FileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = File
-        fields = ('id', 'resource', 'document')
+        fields = ('id', 'resource')

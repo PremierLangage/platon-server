@@ -13,6 +13,6 @@ class RessourceStorage(FileSystemStorage):
 
 
     @staticmethod
-    def open(file):
+    def open_file(file):
         with file.open("r+") as f:
             return f.readlines()
