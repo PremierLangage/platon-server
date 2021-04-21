@@ -10,12 +10,13 @@ class FilesUtils():
 
 
     @staticmethod
-    def create_folder(repo_name, relative_path):
+    def create_folder(path_repo):
         """create a new folder `repo_name` is the path from path of resources
         and`relative_path`is the path from the repo_name """
-        path_repo = os.path.join(settings.MEDIA_ROOT, repo_name)
-        path = os.path.join(path_repo, relative_path)
-        Path(path).mkdir(parents=True, exist_ok=True)
+        
+        path = os.path.join(settings.MEDIA_ROOT, path_repo)
+        if not os.path.exists(path):
+            Path(path).mkdir(parents=True, exist_ok=True)
 
 
     @staticmethod

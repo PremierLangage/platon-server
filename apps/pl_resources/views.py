@@ -27,6 +27,7 @@ class FileList(mixins.ListModelMixin, generics.GenericAPIView):
 
         content = request.data.get('content')
         filename = request.data.get('filename')
+        path = request.data.get('path')
         if not content:
             return Response(
                 RestError('resource/content/missing'),
@@ -38,9 +39,11 @@ class FileList(mixins.ListModelMixin, generics.GenericAPIView):
                 RestError('resource/filename/missing'),
                 status=status.HTTP_400_BAD_REQUEST
             )
+        if not path:
+            path = ''
         
         try:
-            f = File.create_file(pk, filename, content)
+            f = File.create_file(pk, filename, path, content)
             serializer = FileSerializer(f)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -132,8 +135,7 @@ class ResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
         if content == 'tag':
             try:
                 resource = Resource.objects.get(id=pk)
-                resource.tag(pk, path)
-
+                # TODO tag this version
             except Resource.DoesNotExist:
                 return Response(
                     RestError('resource/not-found'),
@@ -142,30 +144,7 @@ class ResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
             
             serializer = ResourceSerializer(resource)
             return Response(serializer.data, status=status.HTTP_200_OK)
-
-        # add new folder to the resource
-        elif content == 'folder':
-            path = request.data.get('path')
-            if not path:
-                return Response(
-                    RestError('resource/pass/missing'),
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            try:
-                resource = Resource.objects.get(id=pk)
-                resource.create_folder(pk, path)
-
-            except Resource.DoesNotExist:
-                return Response(
-                    RestError('resource/not-found'),
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            serializer = ResourceSerializer(resource)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        
+                
         else:
             return Response(
                 RestError('resource/content/missing'),
@@ -184,7 +163,9 @@ class ResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
 
         try:
             resource = Resource.objects.get(id=pk)
-            resource.delete_folder(pk, path)
+            # NPTQ resource.delete_folder(pk, path)
+            # TODO Remove un file
+            # TODO check folder parent != / and si vide suppr folder
 
         except Resource.DoesNotExist:
             return Response(

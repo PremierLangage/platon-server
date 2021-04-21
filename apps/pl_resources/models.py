@@ -30,13 +30,6 @@ class Resource(models.Model):
     def tag(self):
         GitUtils.tag(self.name)
 
-
-    def create_folder(self, pk: int, path: str):
-
-        # TODO check s'il a le droit
-        FilesUtils.create_folder(self.name, path)
-
-
     def delete_folder(self, pk: int, path: str):
         # TODO remove folders and files ....
         return
@@ -62,13 +55,20 @@ class File(models.Model):
 
     
     @classmethod
-    def create_file(cls, id_resource, filename, content):
+    def create_file(cls, id_resource, filename, path, content):
         """Filename est le relativepath depuis MEADIA ROOT"""
         try:
             resource = Resource.objects.get(id=id_resource)
         except Resource.DoesNotExist:
             raise Resource.DoesNotExist
-        real_filename = os.path.join(resource.name, filename)
+        # relative path from repo
+        relative_path = os.path.join(resource.name, path)
+        # create folder if is needed
+        FilesUtils.create_folder(relative_path)
+        
+        # 
+        real_filename = os.path.join(relative_path, filename)
+
         new_file = cls.objects.create(resource=resource, document=None)
         new_file.document.save(real_filename, ContentFile(content))
         GitUtils.commit(resource.name, "update")
