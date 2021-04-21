@@ -15,7 +15,7 @@ from .models import Circle, File, Resource
 
 
 class FileList(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = Resource.objects.all()
+    queryset = File.objects.all()
     serializer_class = FileSerializer
 
     def get(self, request, *args, **kwargs):
@@ -52,7 +52,7 @@ class FileList(mixins.ListModelMixin, generics.GenericAPIView):
 
 
 class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = Resource.objects.all()
+    queryset = File.objects.all()
     serializer_class = FileSerializer
 
     def patch(self, request: Request, pk, fpk):
