@@ -12,7 +12,7 @@ urlpatterns = [
     path('<int:pk>/files/', views.FileList.as_view(), name='files-list'),
     path('<int:pk>/files/<int:fpk>/', views.FileDetail.as_view(), name='files-detail'),
 
-# Circle
+    # Circle
     path('circles/', views.CircleList.as_view(), name='circle-list'),
     path('circles/<int:pk>/', views.CircleDetail.as_view(), name='circle-detail'),
     path(

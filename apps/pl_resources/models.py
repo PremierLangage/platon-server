@@ -66,7 +66,6 @@ class File(models.Model):
         # create folder if is needed
         FilesUtils.create_folder(relative_path)
         
-        # 
         real_filename = os.path.join(relative_path, filename)
 
         new_file = cls.objects.create(resource=resource, document=None)
