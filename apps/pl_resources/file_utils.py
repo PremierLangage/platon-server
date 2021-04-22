@@ -20,9 +20,19 @@ class FilesUtils():
 
 
     @staticmethod
-    def delete_folder(repo_name, relative_path):
+    def delete_folder(path_repo):
         """create a new folder `repo_name` is the path from path of resources
         and`relative_path`is the path from the repo_name """
-        path_repo = os.path.join(settings.MEDIA_ROOT, repo_name)
-        path = os.path.join(path_repo, relative_path)
+        path = os.path.join(settings.MEDIA_ROOT, path_repo)
+        try:
+            os.rmdir(path)
+        except Exception:
+            return False
+        return True
+
+    
+    @staticmethod
+    def delete_file(path_file):
+        """delete file"""
+        path = os.path.join(settings.MEDIA_ROOT, path_file)
         shutil.rmtree(path, ignore_errors=True)

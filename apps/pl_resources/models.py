@@ -85,5 +85,21 @@ class File(models.Model):
         return {self.document.name: RessourceStorage.open_file(self.document)}
     
 
+    def delete(self, *args, **kwargs):
+        self.__delete_file()
+        super().delete(*args, **kwargs)
+
+    def __delete_file(self):
+        """delete file and directory if he is empty"""
+        sep = "/"
+        tab = self.document.name.split(sep)
+        path_folder = sep.join(tab[:-1])
+        FilesUtils.delete_file(self.document.name)
+        # Check if relative path is not root
+        if path_folder:
+            FilesUtils.delete_folder(path_folder)
+        GitUtils.commit(resource.name, "delete")
+
+
     def __str__(self):
         return '%s: %s' % (self.document.name, self.document.path)

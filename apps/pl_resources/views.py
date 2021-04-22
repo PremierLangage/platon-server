@@ -40,7 +40,10 @@ class FileList(mixins.ListModelMixin, generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         if not path:
-            path = ''
+            return Response(
+                RestError('resource/filename/missing'),
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         try:
             f = File.create_file(pk, filename, path, content)
@@ -91,6 +94,7 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
 
     def get(self, request: Request, pk, fpk):
         """return content of the file"""
+        print("GO GEEEET")
         try:
             resource = Resource.objects.get(id=pk)
             f = File.objects.get(id=fpk, resource=resource)
@@ -106,7 +110,26 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
                 RestError('file/not-found'),
                 status=status.HTTP_404_NOT_FOUND
             )
+        
+    def delete(self, request: Request, pk, fpk):
+        print("GOO DEELETE-------------------")
+        try:
+            resource = Resource.objects.get(id=pk)
+            f = File.objects.get(id=fpk, resource=resource)
+            f.delete()
+            serializer = FileSerializer(f)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
+        except Resource.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except File.DoesNotExist:
+            return Response(
+                RestError('file/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 
