@@ -563,7 +563,7 @@ Register a current user in circle.
 
  ```json
  {
-   "parents" : [0, 2, ...]
+   "parents" : [0, 2, "..."]
  }
  ```
 
@@ -942,7 +942,7 @@ The resource API allows you to manage resources
        },
    "created_date" : "2021-02-08",
    "description" : "Use this version for ...",
-   "tags" : ["tag1", "Python", ...],
+   "tags" : ["tag1", "Python", "..."],
    "version" : 0,
  }
  ```
@@ -1016,7 +1016,7 @@ The resource API allows you to manage resources
                },
            "created_date" : "2021-02-08",
            "description" : "Use this version for ...",
-           "tags" : ["tag1", "Python", ...],
+           "tags" : ["tag1", "Python", "..."],
            "version" : 0,
        }
     ]
@@ -1089,7 +1089,7 @@ The resource API allows you to manage resources
        },
    "created_date" : "2021-02-08",
    "description" : "Use this version for ...",
-   "tags" : ["tag1", "Python", ...],
+   "tags" : ["tag1", "Python", "..."],
    "version" : 0,
  }
  ```
@@ -1164,7 +1164,7 @@ The resource API allows you to manage resources
        },
    "created_date" : "2021-02-08",
    "description" : "Use this version for ...",
-   "tags" : ["tag1", "Python", ...],
+   "tags" : ["tag1", "Python", "..."],
    "version" : 0,
  }
  ```
