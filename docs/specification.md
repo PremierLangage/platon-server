@@ -64,7 +64,6 @@ Register a current user in circle.
 
  ---
  ---
- ---
 
 
 
