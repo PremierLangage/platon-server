@@ -61,6 +61,16 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = File.objects.all()
     serializer_class = FileSerializer
 
+    @property
+    def allowed_methods(self):
+        """
+        Return the list of allowed HTTP methods, uppercased.
+        """
+        self.http_method_names.append("patch")
+        self.http_method_names.append("delete")
+        return [method.upper() for method in self.http_method_names
+                if hasattr(self, method)]
+
     def patch(self, request: Request, pk, fpk):
         """Update a file"""
 
@@ -94,7 +104,6 @@ class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
 
     def get(self, request: Request, pk, fpk):
         """return content of the file"""
-        print("GO GEEEET")
         try:
             resource = Resource.objects.get(id=pk)
             f = File.objects.get(id=fpk, resource=resource)
@@ -145,6 +154,16 @@ class ResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
     """View that allow to retrieve the informations of a single resource"""
     queryset = Resource.objects.all()
     serializer_class = ResourceSerializer
+
+    @property
+    def allowed_methods(self):
+        """
+        Return the list of allowed HTTP methods, uppercased.
+        """
+        self.http_method_names.append("patch")
+        self.http_method_names.append("delete")
+        return [method.upper() for method in self.http_method_names
+                if hasattr(self, method)]
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
