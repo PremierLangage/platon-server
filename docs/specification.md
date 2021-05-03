@@ -4,9 +4,9 @@ Here you will find all the endpoints to handle resources.
 
 ## **API**
 
-- [Circle Endpoints](#circle-api)
-- [Resource Endpoints](#resource-api)
-- [File Endpoints](#file-api)
+- [Circle Endpoint](#circle-api)
+- [Resource Endpoint](#resource-api)
+- [File Endpoint](#file-api)
 
 ## **Circle API**
 
