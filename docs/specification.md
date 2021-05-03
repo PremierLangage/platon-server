@@ -5,7 +5,7 @@ Here you will find all the endpoints to handle resources.
 ## **API**
 
 - [Circle API](#markdown-header-circle-api)
-- [Resource API](#markdown-header-resource-api)
+- [Resource API](#resource-api)
 - [File API](#markdown-header-file-api)
 
 ## **Circle API**
