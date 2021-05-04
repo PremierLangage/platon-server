@@ -46,30 +46,41 @@ Register a current user in circle.
 
  ---
 
-  `POST` *{baseUrl}/api/circles/\<int:pk/quit/*
+  `POST` *{baseUrl}/api/circles/\<int:pk/kick/*
 
- User left a circle.
+ Kick a user to a circle `pk`.
 
  ---
 
   `POST` *{baseUrl}/api/circles/\<int:pk/publish/*
 
- Publish a circle.
+ Publish circle with id `pk`.
+
+---
+
+  `POST` *{baseUrl}/api/circles/\<int:pk/praise/*
+
+ Praise and increase user's rights in a circle `pk`.
+
+---
+
+`POST` *{baseUrl}/api/circles/\<int:pk/blame/*
+
+ Blame and decrease user's rights in a circle `pk`.
 
 ---
 
 `GET` *{baseUrl}/api/circles/\<int:pk/parent/*
 
- *Get all circle's parent*
+ *Get all `pk`'s circle's parent*
 
  ---
  ---
-
-
 
 
 
  ### **`POST`** ***{baseUrl}/api/circles/***
+ 
 *create new circle*
 
  ### **Resource URL :**
@@ -111,12 +122,13 @@ Register a current user in circle.
     "desciption" : "My first circle",
     "is_publish" : false,
     "created_date" : "2020-09-07",
-    "users" : [
-       {
-           "id" : 12,
-           "name" : "...",
-       }
-   ],
+    "members" : [ ],
+    "scientific_directors" : [ ],
+    "moderators" : [ ],
+    "creator" : {
+                   "id" : 12,
+                   "name" : "...",
+               }
  }
  ```
 
@@ -129,7 +141,11 @@ Register a current user in circle.
  parent_id|Id of parent circle
  is_publish|True if circle with id `id` is publish, False otherwise
  created_date|Created date in ISO format (YYYY-MM-DD pattern)
- users|List of users registered in the circle with id `id`
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of moderators user who are registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
+
 
 
 ---
@@ -179,12 +195,13 @@ Register a current user in circle.
            "desciption" : "My first circle",
            "is_publish" : false,
            "created_date" : "2020-09-07",
-           "users" : [
-               {
-                   "id" : 12,
-                   "name" : "...",
-               }
-           ],
+            "members" : [ ],
+            "scientific_directors" : [ ],
+            "moderators" : [ ],
+            "creator" : {
+                        "id" : 12,
+                        "name" : "...",
+                    }
        }
    ]
  }
@@ -200,7 +217,11 @@ Register a current user in circle.
  parent_id|Id of parent circle
  is_publish|True if circle with id `id` is publish, False otherwise
  created_date|Created date in ISO format (YYYY-MM-DD pattern)
- users|List of users registered in the circle with id `id`
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of moderators user who are registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
+
 
 
 ---
@@ -247,12 +268,13 @@ Register a current user in circle.
     "desciption" : "My first circle",
     "is_publish" : false,
     "created_date" : "2020-09-07",
-    "users" : [
-       {
-           "id" : 12,
-           "name" : "...",
-       }
-   ],
+    "members" : [ ],
+    "scientific_directors" : [ ],
+    "moderators" : [ ],
+    "creator" : {
+                   "id" : 12,
+                   "name" : "...",
+               }
  }
  ```
 
@@ -265,7 +287,11 @@ Register a current user in circle.
  parent_id|Id of parent circle
  is_publish|True if circle with id `id` is publish, False otherwise
  created_date|Created date in ISO format (YYYY-MM-DD pattern)
- users|List of users registered in the circle with id `id`
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of moderators user who are registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
+
 
 ---
 
@@ -305,12 +331,13 @@ Register a current user in circle.
     "desciption" : "My first circle",
     "is_publish" : false,
     "created_date" : "2020-09-07",
-    "users" : [
-       {
-           "id" : 12,
-           "name" : "...",
-       }
-   ],
+    "members" : [ ],
+    "scientific_directors" : [ ],
+    "moderators" : [ ],
+    "creator" : {
+                   "id" : 12,
+                   "name" : "...",
+               }
  }
  ```
 
@@ -323,7 +350,11 @@ Register a current user in circle.
  parent_id|Id of parent circle
  is_publish|True if circle with id `id` is publish, False otherwise
  created_date|Created date in ISO format (YYYY-MM-DD pattern)
- users|List of users registered in the circle with id `id`
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of user who are moderators registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
+
 
 ---
 
@@ -373,12 +404,13 @@ Register a current user in circle.
     "desciption" : "My first circle",
     "is_publish" : false,
     "created_date" : "2020-09-07",
-    "users" : [
-       {
-           "id" : 12,
-           "name" : "...",
-       }
-   ],
+    "members" : [ ],
+    "scientific_directors" : [ ],
+    "moderators" : [ ],
+    "creator" : {
+                   "id" : 12,
+                   "name" : "...",
+               }
  }
  ```
 
@@ -391,18 +423,22 @@ Register a current user in circle.
  parent_id|Id of parent circle
  is_publish|True if circle with id `id` is publish, False otherwise
  created_date|Created date in ISO format (YYYY-MM-DD pattern)
- users|List of users registered in the circle with id `id`
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of user who are moderators registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
+
 
 
 ---
 
 
- ### **`POST`** ***{baseUrl}/api/circles/\<int:pk/quit/***
-*User left a circle*
+ ### **`POST`** ***{baseUrl}/api/circles/\<int:pk/kick/***
+*Kick a user to the circle with id `pk`*
 
  ### **Resource URL :**
  ```
- {baseUrl}/api/circles/<int:pk/quit/
+ {baseUrl}/api/circles/<int:pk/kick/
  ```
 
  ### **HTTP headers :**
@@ -420,11 +456,11 @@ Register a current user in circle.
 
  Key|Desciption|Example value
  --|--|--
- id_user|id of user who left of the circle
+ id_user|id of user kicked to the circle
 
 
  ### **Response :**
- [`200`] Query request successfully processed. Return circle is user lefted the circle.
+ [`200`] Query request successfully processed.
 
  [`400`] Bad request.
 
@@ -440,12 +476,13 @@ Register a current user in circle.
     "desciption" : "My first circle",
     "is_publish" : false,
     "created_date" : "2020-09-07",
-    "users" : [
-       {
-           "id" : 12,
-           "name" : "...",
-       }
-   ],
+    "members" : [ ],
+    "scientific_directors" : [ ],
+    "moderators" : [ ],
+    "creator" : {
+                   "id" : 12,
+                   "name" : "...",
+               }
  }
  ```
 
@@ -458,10 +495,14 @@ Register a current user in circle.
  parent_id|Id of parent circle
  is_publish|True if circle with id `id` is publish, False otherwise
  created_date|Created date in ISO format (YYYY-MM-DD pattern)
- users|List of users registered in the circle with id `id`
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of user who are moderators registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
 
 
 ---
+
 
 ### **`POST`** ***{baseUrl}/api/circles/\<int:pk/publish/***
 *Publish a circle*
@@ -497,7 +538,7 @@ Register a current user in circle.
  [`404`] Not found.
 
 
- *Example*
+*Example*
 
  ```json
  {
@@ -506,12 +547,13 @@ Register a current user in circle.
     "desciption" : "My first circle",
     "is_publish" : false,
     "created_date" : "2020-09-07",
-    "users" : [
-       {
-           "id" : 12,
-           "name" : "...",
-       }
-   ],
+    "members" : [ ],
+    "scientific_directors" : [ ],
+    "moderators" : [ ],
+    "creator" : {
+                   "id" : 12,
+                   "name" : "...",
+               }
  }
  ```
 
@@ -524,7 +566,148 @@ Register a current user in circle.
  parent_id|Id of parent circle
  is_publish|True if circle with id `id` is publish, False otherwise
  created_date|Created date in ISO format (YYYY-MM-DD pattern)
- users|List of users registered in the circle with id `id`
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of user who are moderators registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
+
+---
+
+### **`POST`** ***{baseUrl}/api/circles/\<int:pk/praise/***
+* Praise and increase user's rights in a circle `pk`.*
+
+ ### **Resource URL :**
+ ```
+ {baseUrl}/api/circles/<int:pk/praise/
+ ```
+
+ ### **HTTP headers :**
+ TODO
+
+### **Path parameters :**
+ Key|Desciption|Example value
+ --|--|--
+ pk|id of the circle
+
+ ### **Query parameters :**
+ This endpoint does not require Query parameters.
+
+ ### **Request body :**
+
+ Key|Desciption|Example value
+ --|--|--
+ id_user|id of user who left of the circle
+
+
+ ### **Response :**
+ [`200`] Query request successfully processed. Return circle if he is published.
+
+ [`400`] Bad request.
+
+ [`404`] Not found.
+
+
+*Example*
+
+ ```json
+ {
+    "id" : 123,
+    "id_parent" : 0,
+    "desciption" : "My first circle",
+    "is_publish" : false,
+    "created_date" : "2020-09-07",
+    "members" : [ ],
+    "scientific_directors" : [ ],
+    "moderators" : [ ],
+    "creator" : {
+                   "id" : 12,
+                   "name" : "...",
+               }
+ }
+ ```
+
+*Structure (object)*
+
+ Key|Desciption
+ --|--
+ id|The unique identifier of the circle
+ description|Description of the cirle with id `id`
+ parent_id|Id of parent circle
+ is_publish|True if circle with id `id` is publish, False otherwise
+ created_date|Created date in ISO format (YYYY-MM-DD pattern)
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of user who are moderators registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
+
+---
+
+
+### **`POST`** ***{baseUrl}/api/circles/\<int:pk/blame/***
+* Blame and decrease user's rights in a circle `pk`.*
+
+ ### **Resource URL :**
+ ```
+ {baseUrl}/api/circles/<int:pk/praise/
+ ```
+
+ ### **HTTP headers :**
+ TODO
+
+### **Path parameters :**
+ Key|Desciption|Example value
+ --|--|--
+ pk|id of the circle
+
+ ### **Query parameters :**
+ This endpoint does not require Query parameters.
+
+ ### **Request body :**
+
+ Key|Desciption|Example value
+ --|--|--
+ id_user|id of user who left of the circle
+
+
+ ### **Response :**
+ [`200`] Query request successfully processed. Return circle if he is published.
+
+ [`400`] Bad request.
+
+ [`404`] Not found.
+
+*Example*
+
+ ```json
+ {
+    "id" : 123,
+    "id_parent" : 0,
+    "desciption" : "My first circle",
+    "is_publish" : false,
+    "created_date" : "2020-09-07",
+    "members" : [ ],
+    "scientific_directors" : [ ],
+    "moderators" : [ ],
+    "creator" : {
+                   "id" : 12,
+                   "name" : "...",
+               }
+ }
+ ```
+
+*Structure (object)*
+
+ Key|Desciption
+ --|--
+ id|The unique identifier of the circle
+ description|Description of the cirle with id `id`
+ parent_id|Id of parent circle
+ is_publish|True if circle with id `id` is publish, False otherwise
+ created_date|Created date in ISO format (YYYY-MM-DD pattern)
+ members|List of users registered in the circle with id `id`
+ scientific_directors|List of user who are scientific directors registered in the circle with id `id`
+ moderators|List of user who are moderators registered in the circle with id `id`
+ creator|Creator of the circle the circle with id `id`
 
 ---
 
