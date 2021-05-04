@@ -1,6 +1,7 @@
 import os
 
 from django.core.files.base import ContentFile
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
@@ -19,22 +20,23 @@ from .file_utils import FilesUtils
 
 
 class Circle(models.Model):
-    """Represents a unique circle"""
+    # Represents a unique circlecDelete -> SetNull ? """
     publish = models.BooleanField(default = False)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
-    members = models.ManyToManyField(User)
-    scientific_directors = models.ManyToManyField(User)
-    moderators = models.ManyToManyField(User)
-    creator = models.ForeignKey(User, null=False)
+    members = models.ManyToManyField(User, related_name='members')
+    scientific_directors = models.ManyToManyField(User, related_name='scientifics')
+    moderators = models.ManyToManyField(User, related_name='moderators')
+    creator = models.ForeignKey(User, null=True, on_delete=models.PROTECT)
     date = models.DateTimeField(auto_now_add=True)
 
 
 
 class Resource(models.Model):
     """Resource """
+    circle = models.ForeignKey(Circle, null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=30, blank=True)
     path = models.CharField(max_length=100, blank=True)
-    creator = models.ForeignKey(User, null=False)
+    creator = models.ForeignKey(User, null=True, on_delete=models.PROTECT)
     date = models.DateTimeField(auto_now_add=True)
 
 
@@ -57,7 +59,7 @@ class Resource(models.Model):
 
 
 class VersionStatus(models.Model):
-
+    """TODO Care"""
     class Status(models.TextChoices):
         DRAFT = 'DRAFT'
         READY = 'READY'
@@ -65,14 +67,20 @@ class VersionStatus(models.Model):
         BUGGED = 'BUGGED'
         NOT_TESTED = 'NOT_TESTED'
 
+
     tag_git = models.CharField(max_length=50, blank=True)
     version = models.IntegerField()
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.DRAFT)
+    tags = ArrayField(
+            models.CharField(max_length=15, blank=True),
+            size=8,
+        )
     description = models.CharField(max_length=200, blank=True)
     date = models.DateTimeField(auto_now_add=True)
+
 
 
 

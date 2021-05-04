@@ -221,7 +221,7 @@ class ResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# ====== TODO move in circle activity ==================
+# ====== TODO move in Circle activity ==================
 
 class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = Circle.objects.all()
@@ -243,26 +243,26 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
         if id_parent is not None:
             parent = Circle.objects.get(id=id_parent)
         
-        circle = Circle.objects.create(
+        Circle = Circle.objects.create(
             parent=parent, name=name,
             description=description,
             tags=tags,
             path=path
         )
         
-        if not circle:
+        if not Circle:
             return Response(
-                RestError('circle/not-found'),
+                RestError('Circle/not-found'),
                 status=status.HTTP_404_NOT_FOUND
             )
-        circle.create_resource()
-        serializer = CircleSerializer(circle)
+        Circle.create_resource()
+        serializer = CircleSerializer(Circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
 class CircleDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
-    """View that allow to retrieve the informations of a single circle"""
+    """View that allow to retrieve the informations of a single Circle"""
     queryset = Circle.objects.all()
     serializer_class = CircleSerializer
 
@@ -284,7 +284,7 @@ class CircleDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.
         return self.update(request, pk=pk)
 
     def patch(self, request: Request, pk):
-        """update resource of circle"""
+        """update resource of Circle"""
         # TODO changement de file.
         return self.partial_update(request, pk=pk)
 
@@ -301,10 +301,10 @@ class CircleResourceTree(generics.ListAPIView):
         
         if id_circle is not None:
             tree_id.append(id_circle)
-            circle = Circle.objects.get(id=id_circle)
-            while(circle and circle.parent):
-                circle = circle.parent
-                tree_id.append(circle.id)
+            Circle = Circle.objects.get(id=id_circle)
+            while(Circle and Circle.parent):
+                Circle = Circle.parent
+                tree_id.append(Circle.id)
             
         queryset = queryset.filter(circle__pk__in=tree_id)
         return queryset

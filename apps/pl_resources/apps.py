@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class PlResourcesConfig(AppConfig):
+class PlResourceConfig(AppConfig):
     name = 'pl_resources'
