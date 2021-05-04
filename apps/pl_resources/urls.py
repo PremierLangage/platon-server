@@ -19,4 +19,30 @@ urlpatterns = [
         'circles/<int:pk>/tree/',
         views.CircleResourceTree.as_view(),
         name='circle-resources-tree'),
+
+
+    # New Endpoints
+
+    # Circle's endpoint
+
+    path('circles/', views.CircleList.as_view(), name='circle-list'),
+    path('circles/<int:pk>/', views.CircleDetail.as_view(), name='circle-detail'),
+    path('circles/<int:pk>/register/', views.CircleDetail.as_view(), name='circle-detail'),
+    path('circles/<int:pk>/kick/', views.CircleDetail.as_view(), name='circle-detail'),
+    path('circles/<int:pk>/publish/', views.CircleDetail.as_view(), name='circle-detail'),
+    path('circles/<int:pk>/praise/', views.CircleDetail.as_view(), name='circle-detail'),
+    path('circles/<int:pk>/blame/', views.CircleDetail.as_view(), name='circle-detail'),
+    path('circles/<int:pk>/parent/', views.CircleDetail.as_view(), name='circle-detail'),
+
+    # Resource's endpoints
+
+    path('circles/<int:pk>/resources/', views.ResourcesList.as_view(), name='resource-list'),
+    path('circles/<int:pk>/resources/<int:pkr>/', views.ResourcesList.as_view(), name='resource-list'),
+  
+    # Version's endpoints
+
+    path('circles/<int:pk>/resources/<int:pkr>/versions/', views.ResourcesList.as_view(), name='resource-list'),
+    path('circles/<int:pk>/resources/<int:pkr>/versions/<int:pkv>/', views.ResourcesList.as_view(), name='resource-list'),
+ 
+
 ]
