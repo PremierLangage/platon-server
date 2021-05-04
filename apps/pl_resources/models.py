@@ -16,21 +16,38 @@ from .git_utils import GitUtils
 from .file_utils import FilesUtils
 
 
+
+
+class Circle(models.Model):
+    """Represents a unique circle"""
+    publish = models.BooleanField(default = False)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
+    members = models.ManyToManyField(User)
+    scientific_directors = models.ManyToManyField(User)
+    moderators = models.ManyToManyField(User)
+    creator = models.ForeignKey(User, null=False)
+    date = models.DateTimeField(auto_now_add=True)
+
+
+
 class Resource(models.Model):
     """Resource """
     name = models.CharField(max_length=30, blank=True)
     path = models.CharField(max_length=100, blank=True)
-    description = models.CharField(max_length=200, blank=True)
-    tags = models.CharField(max_length=150, blank=True)
+    creator = models.ForeignKey(User, null=False)
+    date = models.DateTimeField(auto_now_add=True)
+
 
     def create_resource(self):
-        """Create new repo with """
+        """TODO REFACTOR - Create new repo with """
         GitUtils.create_repo(self.name)
 
     def tag(self):
+        """TODO REFACTOR - """
         GitUtils.tag(self.name)
 
     def delete_folder(self, pk: int, path: str):
+        """TODO REFACTOR - """
         # TODO remove folders and files ....
         return
         # TODO check s'il a le droit
@@ -39,10 +56,25 @@ class Resource(models.Model):
         # commit la resource
 
 
-class Circle(Resource):
-    """Represents a unique circle"""
-    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
-    users = models.ManyToManyField(User)
+class VersionStatus(models.Model):
+
+    class Status(models.TextChoices):
+        DRAFT = 'DRAFT'
+        READY = 'READY'
+        DEPRECARED = 'DEPRECARED'
+        BUGGED = 'BUGGED'
+        NOT_TESTED = 'NOT_TESTED'
+
+    tag_git = models.CharField(max_length=50, blank=True)
+    version = models.IntegerField()
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT)
+    description = models.CharField(max_length=200, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+
 
 
 class File(models.Model):
@@ -56,7 +88,7 @@ class File(models.Model):
     
     @classmethod
     def create_file(cls, id_resource, filename, path, content):
-        """Filename est le relativepath depuis MEADIA ROOT"""
+        """TODO REFACTOR - Filename est le relativepath depuis MEADIA ROOT"""
         try:
             resource = Resource.objects.get(id=id_resource)
         except Resource.DoesNotExist:
@@ -75,22 +107,23 @@ class File(models.Model):
 
 
     def update_file(self, content: str):
-        """ update file"""
+        """TODO REFACTOR -  update file"""
         RessourceStorage.update(self.document, content)
         GitUtils.commit(resource.name, "update")
 
     
     def get_file(self):
-        """return content of the file. And crete file is not exist"""
+        """TODO REFACTOR - return content of the file. And crete file is not exist"""
         return {self.document.name: RessourceStorage.open_file(self.document)}
     
 
     def delete(self, *args, **kwargs):
+        """TODO REFACTOR - """
         self.__delete_file()
         super().delete(*args, **kwargs)
 
     def __delete_file(self):
-        """delete file and directory if he is empty"""
+        """TODO REFACTOR - delete file and directory if he is empty"""
         sep = "/"
         tab = self.document.name.split(sep)
         path_folder = sep.join(tab[:-1])
