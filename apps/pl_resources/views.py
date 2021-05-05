@@ -15,222 +15,21 @@ from .models import Circle, File, Resource
 
 
 
-
-
-class FileList(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-
-    def post(self, request: Request, pk):
-        """ create new file"""
-
-        content = request.data.get('content')
-        filename = request.data.get('filename')
-        path = request.data.get('path')
-        if not content:
-            return Response(
-                RestError('resource/content/missing'),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not filename:
-            return Response(
-                RestError('resource/filename/missing'),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if not path:
-            return Response(
-                RestError('resource/filename/missing'),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            f = File.create_file(pk, filename, path, content)
-            serializer = FileSerializer(f)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        except Resource.DoesNotExist:
-            return Response(
-                RestError('resource/not-found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-
-class FileDetail(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = File.objects.all()
-    serializer_class = FileSerializer
-
-    @property
-    def allowed_methods(self):
-        """
-        Return the list of allowed HTTP methods, uppercased.
-        """
-        self.http_method_names.append("patch")
-        self.http_method_names.append("delete")
-        return [method.upper() for method in self.http_method_names
-                if hasattr(self, method)]
-
-    def patch(self, request: Request, pk, fpk):
-        """Update a file"""
-
-        content = request.data.get('content')
-        if not content:
-            return Response(
-                RestError('resource/content/missing'),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            resource = Resource.objects.get(id=pk)
-            f = File.objects.get(id=fpk, resource=resource)
-            f.update_file(content)
-
-        except Resource.DoesNotExist:
-            return Response(
-                RestError('resource/not-found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        except File.DoesNotExist:
-            return Response(
-                RestError('file/not-found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        serializer = FileSerializer(f)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-    def get(self, request: Request, pk, fpk):
-        """return content of the file"""
-        try:
-            resource = Resource.objects.get(id=pk)
-            f = File.objects.get(id=fpk, resource=resource)
-            return JsonResponse(f.get_file(), status=status.HTTP_200_OK)
-
-        except Resource.DoesNotExist:
-            return Response(
-                RestError('resource/not-found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except File.DoesNotExist:
-            return Response(
-                RestError('file/not-found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-    def delete(self, request: Request, pk, fpk):
-        print("GOO DEELETE-------------------")
-        try:
-            resource = Resource.objects.get(id=pk)
-            f = File.objects.get(id=fpk, resource=resource)
-            f.delete()
-            serializer = FileSerializer(f)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        except Resource.DoesNotExist:
-            return Response(
-                RestError('resource/not-found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except File.DoesNotExist:
-            return Response(
-                RestError('file/not-found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-
-
-class ResourcesList(mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = Resource.objects.all()
-    serializer_class = ResourceSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-
-class ResourceDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
-    """View that allow to retrieve the informations of a single resource"""
-    queryset = Resource.objects.all()
-    serializer_class = ResourceSerializer
-
-    @property
-    def allowed_methods(self):
-        """
-        Return the list of allowed HTTP methods, uppercased.
-        """
-        self.http_method_names.append("patch")
-        self.http_method_names.append("delete")
-        return [method.upper() for method in self.http_method_names
-                if hasattr(self, method)]
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-
-    def patch(self, request: Request, pk):
-        """Create a new tag"""
-
-        content = request.data.get('content')
-        # create new version tag to the resource
-        if content == 'tag':
-            try:
-                resource = Resource.objects.get(id=pk)
-                # TODO tag this version
-            except Resource.DoesNotExist:
-                return Response(
-                    RestError('resource/not-found'),
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            serializer = ResourceSerializer(resource)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-                
-        else:
-            return Response(
-                RestError('resource/content/missing'),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    def delete(self, request: Request, pk):
-        """delete folder and file in folders. `path` is required in request.
-        `path`is relative path from git repo to folder """
-        path = request.data.get('path')
-        if not path:
-            return Response(
-                RestError('resource/pass/missing'),
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            resource = Resource.objects.get(id=pk)
-            # NPTQ resource.delete_folder(pk, path)
-            # TODO Remove un file
-            # TODO check folder parent != / and si vide suppr folder
-
-        except Resource.DoesNotExist:
-            return Response(
-                RestError('resource/not-found'),
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-# ====== TODO move in Circle activity ==================
-
 class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = Circle.objects.all()
     serializer_class = CircleSerializer
 
     def get(self, request, *args, **kwargs):
+        """ok"""
+
+        # TODO check user is logged 
+
         return self.list(request, *args, **kwargs)
 
     def post(self, request: Request):
+        """ko"""
+
+        # TODO check user is logged
         
         id_parent = request.data.get('parent_id')
         path = request.data.get('path')
@@ -266,45 +65,272 @@ class CircleDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.
     queryset = Circle.objects.all()
     serializer_class = CircleSerializer
 
-    @property
-    def allowed_methods(self):
-        """
-        Return the list of allowed HTTP methods, uppercased.
-        """
-        self.http_method_names.append("patch")
-        self.http_method_names.append("put")
-        return [method.upper() for method in self.http_method_names
-                if hasattr(self, method)]
-
     def get(self, request: Request, pk):
+
+        # TODO check user is logged
+
         return self.retrieve(request, pk=pk)
 
-    def put(self, request: Request, pk):
-        """update cirle"""
-        return self.update(request, pk=pk)
 
-    def patch(self, request: Request, pk):
-        """update resource of Circle"""
-        # TODO changement de file.
-        return self.partial_update(request, pk=pk)
+class CircleRegister(mixins.ListModelMixin, generics.GenericAPIView):
+    """View that handle to register a user in a circle."""
 
-
-class CircleResourceTree(generics.ListAPIView):
-    """retrive all parents of a single Circle"""
-    queryset = Circle.objects.all()
-    serializer_class = CircleSerializer
-
-    def get_queryset(self):
-        queryset = Circle.objects.all()
-        tree_id = []
-        id_circle = self.request.query_params.get('id_circle', None)
+    def post(self, request: Request, pk):
         
-        if id_circle is not None:
-            tree_id.append(id_circle)
-            Circle = Circle.objects.get(id=id_circle)
-            while(Circle and Circle.parent):
-                Circle = Circle.parent
-                tree_id.append(Circle.id)
-            
+        # TODO check user is logged 
+
+        try:
+            circle = Circle.objects.get(id=pk)
+        except Circle.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
+        # TODO register
+
+        serializer = CircleSerializer(Circle)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CircleKick(mixins.ListModelMixin, generics.GenericAPIView):
+    """View that handle to kick a user from a circle."""
+
+    def post(self, request: Request, pk):
+        
+        # TODO check user is logged 
+
+        try:
+            circle = Circle.objects.get(id=pk)
+        except Circle.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
+        # TODO kick
+
+        serializer = CircleSerializer(Circle)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CirclePublish(mixins.ListModelMixin, generics.GenericAPIView):
+    """View that handle to publish a user in a circle."""
+
+    def post(self, request: Request, pk):
+        
+        # TODO check user is logged 
+
+        try:
+            circle = Circle.objects.get(id=pk)
+        except Circle.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
+        # TODO publish circle
+
+        serializer = CircleSerializer(Circle)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class CirclePraise(mixins.ListModelMixin, generics.GenericAPIView):
+    """View that handle register a user in a circle."""
+
+    def post(self, request: Request, pk):
+        
+        # TODO check user is logged 
+
+        try:
+            circle = Circle.objects.get(id=pk)
+        except Circle.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
+        # TODO praise
+
+        serializer = CircleSerializer(Circle)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CircleBlame(mixins.ListModelMixin, generics.GenericAPIView):
+    """View that handle register a user in a circle."""
+
+    def post(self, request: Request, pk):
+        
+        # TODO check user is logged  
+
+        try:
+            circle = Circle.objects.get(id=pk)
+        except Circle.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
+        # TODO blame
+
+        serializer = CircleSerializer(Circle)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CircleParents(mixins.ListModelMixin, generics.GenericAPIView):
+    """View that handle register a user in a circle."""
+    serializer_class = CircleSerializer
+    queryset = Circle.objects.all()
+
+    def get(self, request: Request, pk):
+
+        # TODO check user is logged  
+        tree_id = []
+        tree_id.append(pk)
+
+        try:
+            circle = Circle.objects.get(id=pk)
+            while(circle and circle.parent):
+                circle = circle.parent
+                tree_id.append(circle.id)
+        except Circle.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
+                    
         queryset = queryset.filter(circle__pk__in=tree_id)
         return queryset
+
+
+# ========== Resources ==============
+
+
+class ResourcesList(mixins.ListModelMixin, generics.GenericAPIView):
+    """Create more bail when we create models like exo, activity, ..."""
+    queryset = Resource.objects.all()
+    serializer_class = ResourceSerializer
+
+
+    def post(self, request: Request, pk):
+        # TODO check user is logged 
+ 
+        # TODO create resource
+
+        serializer = ResourceSerializer(resource)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def get(self, request, *args, **kwargs):
+        # TODO check user is logged
+        return self.list(request, *args, **kwargs)
+
+
+class ResourceDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView, generics.RetrieveUpdateDestroyAPIView):
+    """View that allow to retrieve the informations of a single Resource."""
+    queryset = Circle.objects.all()
+    serializer_class = CircleSerializer
+    methods = ['get', 'patch']
+
+    def get(self, request: Request, pk : int, pkr: int):
+
+        # TODO check user is logged
+
+        return self.retrieve(request, pk=pk, pkr=pkr)
+
+
+# ========== Versions ==============
+
+class VersionList(mixins.ListModelMixin, generics.GenericAPIView):
+    """Create more bail when we create models like exo, activity, ..."""
+    # TODO queryset = Resource.objects.all()
+    # TODO serializer_class = ResourceSerializer
+
+
+    def post(self, request: Request, pk):
+        # TODO check user is logged 
+ 
+        # TODO create resource
+
+        serializer = ResourceSerializer(resource)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def get(self, request, *args, **kwargs):
+        # TODO check user is logged
+        return self.list(request, *args, **kwargs)
+
+
+class VersionDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView, generics.RetrieveUpdateDestroyAPIView):
+    """View that allow to retrieve the informations of a single Resource."""
+    queryset = Circle.objects.all()
+    serializer_class = CircleSerializer
+    methods = ['get', 'patch']
+
+    def get(self, request: Request, pk : int, pkr: int):
+
+        # TODO check user is logged
+
+        return self.retrieve(request, pk=pk, pkr=pkr)
+
+
+
+# ==========  Files  ==============
+
+class FileList(mixins.ListModelMixin, generics.GenericAPIView):
+    """Create more bail when we create models like exo, activity, ..."""
+    # TODO queryset = Resource.objects.all()
+    # TODO serializer_class = ResourceSerializer
+
+
+    def post(self, request: Request, pk):
+        # TODO check user is logged 
+ 
+        # TODO create resource
+
+        serializer = ResourceSerializer(resource)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def get(self, request, *args, **kwargs):
+        # TODO check user is logged
+        return self.list(request, *args, **kwargs)
+
+
+class FileDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView, generics.RetrieveUpdateDestroyAPIView):
+    """View that allow to retrieve the informations of a single Resource."""
+    queryset = Circle.objects.all()
+    serializer_class = CircleSerializer
+    methods = ['get', 'patch']
+
+    def get(self, request: Request, pk : int, pkr: int):
+
+        # TODO check user is logged
+
+        return self.retrieve(request, pk=pk, pkr=pkr)
+
+
+    def patch(self, request: Request, pk, fpk):
+        """Update a file"""
+
+        content = request.data.get('content')
+        if not content:
+            return Response(
+                RestError('resource/content/missing'),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            resource = Resource.objects.get(id=pk)
+            f = File.objects.get(id=fpk, resource=resource)
+            f.update_file(content)
+
+        except Resource.DoesNotExist:
+            return Response(
+                RestError('resource/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except File.DoesNotExist:
+            return Response(
+                RestError('file/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = FileSerializer(f)
