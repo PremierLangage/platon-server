@@ -70,7 +70,7 @@ Register a current user in circle.
 
 ---
 
-`GET` *{baseUrl}/api/circles/\<int:pk/parent/*
+`GET` *{baseUrl}/api/circles/\<int:pk/parents/*
 
  *Get all `pk`'s circle's parent*
 
@@ -648,7 +648,7 @@ Register a current user in circle.
 
  ### **Resource URL :**
  ```
- {baseUrl}/api/circles/<int:pk/praise/
+ {baseUrl}/api/circles/<int:pk/blame/
  ```
 
  ### **HTTP headers :**
@@ -711,12 +711,12 @@ Register a current user in circle.
 
 ---
 
-### **`GET`** ***{baseUrl}/api/circles/\<int:pk/parent/***
+### **`GET`** ***{baseUrl}/api/circles/\<int:pk/parents/***
 *Publish a circle*
 
  ### **Resource URL :**
  ```
- {baseUrl}/api/circles/<int:pk/publish/
+ {baseUrl}/api/circles/<int:pk/parents/
  ```
 
  ### **HTTP headers :**
