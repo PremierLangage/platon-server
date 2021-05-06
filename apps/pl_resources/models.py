@@ -20,14 +20,67 @@ from .file_utils import FilesUtils
 
 
 class Circle(models.Model):
-    # Represents a unique circlecDelete -> SetNull ? """
     publish = models.BooleanField(default = False)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
     members = models.ManyToManyField(User, related_name='members')
     scientific_directors = models.ManyToManyField(User, related_name='scientifics')
     moderators = models.ManyToManyField(User, related_name='moderators')
+    black_list = models.ManyToManyField(User, related_name='black-list')
     creator = models.ForeignKey(User, null=True, on_delete=models.PROTECT)
     date = models.DateTimeField(auto_now_add=True)
+
+    def register(self, user):
+        """Add a user to members in a circle."""
+        this.members.add(user)
+        this.moderators.remove(user)
+        this.scientific_directors.remove(user)
+        this.save()
+
+
+    def kick(self, kicking, kicked):
+        """user `kicking` kick user `kicked` out of the circle
+        Raise an error if `kicking` don't have rights for kick."""
+        # TODO check kicking rights
+        this.members.remove(kicked)
+        this.black_list.add(kicked)
+        this.save()
+
+
+    def publish(self, user):
+        """Publish a circle. Raise an error if user don't have rights for praise."""
+        self.publish = True
+        self.save()
+
+
+    def praise(self, user, user_praised, praise):
+        """User `user` Praise user_praised to praise
+        Raise an error if user don't have rights for praise."""
+        # TODO check user rights
+        if praise == 'MO':
+            self.moderators.add(user_praised)
+        elif praise == 'SD':
+            self.scientific_directors.add(user_praised)
+        else:
+            raise ValueError
+
+
+
+    def blame(self, user, user_blamed):
+        """User `user` blame user_blamed to praise
+        Raise an error if user don't have rights for blame."""
+        if user.id != self.creator.id:
+            raise ValueError
+ 
+        this.moderators.remove(user_blamed)
+        this.scientific_directors.remove(user_blamed)
+        this.save()
+
+    def parent(self, user, user_praised, praise):
+        """User `user` Praise user_praised to praise
+        Raise an error if user don't have rights for praise."""
+        # Utile ?
+        pass
+    
 
 
 
@@ -50,20 +103,17 @@ class Resource(models.Model):
 
     def delete_folder(self, pk: int, path: str):
         """TODO REFACTOR - """
-        # TODO remove folders and files ....
         return
-        # TODO check s'il a le droit
         # supprimer tous les files
         # FilesUtils.delete_folder(resource.name, path)
         # commit la resource
 
 
 class VersionStatus(models.Model):
-    """TODO Care"""
     class Status(models.TextChoices):
         DRAFT = 'DRAFT'
         READY = 'READY'
-        DEPRECARED = 'DEPRECARED'
+        DEPRECATED = 'DEPRECATED'
         BUGGED = 'BUGGED'
         NOT_TESTED = 'NOT_TESTED'
 
@@ -81,8 +131,20 @@ class VersionStatus(models.Model):
     description = models.CharField(max_length=200, blank=True)
     date = models.DateTimeField(auto_now_add=True)
 
+    @classmethod
+    def create_version(cls, resource):
+        """Nous ne connaissons pas les files valides : 
 
+        -  Nous pouvons avoir une liste de file ici ...
+        -> Mais il y a des resources sans version.
+            -> Donc pas les autoriser à faire de nouvelle version
+        -> Beaucoup de duplication (5 versions ~= 5 fois le meme fichier)
 
+        -  On pourrait dupliquer les informations et avoir une liste d'id en +
+        -> C'est dur à maintenir
+
+        """
+        pass
 
 
 class File(models.Model):
