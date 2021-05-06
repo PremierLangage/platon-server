@@ -19,13 +19,29 @@ urlpatterns = [
 
     # Resource's endpoints
 
-    path('circles/<int:pk>/resources/', views.ResourcesList.as_view(), name='resource-list'),
-    path('circles/<int:pk>/resources/<int:pkr>/', views.ResourceDetail.as_view(), name='resource-detail'),
+    path(
+        'circles/<int:pk>/resources/',
+        views.ResourcesList.as_view(),
+        name='resource-list'
+    ),
+    path(
+        'circles/<int:pk>/resources/<int:pkr>/',
+        views.ResourceDetail.as_view(),
+        name='resource-detail'
+    ),
   
     # Version's endpoints
 
-    path('circles/<int:pk>/resources/<int:pkr>/versions/', views.VersionList.as_view(), name='version-list'),
-    path('circles/<int:pk>/resources/<int:pkr>/versions/<int:pkv>/', views.VersionDetail.as_view(), name='version-list'),
+    path(
+        'circles/<int:pk>/resources/<int:pkr>/versions/',
+        views.VersionList.as_view(),
+        name='version-list'
+    ),
+    path(
+        'circles/<int:pk>/resources/<int:pkr>/versions/<int:pkv>/',
+        views.VersionDetail.as_view(),
+        name='version-list'
+    ),
  
 
 ]

@@ -25,7 +25,7 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         """ok"""
 
-        # TODO check user is logged 
+        # TODO check user is logged
 
         return self.list(request, *args, **kwargs)
 
@@ -33,7 +33,7 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
         """ko"""
 
         # TODO check user is logged
-        
+
         id_parent = request.data.get('parent_id')
         path = request.data.get('path')
         name = request.data.get('name')
@@ -92,12 +92,12 @@ class CircleRegister(mixins.ListModelMixin, generics.GenericAPIView):
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
         except User.DoesNotExist:
             return Response(
                 RestError('user/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
         # TODO register
 
         serializer = CircleSerializer(circle)
@@ -109,7 +109,7 @@ class CircleKick(mixins.ListModelMixin, generics.GenericAPIView):
 
     def post(self, request: Request, pk):
         
-         # TODO update with auth
+        # TODO update with auth
         user_id = request.data.get('user_id')
         user_kicked = request.data.get('user_kicked')
 
@@ -122,12 +122,12 @@ class CircleKick(mixins.ListModelMixin, generics.GenericAPIView):
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
         except User.DoesNotExist:
             return Response(
                 RestError('user/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
         # TODO register
 
         serializer = CircleSerializer(circle)
@@ -141,7 +141,7 @@ class CirclePublish(mixins.ListModelMixin, generics.GenericAPIView):
 
     def post(self, request: Request, pk):
         
-         # TODO update with auth
+        # TODO update with auth
         user_id = request.data.get('user_id')
 
         try:
@@ -152,12 +152,12 @@ class CirclePublish(mixins.ListModelMixin, generics.GenericAPIView):
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
         except User.DoesNotExist:
             return Response(
                 RestError('user/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
         # TODO register
 
         serializer = CircleSerializer(circle)
@@ -170,7 +170,7 @@ class CirclePraise(mixins.ListModelMixin, generics.GenericAPIView):
 
     def post(self, request: Request, pk):
         
-         # TODO update with auth
+        # TODO update with auth
         user_id = request.data.get('user_id')
         user_praised = request.data.get('user_praised')
         user_praised = request.data.get('praise')
@@ -186,12 +186,12 @@ class CirclePraise(mixins.ListModelMixin, generics.GenericAPIView):
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
         except User.DoesNotExist:
             return Response(
                 RestError('user/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
 
         serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -202,7 +202,7 @@ class CircleBlame(mixins.ListModelMixin, generics.GenericAPIView):
         
     def post(self, request: Request, pk):
         
-         # TODO update with auth
+        # TODO update with auth
         user_id = request.data.get('user_id')
         user_blamed = request.data.get('user_blamed')
 
@@ -217,12 +217,12 @@ class CircleBlame(mixins.ListModelMixin, generics.GenericAPIView):
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
         except User.DoesNotExist:
             return Response(
                 RestError('user/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
+            )
 
         serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -235,7 +235,7 @@ class CircleParents(mixins.ListModelMixin, generics.GenericAPIView):
 
     def get(self, request: Request, pk):
 
-        # TODO check user is logged  
+        # TODO check user is logged
         tree_id = []
         tree_id.append(pk)
 
@@ -248,8 +248,8 @@ class CircleParents(mixins.ListModelMixin, generics.GenericAPIView):
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
-            ) 
-                    
+            )
+
         queryset = queryset.filter(circle__pk__in=tree_id)
         return queryset
 
@@ -264,7 +264,7 @@ class ResourcesList(mixins.ListModelMixin, generics.GenericAPIView):
 
 
     def post(self, request: Request, pk):
-        # TODO check user is logged 
+        # TODO check user is logged
  
         # TODO create resource
 
@@ -277,13 +277,18 @@ class ResourcesList(mixins.ListModelMixin, generics.GenericAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class ResourceDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView, generics.RetrieveUpdateDestroyAPIView):
-    """View that allow to retrieve the informations of a single Resource."""
+class ResourceDetail(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView
+):
+    """View that allow to retrieve the informations
+    of a single Resource."""
     queryset = Circle.objects.all()
     serializer_class = CircleSerializer
     methods = ['get', 'patch']
 
-    def get(self, request: Request, pk : int, pkr: int):
+    def get(self, request: Request, pk: int, pkr: int):
 
         # TODO check user is logged
 
@@ -299,7 +304,7 @@ class VersionList(mixins.ListModelMixin, generics.GenericAPIView):
 
 
     def post(self, request: Request, pk):
-        # TODO check user is logged 
+        # TODO check user is logged
  
         # TODO create resource
 
@@ -312,18 +317,21 @@ class VersionList(mixins.ListModelMixin, generics.GenericAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class VersionDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView, generics.RetrieveUpdateDestroyAPIView):
+class VersionDetail(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView
+):
     """View that allow to retrieve the informations of a single Resource."""
     queryset = Circle.objects.all()
     serializer_class = CircleSerializer
     methods = ['get', 'patch']
 
-    def get(self, request: Request, pk : int, pkr: int):
+    def get(self, request: Request, pk: int, pkr: int):
 
         # TODO check user is logged
 
         return self.retrieve(request, pk=pk, pkr=pkr)
-
 
 
 # ==========  Files  ==============
@@ -335,7 +343,7 @@ class FileList(mixins.ListModelMixin, generics.GenericAPIView):
 
 
     def post(self, request: Request, pk):
-        # TODO check user is logged 
+        # TODO check user is logged
  
         # TODO create resource
 
@@ -348,13 +356,18 @@ class FileList(mixins.ListModelMixin, generics.GenericAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class FileDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView, generics.RetrieveUpdateDestroyAPIView):
+class FileDetail(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView
+):
+    # TODO use generics.RetrieveUpdateDestroyAPIView
     """View that allow to retrieve the informations of a single Resource."""
     queryset = Circle.objects.all()
     serializer_class = CircleSerializer
     methods = ['get', 'patch']
 
-    def get(self, request: Request, pk : int, pkr: int):
+    def get(self, request: Request, pk: int, pkr: int):
 
         # TODO check user is logged
 

@@ -20,12 +20,12 @@ from .file_utils import FilesUtils
 
 
 class Circle(models.Model):
-    publish = models.BooleanField(default = False)
+    publish = models.BooleanField(default=False)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
     members = models.ManyToManyField(User, related_name='members')
     scientific_directors = models.ManyToManyField(User, related_name='scientifics')
     moderators = models.ManyToManyField(User, related_name='moderators')
-    black_list = models.ManyToManyField(User, related_name='black-list')
+    black_list = models.ManyToManyField(User, related_name='black_list')
     creator = models.ForeignKey(User, null=True, on_delete=models.PROTECT)
     date = models.DateTimeField(auto_now_add=True)
 
@@ -47,7 +47,8 @@ class Circle(models.Model):
 
 
     def publish(self, user):
-        """Publish a circle. Raise an error if user don't have rights for praise."""
+        """Publish a circle. Raise an error if user don't have rights
+        for praise."""
         self.publish = True
         self.save()
 
@@ -119,15 +120,15 @@ class VersionStatus(models.Model):
         choices=Status.choices,
         default=Status.DRAFT)
     tags = ArrayField(
-            models.CharField(max_length=15, blank=True),
-            size=8,
-        )
+        models.CharField(max_length=15, blank=True),
+        size=8,
+    )
     description = models.CharField(max_length=200, blank=True)
     date = models.DateTimeField(auto_now_add=True)
 
     @classmethod
     def create_version(cls, resource):
-        """Nous ne connaissons pas les files valides : 
+        """Nous ne connaissons pas les files valides :
 
         -  Nous pouvons avoir une liste de file ici ...
         -> Mais il y a des resources sans version.
@@ -177,7 +178,8 @@ class File(models.Model):
 
     
     def get_file(self):
-        """TODO REFACTOR - return content of the file. And crete file is not exist"""
+        """TODO REFACTOR - return content of the file.
+        And crete file is not exist"""
         return {self.document.name: RessourceStorage.open_file(self.document)}
     
 
