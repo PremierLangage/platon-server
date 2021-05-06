@@ -1,6 +1,8 @@
 import json
 from typing import Optional
 
+from django.contrib.auth.models import User
+
 from common.errors import RestError
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import Http404, JsonResponse
@@ -12,6 +14,7 @@ from rest_framework.views import APIView
 from .serializers import FileSerializer, ResourceSerializer
 from .serializers import CircleSerializer, CircleResourceSerializer
 from .models import Circle, File, Resource
+
 
 
 
@@ -55,7 +58,7 @@ class CircleList(mixins.ListModelMixin, generics.GenericAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         Circle.create_resource()
-        serializer = CircleSerializer(Circle)
+        serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -77,18 +80,27 @@ class CircleRegister(mixins.ListModelMixin, generics.GenericAPIView):
 
     def post(self, request: Request, pk):
         
-        # TODO check user is logged 
+        # TODO update with auth
+        user_id = request.data.get('user_id')
+
 
         try:
+            user = User.objects.get(id=user_id)
             circle = Circle.objects.get(id=pk)
+            circle.register(user)
         except Circle.DoesNotExist:
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
             ) 
+        except User.DoesNotExist:
+            return Response(
+                RestError('user/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
         # TODO register
 
-        serializer = CircleSerializer(Circle)
+        serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -97,19 +109,31 @@ class CircleKick(mixins.ListModelMixin, generics.GenericAPIView):
 
     def post(self, request: Request, pk):
         
-        # TODO check user is logged 
+         # TODO update with auth
+        user_id = request.data.get('user_id')
+        user_kicked = request.data.get('user_kicked')
 
         try:
+            user_kicking = User.objects.get(id=user_id)
+            user_kicked = User.objects.get(id=user_kicked)
             circle = Circle.objects.get(id=pk)
+            circle.kick(user_kicking, user_kicked)
         except Circle.DoesNotExist:
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
             ) 
-        # TODO kick
+        except User.DoesNotExist:
+            return Response(
+                RestError('user/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
+        # TODO register
 
-        serializer = CircleSerializer(Circle)
+        serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 
 class CirclePublish(mixins.ListModelMixin, generics.GenericAPIView):
@@ -117,18 +141,26 @@ class CirclePublish(mixins.ListModelMixin, generics.GenericAPIView):
 
     def post(self, request: Request, pk):
         
-        # TODO check user is logged 
+         # TODO update with auth
+        user_id = request.data.get('user_id')
 
         try:
+            user = User.objects.get(id=user_id)
             circle = Circle.objects.get(id=pk)
+            circle.publish(user)
         except Circle.DoesNotExist:
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
             ) 
-        # TODO publish circle
+        except User.DoesNotExist:
+            return Response(
+                RestError('user/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
+        # TODO register
 
-        serializer = CircleSerializer(Circle)
+        serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -138,38 +170,61 @@ class CirclePraise(mixins.ListModelMixin, generics.GenericAPIView):
 
     def post(self, request: Request, pk):
         
-        # TODO check user is logged 
+         # TODO update with auth
+        user_id = request.data.get('user_id')
+        user_praised = request.data.get('user_praised')
+        user_praised = request.data.get('praise')
+
+        # TODO check fields
 
         try:
+            user = User.objects.get(id=user_id)
+            user_praised = User.objects.get(id=user_praised)
             circle = Circle.objects.get(id=pk)
+            circle.praise(user, user_praised, praise)
         except Circle.DoesNotExist:
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
             ) 
-        # TODO praise
+        except User.DoesNotExist:
+            return Response(
+                RestError('user/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
 
-        serializer = CircleSerializer(Circle)
+        serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CircleBlame(mixins.ListModelMixin, generics.GenericAPIView):
     """View that handle register a user in a circle."""
-
+        
     def post(self, request: Request, pk):
         
-        # TODO check user is logged  
+         # TODO update with auth
+        user_id = request.data.get('user_id')
+        user_blamed = request.data.get('user_blamed')
+
+        # TODO check fields
 
         try:
+            user = User.objects.get(id=user_id)
+            user_blamed = User.objects.get(id=user_blamed)
             circle = Circle.objects.get(id=pk)
+            circle.blame(user, user_blamed)
         except Circle.DoesNotExist:
             return Response(
                 RestError('resource/not-found'),
                 status=status.HTTP_404_NOT_FOUND
             ) 
-        # TODO blame
+        except User.DoesNotExist:
+            return Response(
+                RestError('user/not-found'),
+                status=status.HTTP_404_NOT_FOUND
+            ) 
 
-        serializer = CircleSerializer(Circle)
+        serializer = CircleSerializer(circle)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

@@ -63,6 +63,7 @@ class Circle(models.Model):
         else:
             raise ValueError
 
+        self.save()
 
 
     def blame(self, user, user_blamed):
@@ -75,14 +76,7 @@ class Circle(models.Model):
         this.scientific_directors.remove(user_blamed)
         this.save()
 
-    def parent(self, user, user_praised, praise):
-        """User `user` Praise user_praised to praise
-        Raise an error if user don't have rights for praise."""
-        # Utile ?
-        pass
     
-
-
 
 class Resource(models.Model):
     """Resource """
