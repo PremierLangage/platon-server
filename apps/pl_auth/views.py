@@ -49,12 +49,14 @@ class SignInView(APIView):
 class SignOutView(APIView):
     """View that handle sign out request."""
 
-    # authentication_classes = (CsrfExemptSessionAuthentication,)
 
     def post(self, request: Request):
-        print(request.user.is_authenticated)
+        # logout session authentifications
         logout(request)
-        print(request.user.is_authenticated)
+
+        # TODO blacklist current jwt token
+        # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/blacklist_app.html
+
         return Response({
             'detail': 'successfully logged out'
         }, status=status.HTTP_200_OK)

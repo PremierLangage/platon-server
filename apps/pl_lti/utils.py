@@ -31,8 +31,7 @@ def find_lms(params: LTIParams) -> LMS:
         params (LTIParams): A LTI request parameters.
 
     Raises:
-        PermissionDenied: If
-        PermissionDenied: [description]
+        PermissionDenied
 
     Returns:
         LMS: The retrieved LMS object.
@@ -50,9 +49,7 @@ def find_lms(params: LTIParams) -> LMS:
         raise PermissionDenied("LTI: Request doesn't contain an oauth_consumer_key; can't continue.")
 
     try:
-        lms = LMS.objects.get(
-            guid=guid,
-        )
+        lms = LMS.objects.get(guid=guid)
         if lms.client_id != oauth_consumer_key:
             logger.error(f"LTI: There is no LMS registered with the key {oauth_consumer_key}")
             raise PermissionDenied(f"LTI: There is no LMS registered with the key {oauth_consumer_key}")
