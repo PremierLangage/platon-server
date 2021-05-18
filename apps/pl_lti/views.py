@@ -9,9 +9,5 @@ class InfoView(APIView):
 
     authentication_classes = (CsrfExemptSessionAuthentication,)
 
-    def get(self, request: Request):
-        return Response(request.LTI, status=status.HTTP_200_OK)
-
-
     def post(self, request: Request):
         return Response(request.LTI, status=status.HTTP_200_OK)

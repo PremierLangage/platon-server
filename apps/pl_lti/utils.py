@@ -11,7 +11,6 @@ import logging
 from typing import Tuple
 from django.http.request import HttpRequest
 
-import oauth2
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
@@ -124,14 +123,6 @@ def parse_lti_request(request) -> Tuple[LMS, LTIParams]:
     """
 
     params = LTIParams.from_dict(request.POST.dict())
-    lms = find_lms(params)
-    try:
-        request_is_valid = is_valid_request(lms.client_id, lms.client_secret, request)
-    except oauth2.Error:
-        request_is_valid = False
-    if not request_is_valid:
-        logger.error("LTI: Oauth signature check failed.")
-        raise PermissionDenied("LTI: Oauth signature check failed.")
     if not params.user_id:
         logger.error("LTI: Missing argument user_if not params.user_id")
         raise PermissionDenied("LTI: Missing argument user_if not params.user_id")
@@ -144,6 +135,15 @@ def parse_lti_request(request) -> Tuple[LMS, LTIParams]:
     if not params.lis_person_contact_email_primary:
         logger.error("LTI: Missing argument lis_person_contact_email_primary")
         raise PermissionDenied("LTI: Missing argument lis_person_contact_email_primary")
+
+    lms = find_lms(params)
+
+    # TODO
+    request_is_valid = is_valid_request(lms.client_id, lms.client_secret, request)
+    # if not request_is_valid:
+    #    logger.error("LTI: Oauth signature check failed.")
+    #    raise PermissionDenied("LTI: Oauth signature check failed.")
+
     return lms, params
 
 
