@@ -5,6 +5,7 @@ from rest_framework.request import Request
 
 logger = logging.getLogger(__name__)
 
+
 def is_valid_request(consumer_key: str, consumer_secret: str, request: Request):
     consumers = {
         consumer_key: {

@@ -59,16 +59,3 @@ class SignOutView(APIView):
         return Response({
             'detail': 'successfully logged out'
         }, status=status.HTTP_200_OK)
-
-
-class MeView(APIView):
-    """View that allow to retrieve the logged user's informations"""
-
-    def get(self, request: Request):
-        if request.user.is_anonymous:
-            return Response(
-                RestError('auth/unauthorized'),
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        serialzer = UserSerializer(request.user)
-        return Response(serialzer.data, status=status.HTTP_200_OK)

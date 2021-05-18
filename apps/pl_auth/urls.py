@@ -6,8 +6,7 @@ from . import views
 app_name = 'pl_auth'
 
 urlpatterns = [
-    path('me/', views.MeView.as_view(), name='me'),
-    path('sign-in/', TokenObtainPairView.as_view(), name='sign-in'),
-    path('sign-out/', views.SignOutView.as_view(), name='sign-out'),
-    path('refresh/', TokenRefreshView.as_view(), name='refresh'),
+    path('auth/sign-in/', TokenObtainPairView.as_view(), name='sign-in'),
+    path('auth/sign-out/', views.SignOutView.as_view(), name='sign-out'),
+    path('auth/refresh/', TokenRefreshView.as_view(), name='refresh'),
 ]
