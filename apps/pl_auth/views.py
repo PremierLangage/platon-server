@@ -1,14 +1,13 @@
-from pl_core.errors import RestError
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
-from rest_framework import generics, mixins, status
+from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from pl_core.errors import RestError
 from pl_auth.forms import SignInForm
 
-from .serializers import UserSerializer
+from pl_users.serializers import UserSerializer
 
 
 class SignInView(APIView):
@@ -62,7 +61,7 @@ class SignOutView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-class LoggedUserDetailView(APIView):
+class MeView(APIView):
     """View that allow to retrieve the logged user's informations"""
 
     def get(self, request: Request):
@@ -74,24 +73,3 @@ class LoggedUserDetailView(APIView):
         serialzer = UserSerializer(request.user)
         return Response(serialzer.data, status=status.HTTP_200_OK)
 
-
-class UserListView(mixins.ListModelMixin, generics.GenericAPIView):
-    """View that allow to retrieve the informations of all the registerd users"""
-
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-
-class UserDetailView(mixins.RetrieveModelMixin, generics.GenericAPIView):
-    """View that allow to retrieve the informations of a single user"""
-
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    lookup_field = 'username'
-    
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)

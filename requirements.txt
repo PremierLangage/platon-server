@@ -16,6 +16,7 @@ django-elasticsearch-dsl-drf~=0.22
 djangorestframework~=3.12.4
 djangorestframework-simplejwt~=4.6.0
 drf-yasg~=1.20.0
+gitpython~=3.1.15
 isodate~=0.6.0
 jinja2~=2.11.2
 markdown~=3.3.4

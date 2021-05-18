@@ -68,6 +68,7 @@ PROJECT_APPS = [
     'pl_auth',
     'pl_core',
     'pl_lti',
+    'pl_users',
     'pl_sandbox',
 ]
 

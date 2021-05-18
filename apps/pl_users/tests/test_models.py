@@ -1,17 +1,10 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
-#  test_models.py
-#
-#
-
 from django.contrib.auth.models import User
 from django.test import TestCase
 from pl_lti.role import Role
 
 
 class ModelsTestCase(TestCase):
-    """ Test functions of pl_auth.models modules. """
+    """ Test functions of pl_users.models modules. """
 
 
     @classmethod
