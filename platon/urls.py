@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/v1/admin/', admin.site.urls),
     path('api/v1/lti/', include('pl_lti.urls', namespace='pl_lti')),
     path('api/v1/auth/', include('pl_auth.urls', namespace='pl_auth')),
+    path('api/v1/users', include('pl_users.urls', namespace='pl_users')),
     path('api/v1/sandbox/', include('pl_sandbox.urls', namespace='pl_sandbox')),
     
     url(
