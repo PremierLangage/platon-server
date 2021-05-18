@@ -72,4 +72,3 @@ class MeView(APIView):
             )
         serialzer = UserSerializer(request.user)
         return Response(serialzer.data, status=status.HTTP_200_OK)
-

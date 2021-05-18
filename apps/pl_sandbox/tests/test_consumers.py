@@ -30,7 +30,7 @@ class ConsumerTestCase(TransactionTestCase):
     
     async def test_usage_consumer(self):
         communicator = WebsocketCommunicator(
-            application, f'/ws/sandbox/usage/{self.sandbox.pk}/'
+            application, f'/ws/sandbox/sandbox-usages/{self.sandbox.pk}/'
         )
         communicator.scope["user"] = self.user
         await communicator.connect()
@@ -54,7 +54,7 @@ class ConsumerTestCase(TransactionTestCase):
     async def test_usage_consumer_permission_denied(self):
         with self.assertRaises(PermissionDenied):
             communicator = WebsocketCommunicator(
-                application, f'/ws/sandbox/usage/{self.sandbox.pk}/'
+                application, f'/ws/sandbox/sandbox-usages/{self.sandbox.pk}/'
             )
             communicator.scope["user"] = AnonymousUser()
             await communicator.connect()
@@ -62,7 +62,7 @@ class ConsumerTestCase(TransactionTestCase):
     
     async def test_sandbox_specs_consumer(self):
         communicator = WebsocketCommunicator(
-            application, f'/ws/sandbox/sandbox_specs/{self.sandbox.pk}/'
+            application, f'/ws/sandbox/sandbox-specs/{self.sandbox.pk}/'
         )
         communicator.scope["user"] = self.user
         await communicator.connect()
@@ -86,7 +86,7 @@ class ConsumerTestCase(TransactionTestCase):
     async def test_sandbox_specs_consumer_permission_denied(self):
         with self.assertRaises(PermissionDenied):
             communicator = WebsocketCommunicator(
-                application, f'/ws/sandbox/sandbox_specs/{self.sandbox.pk}/'
+                application, f'/ws/sandbox/sandbox-specs/{self.sandbox.pk}/'
             )
             communicator.scope["user"] = AnonymousUser()
             await communicator.connect()
@@ -94,7 +94,7 @@ class ConsumerTestCase(TransactionTestCase):
     
     async def test_container_specs_consumer(self):
         communicator = WebsocketCommunicator(
-            application, f'/ws/sandbox/container_specs/{self.sandbox.pk}/'
+            application, f'/ws/sandbox/container-specs/{self.sandbox.pk}/'
         )
         communicator.scope["user"] = self.user
         await communicator.connect()
@@ -118,7 +118,7 @@ class ConsumerTestCase(TransactionTestCase):
     async def test_container_specs_consumer_permission_denied(self):
         with self.assertRaises(PermissionDenied):
             communicator = WebsocketCommunicator(
-                application, f'/ws/sandbox/container_specs/{self.sandbox.pk}/'
+                application, f'/ws/sandbox/container-specs/{self.sandbox.pk}/'
             )
             communicator.scope["user"] = AnonymousUser()
             await communicator.connect()
