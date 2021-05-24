@@ -9,4 +9,4 @@
 
 from django.dispatch import Signal
 
-connect_from_lti_role = Signal(providing_args=["request"])
+lti_request = Signal(providing_args=["request"])

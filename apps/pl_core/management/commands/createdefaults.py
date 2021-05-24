@@ -3,7 +3,6 @@ import logging
 import os
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.management import BaseCommand
 from pl_core.signals import create_defaults
 

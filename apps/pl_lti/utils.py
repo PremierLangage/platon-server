@@ -87,7 +87,7 @@ def create_lti_user(lms: LMS, params: LTIParams) -> User:
         UserModel = get_user_model()
         while True:
             try:
-                if i == -1: # attempt first with ext_user_username
+                if i == -1:  # attempt first with ext_user_username
                     user = UserModel.objects.create_user(username=username)
                 else:
                     user = UserModel.objects.create_user(

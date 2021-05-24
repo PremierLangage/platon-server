@@ -7,7 +7,7 @@ from enumfields import EnumIntegerField
 
 from pl_lti.params import LTIParams
 from pl_lti.role import Role, TEACHING_STAFF_ROLES
-from pl_lti.signals import connect_from_lti_role
+from pl_lti.signals import lti_request
 
 
 class Profile(models.Model):
@@ -55,7 +55,7 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
         instance.profile.save()
 
 
-@receiver(connect_from_lti_role)
+@receiver(lti_request)
 def update_user_profile_from_lti_role(sender, request, **kwargs):
     """
     When a user join platon from a LMS using lti protocol,

@@ -13,8 +13,6 @@ from typing import List
 
 from enumfields import Enum
 
-from .params import LTIParams
-
 
 @unique
 @total_ordering
