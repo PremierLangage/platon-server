@@ -4,6 +4,7 @@ platon/config.json
 static/*
 media/*
 tmp/*
+resources/*
 
 # Deepcode
 .dccache
