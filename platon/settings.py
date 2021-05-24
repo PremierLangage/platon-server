@@ -63,7 +63,6 @@ THIRD_PARTY_APPS = [
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
     'django_filters',
-    'drf_yasg',
     'rest_framework',
 ]
 
@@ -73,6 +72,7 @@ PROJECT_APPS = [
     'pl_lti',
     'pl_users',
     'pl_sandbox',
+    'pl_resources',
 ]
 
 

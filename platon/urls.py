@@ -18,26 +18,12 @@ Including another URLconf
 import debug_toolbar
 
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import admin
 from django.urls import include, path
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
 
-from rest_framework import permissions
 from .views import api_root
 
-schema_view = get_schema_view(
-    openapi.Info(
-        title="PLaTon API",
-        default_version='v1',
-        description="Documentation of PLaTon apis",
-        terms_of_service="https://www.google.com/policies/terms/",
-        license=openapi.License(name="CeCILL-B"),
-    ),
-    public=True,
-    permission_classes=[permissions.AllowAny],
-)
+
 
 urlpatterns = [
     path('api/v1/admin/', admin.site.urls),
@@ -47,22 +33,6 @@ urlpatterns = [
     path('api/v1/', include('pl_users.urls', namespace='pl_users')),
     path('api/v1/', include('pl_lti.urls', namespace='pl_lti')),
     path('api/v1/', include('pl_sandbox.urls', namespace='pl_sandbox')),
-
-    url(
-        r'^api/v1/docs/swagger(?P<format>\.json|\.yaml)$',
-        schema_view.without_ui(cache_timeout=0),
-        name='schema-json'
-    ),
-    url(
-        r'^api/v1/docs/swagger/$',
-        schema_view.with_ui('swagger', cache_timeout=0),
-        name='schema-swagger-ui'
-    ),
-    url(
-        r'^api/v1/docs/redoc/$',
-        schema_view.with_ui('redoc', cache_timeout=0),
-        name='schema-redoc'
-    ),
 ]
 
 if settings.DEBUG:
