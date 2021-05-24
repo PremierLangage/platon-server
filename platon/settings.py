@@ -89,15 +89,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
-
     # App middlewares
     'pl_lti.middleware.LTIAuthMiddleware',
 ]
 
-if DEBUG:
+if DEBUG and not TESTING:
     # https://django-debug-toolbar.readthedocs.io/en/stable/index.html
     INSTALLED_APPS += ['debug_toolbar']
-    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
     DEBUG_TOOLBAR_CONFIG = {
         # Toolbar options
         'RESULTS_CACHE_SIZE': 3,
