@@ -43,6 +43,8 @@ TESTING = sys.argv[1:2] == ['test']
 # Allowed Hosts
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').strip().split(',')
 
+
+
 # Application definition
 PREREQ_APPS = [
     'django.contrib.admin',
@@ -60,6 +62,7 @@ THIRD_PARTY_APPS = [
     'django_extensions',
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
+    'django_filters',
     'drf_yasg',
     'rest_framework',
 ]
@@ -71,6 +74,7 @@ PROJECT_APPS = [
     'pl_users',
     'pl_sandbox',
 ]
+
 
 INSTALLED_APPS = PREREQ_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
@@ -84,10 +88,24 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    
+
+
     # App middlewares
     'pl_lti.middleware.LTIAuthMiddleware',
 ]
+
+if DEBUG:
+    # https://django-debug-toolbar.readthedocs.io/en/stable/index.html
+    INSTALLED_APPS += ['debug_toolbar']
+    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    DEBUG_TOOLBAR_CONFIG = {
+        # Toolbar options
+        'RESULTS_CACHE_SIZE': 3,
+        'SHOW_COLLAPSED': True,
+        'SHOW_TOOLBAR_CALLBACK': lambda _: True,
+        # Panel options
+        'SQL_WARNING_THRESHOLD': 100,   # milliseconds
+    }
 
 # URL
 ROOT_URLCONF = 'platon.urls'
@@ -157,6 +175,10 @@ LOGGING = {
             'handlers': ['console', 'mail_admins'],
             'level':    'ERROR',
         },
+        # 'django.db.backends': {
+        #    'level': 'DEBUG',
+        #    'handlers': ['console'],
+        # }
     },
 }
 
@@ -232,15 +254,22 @@ SIMPLE_JWT = {
 
 # Django Rest Framework
 # https://www.django-rest-framework.org
+
+DEFAULT_RENDERER_CLASSES = (
+    'rest_framework.renderers.JSONRenderer',
+)
+
+if DEBUG:  # remove browable api in prod
+    DEFAULT_RENDERER_CLASSES = DEFAULT_RENDERER_CLASSES + (
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    )
+
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
 
     # https://www.django-rest-framework.org/api-guide/renderers/#api-reference
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-    ),
+    'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES,
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
     # https://www.django-rest-framework.org/api-guide/parsers/#api-reference
     'DEFAULT_PARSER_CLASSES': (
@@ -332,6 +361,10 @@ SANDBOX_POLL_SPECS_EVERY = 60 * 10
 # Default sandbox url
 SANDBOX_URL = os.getenv('SANDBOX_URL', 'http://localhost:7000/')
 ################################################################################
+
+# Resources
+RESOURCES_ROOT = os.path.join(BASE_DIR, "resources")
+
 
 if APPS_DIR not in sys.path:  # pragma: no cover
     sys.path.append(APPS_DIR)

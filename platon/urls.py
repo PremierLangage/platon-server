@@ -14,12 +14,18 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+import debug_toolbar
+
+from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
+
 from rest_framework import permissions
+from .views import api_root
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -36,11 +42,12 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('api/v1/admin/', admin.site.urls),
 
+    path('api/v1/', api_root),
     path('api/v1/', include('pl_auth.urls', namespace='pl_auth')),
     path('api/v1/', include('pl_users.urls', namespace='pl_users')),
     path('api/v1/', include('pl_lti.urls', namespace='pl_lti')),
     path('api/v1/', include('pl_sandbox.urls', namespace='pl_sandbox')),
-    
+
     url(
         r'^api/v1/docs/swagger(?P<format>\.json|\.yaml)$',
         schema_view.without_ui(cache_timeout=0),
@@ -57,3 +64,6 @@ urlpatterns = [
         name='schema-redoc'
     ),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [path('api/v1/__debug__/', include(debug_toolbar.urls))]
