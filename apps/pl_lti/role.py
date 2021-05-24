@@ -30,15 +30,6 @@ class Role(Enum):
     ADMINISTRATOR = 6
     TEACHING_ASSISTANT = 7
 
-    TEACHING_STAFF_ROLES = [
-        MENTOR,
-        MANAGER,
-        INSTRUCTOR,
-        ADMINISTRATOR,
-        CONTENT_DEVELOPER,
-        TEACHING_ASSISTANT,
-    ]
-
     class Label:
         LEARNER = 'Learner'
         INSTRUCTOR = 'Instructor'
@@ -109,3 +100,13 @@ class Role(Enum):
             if name in roles:
                 return role
         return Role.LEARNER
+
+
+TEACHING_STAFF_ROLES = [
+    Role.MENTOR,
+    Role.MANAGER,
+    Role.INSTRUCTOR,
+    Role.ADMINISTRATOR,
+    Role.CONTENT_DEVELOPER,
+    Role.TEACHING_ASSISTANT,
+]

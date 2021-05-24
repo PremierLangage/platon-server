@@ -76,36 +76,41 @@ def create_lti_user(lms: LMS, params: LTIParams) -> User:
     last_name = params.lis_person_name_family
     first_name = params.lis_person_name_given
 
-    username = (first_name[0].lower() + last_name.lower())
-
+    username = params.ext_user_username
+    
     try:
-        lti = LTIUser.objects.get(lms=lms, lms_user_id=user_id)
+        lti_user = LTIUser.objects.get(lms=lms, lms_user_id=user_id)
         logger.info(f'LTI: Found an existing user for {username}')
     except ObjectDoesNotExist:
         logger.info(f'LTI: Creating a new user for {username}')
-        i = 0
+        i = -1
         UserModel = get_user_model()
         while True:
             try:
-                user = UserModel.objects.create_user(
-                    username=username + ("" if not i else str(i))
-                )
+                if i == -1: # attempt first with ext_user_username
+                    user = UserModel.objects.create_user(username=username)
+                else:
+                    user = UserModel.objects.create_user(
+                        username=username + ("" if not i else str(i))
+                    )
             except IntegrityError:
+                username = (first_name[0].lower() + last_name.lower())
                 i += 1
                 continue
             break
-        lti = LTIUser.objects.create(
+
+        lti_user = LTIUser.objects.create(
             lms=lms,
             user=user,
             lms_user_id=user_id
         )
 
-    lti.user.email = email
-    lti.user.last_name = last_name
-    lti.user.first_name = first_name
-    lti.user.save()
+    lti_user.user.email = email
+    lti_user.user.last_name = last_name
+    lti_user.user.first_name = first_name
+    lti_user.user.save()
 
-    return lti.user
+    return lti_user.user
 
 
 def parse_lti_request(request) -> Tuple[LMS, LTIParams]:
