@@ -20,15 +20,15 @@ class ModelsTestCase(TestCase):
         self.user.is_staff = False
         self.user.is_superuser = False
         self.user.profile.role = Role.LEARNER
-        self.assertFalse(self.user.profile.is_admin())
+        self.assertFalse(self.user.profile.is_admin)
 
         self.user.profile.role = Role.ADMINISTRATOR
-        self.assertTrue(self.user.profile.is_admin())
+        self.assertTrue(self.user.profile.is_admin)
 
         self.user.profile.role = Role.LEARNER
         self.user.is_superuser = True
-        self.assertTrue(self.user.profile.is_admin())
+        self.assertTrue(self.user.profile.is_admin)
 
         self.user.is_superuser = False
         self.user.is_staff = True
-        self.assertTrue(self.user.profile.is_admin())
+        self.assertTrue(self.user.profile.is_admin)

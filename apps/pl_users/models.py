@@ -2,12 +2,11 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.http.request import HttpRequest
 
 from enumfields import EnumIntegerField
 
 from pl_lti.params import LTIParams
-from pl_lti.role import Role
+from pl_lti.role import Role, TEACHING_STAFF_ROLES
 from pl_lti.signals import connect_from_lti_role
 
 
@@ -18,6 +17,7 @@ class Profile(models.Model):
     role: Role = EnumIntegerField(Role, default=Role.LEARNER)
 
 
+    @property
     def is_admin(self):
         """
         Returns whether the user is an administrator
@@ -25,10 +25,10 @@ class Profile(models.Model):
         """
         return self.user.is_superuser or self.user.is_staff or self.role == Role.ADMINISTRATOR
 
-
+    @property
     def is_teacher(self):
         """Returns whether the user is a teacher"""
-        return self.role in Role.TEACHING_STAFF_ROLES
+        return self.role in TEACHING_STAFF_ROLES
 
     def save(self, *args, **kwargs):
         """Saves the profile to the database"""
@@ -38,9 +38,8 @@ class Profile(models.Model):
         if self.pk is None:
             p = Profile.objects.filter(user=self.user)
             p.delete()
-            super(Profile, self).save(*args, **kwargs)
-        else:
-            super(Profile, self).save(*args, **kwargs)
+
+        super(Profile, self).save(*args, **kwargs)
 
 
     def __str__(self):
@@ -48,7 +47,7 @@ class Profile(models.Model):
 
 
 @receiver(post_save, sender=User)
-def create_or_update_user_profile(sender, instance: User, created, **kwargs):
+def create_or_update_user_profile(sender, instance, created, **kwargs):
     """When a new user is saved, create or save it's corresponding profile."""
     if created:
         Profile.objects.create(user=instance)
@@ -57,7 +56,7 @@ def create_or_update_user_profile(sender, instance: User, created, **kwargs):
 
 
 @receiver(connect_from_lti_role)
-def update_user_profile_from_lti_role(sender, request: HttpRequest, **kwargs):
+def update_user_profile_from_lti_role(sender, request, **kwargs):
     """
     When a user join platon from a LMS using lti protocol,
     update it's profile according to the lti params
