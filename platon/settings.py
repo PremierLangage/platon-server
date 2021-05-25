@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import sys
+import hashlib
 import logging
 from datetime import timedelta
 
@@ -128,6 +129,18 @@ TEMPLATES = [
     },
 ]
 
+# Email
+# Used by mail_admins log handler,
+# set ENABLE_MAIL_ADMINS to True to use it (DEBUG should also be set to False)
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+SERVER_EMAIL = 'root@localhost'
+ADMINS = []
+# Write email in console instead of sending it if DEBUG is True
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
 # Logging definition
 LOGGING = {
     'version':                  1,
@@ -158,6 +171,13 @@ LOGGING = {
             'class':     'logging.StreamHandler',
             'formatter': 'simple'
         },
+        'syslog': {
+            'level': 'INFO',
+            'class': 'logging.handlers.SysLogHandler',
+            'facility': 'local7',
+            'address': '/dev/log' if os.path.exists('/dev/log') else '/var/run/syslog',
+            'formatter': 'verbose'
+        },
         'mail_admins': {
             'level':        'ERROR',
             'class':        'django.utils.log.AdminEmailHandler',
@@ -167,17 +187,13 @@ LOGGING = {
     },
     'loggers':                  {
         '': {
-            'handlers': ['console'],
+            'handlers': ['console', 'mail_admins'],
             'level':    'INFO',
         },
         'django.request': {
             'handlers': ['console', 'mail_admins'],
             'level':    'ERROR',
-        },
-        # 'django.db.backends': {
-        #    'level': 'DEBUG',
-        #    'handlers': ['console'],
-        # }
+        }
     },
 }
 
@@ -207,10 +223,17 @@ DATABASES['default'].update(db_from_env)
 
 # Authentication
 
+LOGIN_URL = "/login"
+LOGIN_REDIRECT_URL = '/'
+
+# https://docs.djangoproject.com/fr/3.2/topics/auth/customizing/#substituting-a-custom-user-model
+AUTH_USER_MODEL = 'pl_users.User'
+
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'pl_lti.backends.LTIAuthBackend',
 )
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -319,6 +342,9 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "shared/static"),
 ]
 
+MEDIA_ROOT = os.path.abspath(os.path.join(BASE_DIR, 'media'))
+MEDIA_URL = '/media/'
+
 ################################################################################
 #                             Third-Party's Settings                           #
 ################################################################################
@@ -364,6 +390,24 @@ SANDBOX_URL = os.getenv('SANDBOX_URL', 'http://localhost:7000/')
 # Resources
 RESOURCES_ROOT = os.path.join(BASE_DIR, "resources")
 
+# Identicon (default avatar)
+IDENTICON_OPTIONS = {
+    'background':    'rgb(224,224,224)',
+    'foreground':    [
+        'rgb(45,79,255)',
+        'rgb(254,180,44)',
+        'rgb(226,121,234)',
+        'rgb(30,179,253)',
+        'rgb(232,77,65)',
+        'rgb(49,203,115)',
+    ],
+    'row':           15,
+    'col':           15,
+    'padding':       (20, 20, 20, 20),
+    'size':          (300, 300),
+    'digest':        hashlib.sha1,
+    'output_format': 'png',
+}
 
 if APPS_DIR not in sys.path:  # pragma: no cover
     sys.path.append(APPS_DIR)

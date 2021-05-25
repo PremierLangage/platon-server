@@ -13,18 +13,15 @@ logger = logging.getLogger(__name__)
 def on_create_defaults(sender, config, **kwargs):
     logger.info('creating pl_lti defaults')
     if 'lms' in config:
-        logger.info('creating default LMS')
-        for item in config['lms']:
-            try:
-                LMS.objects.create(
-                    guid=item['guid'],
-                    name=item['name'],
-                    url=item['url'],
-                    outcome_url=item['outcome_url'],
-                    client_id=item['client_id'],
-                    client_secret=item['client_secret']
-                )
-                logger.info(f"LMS {item['name']} created")
-            except IntegrityError:
-                logger.warning(f"LMS '{item['name']}' already created")
-                pass
+        data = [
+            LMS(
+                guid=item['guid'],
+                name=item['name'],
+                url=item['url'],
+                outcome_url=item['outcome_url'],
+                client_id=item['client_id'],
+                client_secret=item['client_secret']
+            )
+            for item in config['lms']
+        ]        
+        LMS.objects.bulk_create(data, ignore_conflicts=True)

@@ -1,11 +1,10 @@
-from django.contrib.auth.models import User
-from pl_core.errors import RestError
-from rest_framework import generics, mixins, status
-from rest_framework.request import Request
+from django.contrib.auth import get_user_model
+from rest_framework import generics, mixins
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .serializers import UserSerializer
+
+User = get_user_model()
 
 
 class UserListView(mixins.ListModelMixin, generics.GenericAPIView):

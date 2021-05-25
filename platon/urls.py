@@ -16,12 +16,11 @@ Including another URLconf
 """
 
 from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
 from .views import api_root
-
-
 
 urlpatterns = [
     path('api/v1/admin/', admin.site.urls),
@@ -37,3 +36,5 @@ urlpatterns = [
 if settings.DEBUG and not settings.TESTING:
     import debug_toolbar
     urlpatterns += [path('api/v1/__debug__/', include(debug_toolbar.urls))]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

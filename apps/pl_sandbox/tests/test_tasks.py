@@ -5,15 +5,15 @@ import dgeq
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.conf import settings
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TransactionTestCase
-
 from pl_sandbox import tasks
 from pl_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs, Usage
 from platon.routing import application
 
-
+User = get_user_model()
 SANDBOX_URL = settings.SANDBOX_URL
 
 

@@ -15,7 +15,7 @@ from typing import List, Literal, Optional, Tuple, TypedDict, Union
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http.response import HttpResponse
@@ -24,6 +24,7 @@ from git.objects import Blob, Tree
 from rest_framework.request import Request
 from rest_framework.reverse import reverse
 
+User = get_user_model()
 RESOURCES_ROOT = settings.RESOURCES_ROOT
 
 

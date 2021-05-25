@@ -1,4 +1,5 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.db import models
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
@@ -6,6 +7,8 @@ from pl_resources.enums import ResourceStatus
 from pl_resources.files import Directory
 
 from . import models
+
+User = get_user_model()
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -184,11 +187,10 @@ class InvitationCreateSerializer(serializers.ModelSerializer):
         if value.pk == request.user.id:
             raise serializers.ValidationError('Should be different to "inviter".')
 
-        profile = value.profile
-        if profile.is_admin:
+        if value.is_admin:
             raise serializers.ValidationError('Should not be an admin.')
 
-        if not profile.is_teacher:
+        if not value.is_editor:
             raise serializers.ValidationError('Must be a teacher.')
 
         query = models.Invitation.objects.filter(

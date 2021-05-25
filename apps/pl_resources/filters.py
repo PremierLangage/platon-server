@@ -8,11 +8,13 @@
 #
 import datetime
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django_filters import rest_framework as filters
 
 from .models import Circle, Resource
+
+User = get_user_model()
 
 
 class CircleFilter(filters.FilterSet):
@@ -32,11 +34,11 @@ class CircleFilter(filters.FilterSet):
         return queryset.filter(name__icontains=value)
 
     def filter_member(self, queryset, name, value):
-        user = User.objects.select_related('profile').filter(username=value).first()
+        user = User.objects.filter(username=value).first()
         if not user:
             return queryset.none()
 
-        if user.profile.is_admin:
+        if user.is_admin:
             return queryset
 
         return queryset.filter(members__user__username=value)

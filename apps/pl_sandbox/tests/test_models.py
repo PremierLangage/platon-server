@@ -2,16 +2,14 @@ import os
 
 from channels.db import database_sync_to_async
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.test import TransactionTestCase
 from django_celery_beat.models import PeriodicTask
-
 from pl_sandbox.exceptions import SandboxDisabledError
 from pl_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs, Usage
 
-
+User = get_user_model()
 SANDBOX_URL = settings.SANDBOX_URL
-
 TEST_DATA_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data")
 
 

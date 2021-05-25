@@ -1,11 +1,13 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
+User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    role = serializers.CharField(source='profile.role', read_only=True)
-    is_admin = serializers.BooleanField(source='profile.is_admin', read_only=True)
-
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'role', 'is_admin')
+        fields = (
+            'id', 'username', 'email', 'first_name',
+            'last_name', 'is_editor', 'is_admin', 'avatar'
+        )
