@@ -15,6 +15,7 @@ django-elasticsearch-dsl~=7.1.4
 django-elasticsearch-dsl-drf~=0.22
 django-debug-toolbar~=3.2.1
 djangorestframework~=3.12.4
+djangorestframework-camel-case~=1.2.0
 djangorestframework-simplejwt~=4.6.0
 drf-yasg~=1.20.0
 gitpython~=3.1.15

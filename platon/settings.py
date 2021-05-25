@@ -255,12 +255,16 @@ SIMPLE_JWT = {
 # https://www.django-rest-framework.org
 
 DEFAULT_RENDERER_CLASSES = (
-    'rest_framework.renderers.JSONRenderer',
+    #'rest_framework.renderers.JSONRenderer',
+    'djangorestframework_camel_case.render.CamelCaseJSONRenderer',
+
 )
 
 if DEBUG:  # remove browable api in prod
     DEFAULT_RENDERER_CLASSES = DEFAULT_RENDERER_CLASSES + (
-        'rest_framework.renderers.BrowsableAPIRenderer',
+        #'rest_framework.renderers.BrowsableAPIRenderer',
+        'djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer',
+
     )
 
 REST_FRAMEWORK = {
@@ -272,9 +276,12 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
     # https://www.django-rest-framework.org/api-guide/parsers/#api-reference
     'DEFAULT_PARSER_CLASSES': (
-        'rest_framework.parsers.JSONParser',
-        'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser',
+        # 'rest_framework.parsers.JSONParser',
+        # 'rest_framework.parsers.FormParser',
+        # 'rest_framework.parsers.MultiPartParser',
+        'djangorestframework_camel_case.parser.CamelCaseFormParser',
+        'djangorestframework_camel_case.parser.CamelCaseMultiPartParser',
+        'djangorestframework_camel_case.parser.CamelCaseJSONParser',
     ),
     # https://www.django-rest-framework.org/api-guide/authentication/#api-reference
     'DEFAULT_AUTHENTICATION_CLASSES': (
