@@ -24,7 +24,7 @@ class SandboxViewTestCase(TransactionTestCase):
         self.client.force_login(self.user)
 
     def test_get_single(self):
-        response = self.client.get(reverse("pl_sandbox:sandbox", args=(self.sandbox.pk,)))
+        response = self.client.get(reverse("pl_sandbox:sandbox-detail", args=(self.sandbox.pk,)))
         expected = {
             "status": True,
             "row":    dgeq.serialize(self.sandbox),
@@ -41,7 +41,7 @@ class SandboxViewTestCase(TransactionTestCase):
             name="Dummy 2", url="http://localhost:7778", enabled=False
         )
         response = self.client.get(
-            reverse("pl_sandbox:sandbox_collection"), data={"enabled": "1"}
+            reverse("pl_sandbox:sandbox-list"), data={"enabled": "1"}
         )
         expected = {
             "status": True,
@@ -56,7 +56,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
 
     def test_get_404(self):
-        response = self.client.get(reverse("pl_sandbox:sandbox", args=(9999,)))
+        response = self.client.get(reverse("pl_sandbox:sandbox-detail", args=(9999,)))
         expected = {
             "status":  False,
             "message": "Sandbox matching query does not exist.",
@@ -67,7 +67,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
 
     def test_get_403(self):
-        response = Client().get(reverse("pl_sandbox:sandbox", args=(self.sandbox.pk,)))
+        response = Client().get(reverse("pl_sandbox:sandbox-detail", args=(self.sandbox.pk,)))
         expected = {
             "status":  False,
             "message": "Missing view permission on Sandbox",
@@ -84,7 +84,7 @@ class SandboxViewTestCase(TransactionTestCase):
             "enabled": False
         }
         response = self.client.post(
-            reverse("pl_sandbox:sandbox_collection"), data=data,
+            reverse("pl_sandbox:sandbox-list"), data=data,
             content_type="application/json"
         )
         expected = {
@@ -97,7 +97,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_post_400_invalid_json(self):
         response = self.client.post(
-            reverse("pl_sandbox:sandbox_collection"), data="{fhze}",
+            reverse("pl_sandbox:sandbox-list"), data="{fhze}",
             content_type="application/json"
         )
         expected = {
@@ -116,7 +116,7 @@ class SandboxViewTestCase(TransactionTestCase):
             "url":  "http://localhost:7777",
         }
         response = self.client.post(
-            reverse("pl_sandbox:sandbox_collection"), data=data,
+            reverse("pl_sandbox:sandbox-list"), data=data,
             content_type="application/json"
         )
         expected = {
@@ -130,7 +130,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_post_403(self):
         response = Client().post(
-            reverse("pl_sandbox:sandbox_collection"), data={},
+            reverse("pl_sandbox:sandbox-list"), data={},
             content_type="application/json"
         )
         expected = {
@@ -144,7 +144,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_post_404_single(self):
         response = Client().post(
-            reverse("pl_sandbox:sandbox", args=(1,)), data={},
+            reverse("pl_sandbox:sandbox-detail", args=(1,)), data={},
             content_type="application/json"
         )
         expected = {
@@ -165,13 +165,13 @@ class SandboxViewTestCase(TransactionTestCase):
             "row":    dgeq.serialize(sandbox_dummy1),
         }
 
-        response = self.client.delete(reverse("pl_sandbox:sandbox", args=(sandbox_dummy1.pk,)))
+        response = self.client.delete(reverse("pl_sandbox:sandbox-detail", args=(sandbox_dummy1.pk,)))
         self.assertEqual(200, response.status_code)
         self.assertDictEqual(expected, response.json())
 
 
     def test_delete_404_sandbox_not_found(self):
-        response = self.client.delete(reverse("pl_sandbox:sandbox", args=(9999,)))
+        response = self.client.delete(reverse("pl_sandbox:sandbox-detail", args=(9999,)))
         expected = {
             "status":  False,
             "message": "Sandbox matching query does not exist.",
@@ -182,7 +182,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
 
     def test_delete_404_collection(self):
-        response = self.client.delete(reverse("pl_sandbox:sandbox_collection"))
+        response = self.client.delete(reverse("pl_sandbox:sandbox-list"))
         expected = {
             "status":  False,
             "message": "Page not found",
@@ -193,7 +193,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
 
     def test_delete_403(self):
-        response = Client().delete(reverse("pl_sandbox:sandbox", args=(1,)))
+        response = Client().delete(reverse("pl_sandbox:sandbox-detail", args=(1,)))
         expected = {
             "status":  False,
             "message": "Missing delete permission on Sandbox",
@@ -209,7 +209,7 @@ class SandboxViewTestCase(TransactionTestCase):
         )
         data = {"name": "Modified"}
         response = self.client.patch(
-            reverse("pl_sandbox:sandbox", args=(sandbox_dummy1.pk,)), data=data,
+            reverse("pl_sandbox:sandbox-detail", args=(sandbox_dummy1.pk,)), data=data,
             content_type="application/json"
         )
         sandbox_dummy1.refresh_from_db()
@@ -224,7 +224,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_patch_404_collection(self):
         response = self.client.patch(
-            reverse("pl_sandbox:sandbox_collection"), data={},
+            reverse("pl_sandbox:sandbox-list"), data={},
             content_type="application/json"
         )
         expected = {
@@ -238,7 +238,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_patch_404_sandbox_not_found(self):
         response = self.client.patch(
-            reverse("pl_sandbox:sandbox", args=(9999,)), data={},
+            reverse("pl_sandbox:sandbox-detail", args=(9999,)), data={},
             content_type="application/json"
         )
         expected = {
@@ -252,7 +252,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_patch_400_invalid_json(self):
         response = self.client.patch(
-            reverse("pl_sandbox:sandbox", args=(self.sandbox.pk,)), data="{fhze}",
+            reverse("pl_sandbox:sandbox-detail", args=(self.sandbox.pk,)), data="{fhze}",
             content_type="application/json"
         )
         expected = {
@@ -271,7 +271,7 @@ class SandboxViewTestCase(TransactionTestCase):
         )
         data = {"unknown": "unknown"}
         response = self.client.patch(
-            reverse("pl_sandbox:sandbox", args=(sandbox_dummy1.pk,)), data=data,
+            reverse("pl_sandbox:sandbox-detail", args=(sandbox_dummy1.pk,)), data=data,
             content_type="application/json"
         )
         expected = {
@@ -285,7 +285,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_patch_403(self):
         response = Client().patch(
-            reverse("pl_sandbox:sandbox", args=(1,)), data={},
+            reverse("pl_sandbox:sandbox-detail", args=(1,)), data={},
             content_type="application/json"
         )
         expected = {
@@ -307,7 +307,7 @@ class SandboxViewTestCase(TransactionTestCase):
             "enabled": False
         }
         response = self.client.put(
-            reverse("pl_sandbox:sandbox", args=(sandbox_dummy1.pk,)), data=data,
+            reverse("pl_sandbox:sandbox-detail", args=(sandbox_dummy1.pk,)), data=data,
             content_type="application/json"
         )
         sandbox_dummy1.refresh_from_db()
@@ -321,7 +321,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_put_404_collection(self):
         response = self.client.put(
-            reverse("pl_sandbox:sandbox_collection"), data={},
+            reverse("pl_sandbox:sandbox-list"), data={},
             content_type="application/json"
         )
         expected = {
@@ -335,7 +335,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_put_404_sandbox_not_found(self):
         response = self.client.put(
-            reverse("pl_sandbox:sandbox", args=(9999,)), data={},
+            reverse("pl_sandbox:sandbox-detail", args=(9999,)), data={},
             content_type="application/json"
         )
         expected = {
@@ -349,7 +349,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_put_400_invalid_json(self):
         response = self.client.put(
-            reverse("pl_sandbox:sandbox", args=(self.sandbox.pk,)), data="{fhze}",
+            reverse("pl_sandbox:sandbox-detail", args=(self.sandbox.pk,)), data="{fhze}",
             content_type="application/json"
         )
         expected = {
@@ -371,7 +371,7 @@ class SandboxViewTestCase(TransactionTestCase):
             "enabled": False
         }
         response = self.client.put(
-            reverse("pl_sandbox:sandbox", args=(sandbox_dummy1.pk,)), data=data,
+            reverse("pl_sandbox:sandbox-detail", args=(sandbox_dummy1.pk,)), data=data,
             content_type="application/json"
         )
         expected = {
@@ -385,7 +385,7 @@ class SandboxViewTestCase(TransactionTestCase):
 
     def test_put_403(self):
         response = Client().put(
-            reverse("pl_sandbox:sandbox", args=(1,)), data={},
+            reverse("pl_sandbox:sandbox-detail", args=(1,)), data={},
             content_type="application/json"
         )
         expected = {
@@ -409,7 +409,7 @@ class SandboxSpecsViewTestCase(TransactionTestCase):
 
 
     def test_get_single(self):
-        response = self.client.get(reverse("pl_sandbox:sandbox_specs", args=(self.specs.pk,)))
+        response = self.client.get(reverse("pl_sandbox:sandbox-specs-detail", args=(self.specs.pk,)))
         expected = {
             "status": True,
             "row":    dgeq.serialize(self.specs),
@@ -426,7 +426,7 @@ class SandboxSpecsViewTestCase(TransactionTestCase):
             name="Dummy 2", url="http://localhost:7778", enabled=False
         )
         response = self.client.get(
-            reverse("pl_sandbox:sandbox_specs_collection"),
+            reverse("pl_sandbox:sandbox-specs-list"),
             data={"sandbox": f"]{sandbox_dummy1.pk}"}
         )
         expected = {
@@ -442,7 +442,7 @@ class SandboxSpecsViewTestCase(TransactionTestCase):
 
 
     def test_get_404(self):
-        response = self.client.get(reverse("pl_sandbox:sandbox_specs", args=(9999,)))
+        response = self.client.get(reverse("pl_sandbox:sandbox-specs-detail", args=(9999,)))
         expected = {
             "status":  False,
             "message": "SandboxSpecs matching query does not exist.",
@@ -453,7 +453,7 @@ class SandboxSpecsViewTestCase(TransactionTestCase):
 
 
     def test_get_403(self):
-        response = Client().get(reverse("pl_sandbox:sandbox_specs", args=(self.specs.pk,)))
+        response = Client().get(reverse("pl_sandbox:sandbox-specs-detail", args=(self.specs.pk,)))
         expected = {
             "status":  False,
             "message": "Missing view permission on SandboxSpecs",
@@ -475,7 +475,7 @@ class ContainerSpecsViewTestCase(TransactionTestCase):
 
 
     def test_get_single(self):
-        response = self.client.get(reverse("pl_sandbox:container_specs", args=(self.specs.pk,)))
+        response = self.client.get(reverse("pl_sandbox:container-specs-detail", args=(self.specs.pk,)))
         expected = {
             "status": True,
             "row":    dgeq.serialize(self.specs),
@@ -492,7 +492,7 @@ class ContainerSpecsViewTestCase(TransactionTestCase):
             name="Dummy 2", url="http://localhost:7778", enabled=False
         )
         response = self.client.get(
-            reverse("pl_sandbox:container_specs_collection"),
+            reverse("pl_sandbox:container-specs-list"),
             data={"sandbox": f"]{sandbox_dummy1.pk}"}
         )
         expected = {
@@ -508,7 +508,7 @@ class ContainerSpecsViewTestCase(TransactionTestCase):
 
 
     def test_get_404(self):
-        response = self.client.get(reverse("pl_sandbox:container_specs", args=(9999,)))
+        response = self.client.get(reverse("pl_sandbox:container-specs-detail", args=(9999,)))
         expected = {
             "status":  False,
             "message": "ContainerSpecs matching query does not exist.",
@@ -519,7 +519,7 @@ class ContainerSpecsViewTestCase(TransactionTestCase):
 
 
     def test_get_403(self):
-        response = Client().get(reverse("pl_sandbox:container_specs", args=(self.specs.pk,)))
+        response = Client().get(reverse("pl_sandbox:container-specs-detail", args=(self.specs.pk,)))
         expected = {
             "status":  False,
             "message": "Missing view permission on ContainerSpecs",
@@ -541,7 +541,7 @@ class UsageViewTestCase(TransactionTestCase):
 
 
     def test_get_single(self):
-        response = self.client.get(reverse("pl_sandbox:usage", args=(self.usage.pk,)))
+        response = self.client.get(reverse("pl_sandbox:sandbox-usages-detail", args=(self.usage.pk,)))
         # Encode and decode the expected output so that the date format match
         expected = json.loads(DjangoJSONEncoder().encode({
             "status": True,
@@ -556,7 +556,7 @@ class UsageViewTestCase(TransactionTestCase):
         usage1 = async_to_sync(self.sandbox.poll_usage)()
         usage2 = async_to_sync(self.sandbox.poll_usage)()
         response = self.client.get(
-            reverse("pl_sandbox:usage_collection"),
+            reverse("pl_sandbox:sandbox-usages-list"),
             data={"id": f"[{usage1.pk}"}
         )
         # Encode and decode the expected output so that the date format match
@@ -573,7 +573,7 @@ class UsageViewTestCase(TransactionTestCase):
     """
 
     def test_get_404(self):
-        response = self.client.get(reverse("pl_sandbox:usage", args=(9999,)))
+        response = self.client.get(reverse("pl_sandbox:sandbox-usages-detail", args=(9999,)))
         expected = {
             "status":  False,
             "message": "Usage matching query does not exist.",
@@ -584,7 +584,7 @@ class UsageViewTestCase(TransactionTestCase):
 
 
     def test_get_403(self):
-        response = Client().get(reverse("pl_sandbox:usage", args=(self.usage.pk,)))
+        response = Client().get(reverse("pl_sandbox:sandbox-usages-detail", args=(self.usage.pk,)))
         expected = {
             "status":  False,
             "message": "Missing view permission on Usage",
@@ -609,7 +609,7 @@ class ResponseViewTestCase(TransactionTestCase):
     """ TODO
     def test_get_single(self):
         response = self.client.get(
-            reverse("pl_sandbox:response", args=(self.response.pk,))
+            reverse("pl_sandbox:response-detail", args=(self.response.pk,))
         )
         expected = {
             "status": True,
@@ -627,7 +627,7 @@ class ResponseViewTestCase(TransactionTestCase):
             self.sandbox.execute)(self.user, {"commands": ["true"]}
         ).response
         response = self.client.get(
-            reverse("pl_sandbox:response_collection"),
+            reverse("pl_sandbox:response-list"),
             data={"id": f"[{response1.pk}"}
         )
         expected = {
@@ -642,7 +642,7 @@ class ResponseViewTestCase(TransactionTestCase):
     """
 
     def test_get_404(self):
-        response = self.client.get(reverse("pl_sandbox:response", args=(9999,)))
+        response = self.client.get(reverse("pl_sandbox:response-detail", args=(9999,)))
         expected = {
             "status":  False,
             "message": "Response matching query does not exist.",
@@ -653,7 +653,7 @@ class ResponseViewTestCase(TransactionTestCase):
 
 
     def test_get_403(self):
-        response = Client().get(reverse("pl_sandbox:response", args=(self.response.pk,)))
+        response = Client().get(reverse("pl_sandbox:response-detail", args=(self.response.pk,)))
         expected = {
             "status":  False,
             "message": "Missing view permission on Response",
@@ -678,7 +678,7 @@ class CommandResultViewTestCase(TransactionTestCase):
 
     def test_get_single(self):
         command_result = self.client.get(
-            reverse("pl_sandbox:command_result", args=(self.command_result.pk,))
+            reverse("pl_sandbox:command-results-detail", args=(self.command_result.pk,))
         )
         expected = {
             "status": True,
@@ -693,7 +693,7 @@ class CommandResultViewTestCase(TransactionTestCase):
             self.user, {"commands": ["true", "true"]}
         ).response.execution.all()
         command_result = self.client.get(
-            reverse("pl_sandbox:command_result_collection"),
+            reverse("pl_sandbox:command-results-list"),
             data={"response": f"[{commands[0].response.pk}"}
         )
         expected = {
@@ -708,7 +708,7 @@ class CommandResultViewTestCase(TransactionTestCase):
     """
 
     def test_get_404(self):
-        command_result = self.client.get(reverse("pl_sandbox:command_result", args=(9999,)))
+        command_result = self.client.get(reverse("pl_sandbox:command-results-detail", args=(9999,)))
         expected = {
             "status":  False,
             "message": "CommandResult matching query does not exist.",
@@ -720,7 +720,7 @@ class CommandResultViewTestCase(TransactionTestCase):
 
     def test_get_403(self):
         command = Client().get(
-            reverse("pl_sandbox:command_result", args=(self.command_result.pk,))
+            reverse("pl_sandbox:command-results-detail", args=(self.command_result.pk,))
         )
         expected = {
             "status":  False,
@@ -743,7 +743,7 @@ class RequestViewTestCase(TransactionTestCase):
 
 
     def test_get_single(self):
-        response = self.client.get(reverse("pl_sandbox:request", args=(self.request.pk,)))
+        response = self.client.get(reverse("pl_sandbox:request-detail", args=(self.request.pk,)))
         # Encode and decode the expected output so that the date format match
         expected = json.loads(DjangoJSONEncoder().encode({
             "status": True,
@@ -761,7 +761,7 @@ class RequestViewTestCase(TransactionTestCase):
             self.user, {"commands": ["true"]}
         )
         response = self.client.get(
-            reverse("pl_sandbox:request_collection"),
+            reverse("pl_sandbox:request-list"),
             data={"id": f"[{request1.pk}"}
         )
         # Encode and decode the expected output so that the date format match
@@ -778,7 +778,7 @@ class RequestViewTestCase(TransactionTestCase):
     """
 
     def test_get_404(self):
-        response = self.client.get(reverse("pl_sandbox:request", args=(9999,)))
+        response = self.client.get(reverse("pl_sandbox:request-detail", args=(9999,)))
         expected = {
             "status":  False,
             "message": "Request matching query does not exist.",
@@ -789,7 +789,7 @@ class RequestViewTestCase(TransactionTestCase):
 
 
     def test_get_403(self):
-        response = Client().get(reverse("pl_sandbox:request", args=(self.request.pk,)))
+        response = Client().get(reverse("pl_sandbox:request-detail", args=(self.request.pk,)))
         expected = {
             "status":  False,
             "message": "Missing view permission on Request",

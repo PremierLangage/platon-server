@@ -5,7 +5,7 @@ from pl_core.async_db import has_perm_async
 
 
 
-class UsageConsumer(AsyncWebsocketConsumer):
+class SandboxUsageConsumer(AsyncWebsocketConsumer):
     """Allow to automatically receive the last polled Sandbox's Usage."""
     
     sandbox_id: int

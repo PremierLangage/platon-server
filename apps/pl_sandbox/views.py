@@ -336,6 +336,50 @@ class SandboxSpecsView(AsyncView):
 
 
 
+class SandboxUsageView(AsyncView):
+    """Allow to get a single or a collection of `Usage`."""
+    
+    http_method_names = ['get']
+    
+    
+    async def get(self, request, pk: Optional[int] = None):
+        try:
+            if not await has_perm_async(request.user, "pl_sandbox.view_usage"):
+                raise PermissionDenied("Missing view permission on Usage")
+            
+            if pk is not None:
+                usage = await database_sync_to_async(Usage.objects.get)(pk=pk)
+                response = {
+                    "status": True,
+                    "row":    await database_sync_to_async(dgeq.serialize)(usage)
+                }
+            else:
+                query = dgeq.GenericQuery(
+                    Usage, request.GET, user=request.user, use_permissions=True
+                )
+                response = await database_sync_to_async(query.evaluate)()
+            status = 200
+        
+        except Usage.DoesNotExist as e:
+            response = {
+                "status":  False,
+                "message": str(e),
+                "code":    ErrorCode.from_exception(e).value
+            }
+            status = 404
+        
+        except PermissionDenied as e:
+            response = {
+                "status":  False,
+                "message": str(e),
+                "code":    ErrorCode.from_exception(e).value
+            }
+            status = 403
+        
+        return JsonResponse(response, status=status)
+
+
+
 class ContainerSpecsView(AsyncView):
     """Allow to get a single or a collection of `ContainerSpecs`."""
     
@@ -378,49 +422,6 @@ class ContainerSpecsView(AsyncView):
         
         return JsonResponse(response, status=status)
 
-
-
-class UsageView(AsyncView):
-    """Allow to get a single or a collection of `Usage`."""
-    
-    http_method_names = ['get']
-    
-    
-    async def get(self, request, pk: Optional[int] = None):
-        try:
-            if not await has_perm_async(request.user, "pl_sandbox.view_usage"):
-                raise PermissionDenied("Missing view permission on Usage")
-            
-            if pk is not None:
-                usage = await database_sync_to_async(Usage.objects.get)(pk=pk)
-                response = {
-                    "status": True,
-                    "row":    await database_sync_to_async(dgeq.serialize)(usage)
-                }
-            else:
-                query = dgeq.GenericQuery(
-                    Usage, request.GET, user=request.user, use_permissions=True
-                )
-                response = await database_sync_to_async(query.evaluate)()
-            status = 200
-        
-        except Usage.DoesNotExist as e:
-            response = {
-                "status":  False,
-                "message": str(e),
-                "code":    ErrorCode.from_exception(e).value
-            }
-            status = 404
-        
-        except PermissionDenied as e:
-            response = {
-                "status":  False,
-                "message": str(e),
-                "code":    ErrorCode.from_exception(e).value
-            }
-            status = 403
-        
-        return JsonResponse(response, status=status)
 
 
 

@@ -17,7 +17,7 @@ from django.utils.deprecation import MiddlewareMixin
 from pl_lti.utils import is_lti_request
 
 from .params import LTIParams
-from .signals import connect_from_lti_role
+from .signals import lti_request
 
 logger = logging.getLogger(__name__)
 
@@ -57,4 +57,4 @@ class LTIAuthMiddleware(MiddlewareMixin):
                 send_signal = True
         setattr(request, 'LTI', request.session.get('LTI', {}))
         if send_signal:
-            connect_from_lti_role.send(sender=self.__class__, request=request)
+            lti_request.send(sender=self.__class__, request=request)

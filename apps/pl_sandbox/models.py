@@ -479,27 +479,6 @@ class Response(models.Model):
 
 
 
-class CommandResult(models.Model):
-    """Represents the result of a single command in a `SandboxResponse`.
-    
-    Fields :
-    
-    * `response` (`SandboxResponse`) - Response this command is a part of.
-    * `command` (`str`) - The command executed.
-    * `exit_code` (`int`) - Exit code of the command.
-    * `stdout` (`str`) - Everything written on *stdout* by the command.
-    * `stderr` (`str`) - Everything written on *stderr* by the command.
-    * `time` (`float`) - Execution's time taken by the command in second.
-    """
-    response = models.ForeignKey(Response, related_name="execution", on_delete=models.CASCADE)
-    command = models.TextField()
-    exit_code = models.IntegerField()
-    stdout = models.TextField(default="")
-    stderr = models.TextField(default="")
-    time = models.FloatField()
-
-
-
 class Request(models.Model):
     """Represents an execution on a Sandbox.
     
@@ -534,3 +513,24 @@ class Request(models.Model):
         ordering = ['-date', 'sandbox']
         indexes = [models.Index(fields=['-date'])]
         get_latest_by = "date"
+
+
+
+class CommandResult(models.Model):
+    """Represents the result of a single command in a `SandboxResponse`.
+    
+    Fields :
+    
+    * `response` (`SandboxResponse`) - Response this command is a part of.
+    * `command` (`str`) - The command executed.
+    * `exit_code` (`int`) - Exit code of the command.
+    * `stdout` (`str`) - Everything written on *stdout* by the command.
+    * `stderr` (`str`) - Everything written on *stderr* by the command.
+    * `time` (`float`) - Execution's time taken by the command in second.
+    """
+    response = models.ForeignKey(Response, related_name="execution", on_delete=models.CASCADE)
+    command = models.TextField()
+    exit_code = models.IntegerField()
+    stdout = models.TextField(default="")
+    stderr = models.TextField(default="")
+    time = models.FloatField()
