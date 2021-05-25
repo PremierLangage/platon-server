@@ -16,17 +16,20 @@ from .models import Circle, Resource
 
 
 class CircleFilter(filters.FilterSet):
+    name = filters.CharFilter(label='Name', method='filter_name')
     member = filters.CharFilter(label='Member', method='filter_member')
     updated_at = filters.NumberFilter(label='Updated at', method='filter_updated_at')
 
     class Meta:
         model = Circle
         fields = {
-            'name': ['iexact', 'icontains'],
             'topics': ['exact'],
             'levels': ['exact'],
             'parent': ['exact'],
         }
+
+    def filter_name(self, queryset, name, value):
+        return queryset.filter(name__icontains=value)
 
     def filter_member(self, queryset, name, value):
         user = User.objects.select_related('profile').filter(username=value).first()
