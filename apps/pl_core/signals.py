@@ -9,4 +9,4 @@
 
 from django.dispatch import Signal
 
-lti_request = Signal(providing_args=["request"])
+create_defaults = Signal(providing_args=["config"])

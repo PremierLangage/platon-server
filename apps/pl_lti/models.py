@@ -63,8 +63,8 @@ class LTIUser(models.Model):
             Identifier of the user on the LMS
     """
 
-    user: User = models.ForeignKey(User, related_name="lti_users", on_delete=models.CASCADE)
     lms: LMS = models.ForeignKey(LMS, related_name="users", on_delete=models.CASCADE)
+    user: User = models.ForeignKey(User, related_name="lti_users", on_delete=models.CASCADE)
     lms_user_id: str = models.CharField(max_length=200)
 
     class Meta:

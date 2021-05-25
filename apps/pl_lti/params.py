@@ -81,6 +81,7 @@ LTI_MANDATORY = [
 class LTIParams:
     """Representation of a LTI request params.
     https://www.imsglobal.org/specs/ltiv1p0/implementation-guide
+    https://www.edu-apps.org/code.html
     """
 
     context_id: Optional[str] = None

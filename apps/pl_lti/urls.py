@@ -5,5 +5,5 @@ from . import views
 app_name = 'pl_lti'
 
 urlpatterns = [
-    path('info/', views.InfoView.as_view(), name='info'),
+    path('lti/info/', views.InfoView.as_view(), name='info'),
 ]

@@ -13,8 +13,6 @@ from typing import List
 
 from enumfields import Enum
 
-from .params import LTIParams
-
 
 @unique
 @total_ordering
@@ -29,15 +27,6 @@ class Role(Enum):
     MENTOR = 5
     ADMINISTRATOR = 6
     TEACHING_ASSISTANT = 7
-
-    TEACHING_STAFF_ROLES = [
-        MENTOR,
-        MANAGER,
-        INSTRUCTOR,
-        ADMINISTRATOR,
-        CONTENT_DEVELOPER,
-        TEACHING_ASSISTANT,
-    ]
 
     class Label:
         LEARNER = 'Learner'
@@ -109,3 +98,13 @@ class Role(Enum):
             if name in roles:
                 return role
         return Role.LEARNER
+
+
+TEACHING_STAFF_ROLES = [
+    Role.MENTOR,
+    Role.MANAGER,
+    Role.INSTRUCTOR,
+    Role.ADMINISTRATOR,
+    Role.CONTENT_DEVELOPER,
+    Role.TEACHING_ASSISTANT,
+]
