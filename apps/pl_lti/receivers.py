@@ -23,5 +23,5 @@ def on_create_defaults(sender, config, **kwargs):
                 client_secret=item['client_secret']
             )
             for item in config['lms']
-        ]        
+        ]
         LMS.objects.bulk_create(data, ignore_conflicts=True)
