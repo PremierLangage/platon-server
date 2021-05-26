@@ -92,17 +92,11 @@ def setup_celery_tasks(sender, *args, **kwargs):
 @receiver(create_defaults)
 def on_create_defaults(sender, config, **kwargs):
     logger.info('creating pl_sandbox defaults')
-    if 'sandboxes' in config:
-        logger.info('creating default sanboxes')
-        Sandbox = apps.get_model(app_label='pl_sandbox', model_name='Sandbox')
-        for item in config['sandboxes']:
-            try:
-                Sandbox.objects.create(
-                    name=item['name'],
-                    url=item['url'],
-                    enabled=item['enabled'],
-                )
-                logger.info(f"Sandbox {item['name']} created")
-            except IntegrityError:
-                logger.warning(f"Sandbox '{item['name']}' already created")
-                pass
+    Sandbox = apps.get_model(app_label='pl_sandbox', model_name='Sandbox')
+    sandbox, created = Sandbox.objects.get_or_create(
+        name="Default",
+        url=settings.SANDBOX_URL,
+        enabled=True
+    )
+    sandbox.url = settings.SANDBOX_URL
+    sandbox.save()

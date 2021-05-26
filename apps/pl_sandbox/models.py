@@ -8,7 +8,8 @@ from aiohttp import ClientError
 from channels.db import database_sync_to_async
 from dateutil.parser import isoparse
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import URLValidator
 from django.db import models
@@ -19,7 +20,7 @@ from sandbox_api import ASandbox
 
 from pl_sandbox.exceptions import SandboxDisabledError
 
-
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -31,16 +32,16 @@ class Sandbox(models.Model):
         max_length=2048, validators=[URLValidator(schemes=['http', 'https'])], unique=True
     )
     enabled = models.BooleanField()
-    
-    
+
+
     class Meta:
         verbose_name_plural = "Sandboxes"
-    
-    
+
+
     def __str__(self):
         return f"<Sandbox - {self.name} ({self.pk})>"
-    
-    
+
+
     @receiver(post_save, sender='pl_sandbox.Sandbox')
     def create_periodic_tasks(sender, instance, created, **kwargs):
         """Create a periodic tasks to poll specs and usage of this Sandbox."""
@@ -62,21 +63,21 @@ class Sandbox(models.Model):
                 name=f"sandbox_poll_specifications_{instance.pk}", interval=specs_schedule,
                 task='pl_sandbox.tasks.poll_specifications', args=json.dumps([instance.pk])
             )
-    
-    
+
+
     async def poll_specifications(self) -> Tuple['SandboxSpecs', 'ContainerSpecs']:
         """Poll the specifications of the sandbox's host and its containers.
-        
+
         The sandbox must be enabled, `SandboxDisabledError` will be raised
         otherwise."""
         if not self.enabled:
             raise SandboxDisabledError("Cannot poll specifications of a disabled sandbox")
-        
+
         async with ASandbox(self.url) as asandbox:
             raw_specs, libs = await asyncio.gather(asandbox.specifications(), asandbox.libraries())
-        
+
         host, container = raw_specs["host"], raw_specs["container"]
-        
+
         aw1 = database_sync_to_async(SandboxSpecs.objects.filter(sandbox=self).update)(
             polled=True, sandbox_version=host["sandbox_version"],
             docker_version=host["docker_version"], cpu_core=host["cpu"]["core"],
@@ -96,16 +97,16 @@ class Sandbox(models.Model):
             libraries=libs["libraries"], bin=libs["bin"]
         )
         await asyncio.gather(aw1, aw2)
-        
+
         host = await database_sync_to_async(SandboxSpecs.objects.get)(sandbox=self)
         container = await database_sync_to_async(ContainerSpecs.objects.get)(sandbox=self)
-        
+
         return host, container
-    
-    
+
+
     async def poll_usage(self) -> 'Usage':
         """Poll the current usage of the Sandbox.
-        
+
         If the sandbox is disabled, a `SandboxUsage` with its field `enabled`
         will be produced, all the other fields, with the exception of `sandbox`
         and `date` will be None."""
@@ -113,11 +114,11 @@ class Sandbox(models.Model):
             return await database_sync_to_async(Usage.objects.create)(
                 sandbox=self, enabled=False
             )
-        
+
         try:
             async with ASandbox(self.url) as asandbox:
                 raw = await asandbox.usage()
-            
+
             usage = await database_sync_to_async(Usage.objects.create)(
                 sandbox=self, cpu_usage=[raw["cpu"]["usage"]] + raw["cpu"]["usage_avg"],
                 cpu_freq=raw["cpu"]["frequency"], memory_ram=raw["memory"]["ram"],
@@ -134,21 +135,21 @@ class Sandbox(models.Model):
             usage = await database_sync_to_async(Usage.objects.create)(
                 sandbox=self, reached=False
             )
-        
+
         return usage
-    
-    
+
+
     async def execute(self, user: Union[AnonymousUser, User], config: Dict[str, Any],
                       environment: BinaryIO = None) -> 'Request':
         """Execute a request on the Sandbox based on `config` and
         `environment`.
-        
+
         `environment` can be an optional binary stream representing the tgz
         containing the environment.
-        
+
         `config` must be a dictionary containing information about the
          execution :
-         
+
          * Mandatory key :
             * `commands` - A list of bash command to be executed. A failing
                command (exit code different than 0) will stop the sandbox,
@@ -171,33 +172,33 @@ class Sandbox(models.Model):
                That expiration date will be sent in the response in the
                `expire` field (ISO 8601 format). If the field save is
                missing, it is assumed to be False.
-               
+
         The sandbox must be enabled, a failed SandboxExecution will be produced
         otherwise."""
         try:
             if not self.enabled:
                 raise SandboxDisabledError("Cannot execute on a disabled sandbox")
-            
+
             async with ASandbox(self.url) as asandbox:
                 r = await asandbox.execute(config, environment)
-            
+
             response = await database_sync_to_async(Response.objects.create)(
                 status=r["status"], total_time=r["total_time"], result=r.get("result", ""),
                 environment=r.get("environment", ""),
                 expire=isoparse(r["expire"]) if "expire" in r else None
             )
-            
+
             for e in r["execution"]:
                 await database_sync_to_async(CommandResult.objects.create)(
                     response=response, command=e["command"], exit_code=e["exit_code"],
                     stdout=e["stdout"], stderr=e["stderr"], time=e["time"]
                 )
-            
+
             request = await database_sync_to_async(Request.objects.create)(
                 sandbox=self, config=config, success=True, response=response,
                 user=user if user.is_authenticated else None
             )
-        
+
         except ClientError as e:   # pragma: no cover
             request = await database_sync_to_async(Request.objects.create)(
                 sandbox=self, config=config, success=False, traceback=traceback.format_exc(),
@@ -207,7 +208,7 @@ class Sandbox(models.Model):
                 f"Execution failed on sandbox {self}, see request of id '{request.pk}'",
                 exc_info=e
             )
-        
+
         except SandboxDisabledError:
             request = await database_sync_to_async(Request.objects.create)(
                 sandbox=self, config=config, success=False, traceback=traceback.format_exc(),
@@ -215,21 +216,21 @@ class Sandbox(models.Model):
             )
             logger.warning(f"Execution failed on sandbox {self} because it was disabled,"
                            f"see request of id '{request.pk}'")
-        
+
         return request
-    
-    
+
+
     async def retrieve(self, environment: str, file: str = None) -> Optional[BinaryIO]:
         """Download an environment of the Sandbox.
-        
+
         The sandbox must be enabled, `SandboxDisabledError` will be raised
         otherwise.
-        
+
         If `file` is given, it must be the path of a file inside the
         environment, only this file will be downloaded."""
         if not self.enabled:
             raise SandboxDisabledError("Cannot retrieve from a disabled sandbox")
-        
+
         async with ASandbox(self.url) as asandbox:
             return await asandbox.download(environment, file)
 
@@ -237,9 +238,9 @@ class Sandbox(models.Model):
 
 class SandboxSpecs(models.Model):
     """Contains the specifications of the computer hosting the Sandbox.
-    
+
     Fields :
-    
+
     * `sandbox` (`Sandbox`) - Sandbox these specifications corresponds to.
     * `polled` (`bool`) - Whether the specifications has been polled.
     * `sandbox_version` (`str`) - Version of the Sandbox.
@@ -252,7 +253,7 @@ class SandboxSpecs(models.Model):
     * `memory_swap` (`int`) - Total swap available on the host (in bytes).
     * `memory_storage` (`dict`) - Dictionary mapping host's mounted
        filesystems to their size (in bytes).
-    
+
     Every field but `sandbox` and `polled` will be None as long as `polled` is
     False."""
     sandbox = models.OneToOneField(
@@ -268,13 +269,13 @@ class SandboxSpecs(models.Model):
     memory_ram = models.BigIntegerField(null=True, blank=True, default=None)
     memory_swap = models.BigIntegerField(null=True, blank=True, default=None)
     memory_storage = models.JSONField(null=True, blank=True, default=None)
-    
-    
+
+
     class Meta:
         verbose_name = "Sandbox Specifications"
         verbose_name_plural = "Sandbox Specifications"
-    
-    
+
+
     @receiver(post_save, sender=Sandbox)
     def create(sender, instance, created, **kwargs):
         """When a new Sandbox is created, create the corresponding
@@ -286,11 +287,11 @@ class SandboxSpecs(models.Model):
 
 class ContainerSpecs(models.Model):
     """Contains the specifications used by the container on the Sandbox.
-    
+
     Contains the specifications of the computer hosting the Sandbox.
 
     Fields :
-    
+
     * `sandbox` (`Sandbox`) - Sandbox these specifications corresponds to.
     * `polled` (`bool`) - Whether the specifications has been polled.
     * `working_dir_device` (`str`) - Filesystem containers are running on.
@@ -332,12 +333,12 @@ class ContainerSpecs(models.Model):
            [...]
        }
        ```
-       
+
     A value of -1 in a field means that there is no limit.
-    
+
     Every field but `sandbox` and `polled` will be None as long as `polled` is
     False.
-    
+
     cpu period:
     https://docs.docker.com/engine/reference/run/#cpu-period-constraint
     cpu share :
@@ -364,13 +365,13 @@ class ContainerSpecs(models.Model):
     reading_bytes = models.JSONField(null=True, blank=True, default=None)
     libraries = models.JSONField(null=True, blank=True, default=None)
     bin = ArrayField(models.CharField(max_length=64), null=True, blank=True, default=None)
-    
-    
+
+
     class Meta:
         verbose_name = "Container Specifications"
         verbose_name_plural = "Container Specifications"
-    
-    
+
+
     @receiver(post_save, sender=Sandbox)
     def create(sender, instance, created, **kwargs):
         """When a new Sandbox is created, create the corresponding
@@ -382,9 +383,9 @@ class ContainerSpecs(models.Model):
 
 class Usage(models.Model):
     """Represents the usage of a Sandbox at the given datetime.
-    
+
     Fields :
-    
+
     * `sandbox` (`Sandbox`) - Sandbox this `SandboxUsage` corresponds to.
     * `date` (`datetime`) - Date this `SandboxUsage` was polled.
     * `enabled` (`bool`) - Whether the sandbox was enabled.
@@ -415,10 +416,10 @@ class Usage(models.Model):
        second)
     * `process` (`int`) - Number of process currently running.
     * `container` (`int`) - Number of container currently used.
-    
+
     If `enabled` or `reached` are False, every other fields but `sandbox` and
     `date` are None.
-    
+
     Disk and network I/O are the average of the last 2 seconds."""
     sandbox = models.ForeignKey(Sandbox, related_name="usages", on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
@@ -439,8 +440,8 @@ class Usage(models.Model):
     receiving_bytes = models.BigIntegerField(null=True, blank=True)
     process = models.PositiveSmallIntegerField(null=True, blank=True)
     container = models.PositiveSmallIntegerField(null=True, blank=True)
-    
-    
+
+
     class Meta:
         ordering = ['-date', 'sandbox']
         indexes = [models.Index(fields=['-date'])]
@@ -450,9 +451,9 @@ class Usage(models.Model):
 
 class Response(models.Model):
     """Represents the response of a `SandboxExecution`
-    
+
     Fields :
-    
+
     * `status` (`int`) indicate whether the execution succeeded or failed :
         * `0` - The execution was successful, or the last command's failure was
             ignored (through the used of `-`).
@@ -481,9 +482,9 @@ class Response(models.Model):
 
 class Request(models.Model):
     """Represents an execution on a Sandbox.
-    
+
     Fields :
-    
+
     * `sandbox` (`sandbox`) - Sandbox the execution took place on.
     * `user` (`User`) - User who requested the execution.
     * `date` (`datetime`) - Date of the execution.
@@ -492,7 +493,7 @@ class Request(models.Model):
     * `traceback` (`str`) - Traceback if the request failed.
     * `config` (`dict`) - Config dictionary use for this request.
     * `response` (`dictionary`) - Dictionary containing the response.
-    
+
     `traceback` will be an empty string if `success` is True, and `response`
     will be None if `success` is False.
     """
@@ -507,8 +508,8 @@ class Request(models.Model):
     success = models.BooleanField()
     traceback = models.TextField(default="")
     config = models.JSONField()
-    
-    
+
+
     class Meta:
         ordering = ['-date', 'sandbox']
         indexes = [models.Index(fields=['-date'])]
@@ -518,9 +519,9 @@ class Request(models.Model):
 
 class CommandResult(models.Model):
     """Represents the result of a single command in a `SandboxResponse`.
-    
+
     Fields :
-    
+
     * `response` (`SandboxResponse`) - Response this command is a part of.
     * `command` (`str`) - The command executed.
     * `exit_code` (`int`) - Exit code of the command.

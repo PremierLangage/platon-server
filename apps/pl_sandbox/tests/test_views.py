@@ -1,17 +1,16 @@
 import json
 
 import dgeq
-
 from asgiref.sync import async_to_sync
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client, TransactionTestCase
 from django.urls import reverse
-
 from pl_core.enums import ErrorCode
 from pl_sandbox.models import ContainerSpecs, Sandbox, SandboxSpecs
 
+User = get_user_model()
 SANDBOX_URL = settings.SANDBOX_URL
 
 

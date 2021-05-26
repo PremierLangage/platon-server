@@ -9,16 +9,18 @@
 
 import logging
 from typing import Tuple
-from django.http.request import HttpRequest
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.utils import IntegrityError
+from django.http.request import HttpRequest
 
 from pl_lti.models import LMS, LTIUser
 from pl_lti.params import LTIParams
 from pl_lti.validator import is_valid_request
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +79,7 @@ def create_lti_user(lms: LMS, params: LTIParams) -> User:
     first_name = params.lis_person_name_given
 
     username = params.ext_user_username
-    
+
     try:
         lti_user = LTIUser.objects.get(lms=lms, lms_user_id=user_id)
         logger.info(f'LTI: Found an existing user for {username}')

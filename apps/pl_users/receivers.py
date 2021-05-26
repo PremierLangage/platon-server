@@ -1,30 +1,28 @@
 import logging
 
-from django.contrib.auth.models import User
-from django.db.utils import IntegrityError
+from django.contrib.auth import get_user_model
 from django.dispatch.dispatcher import receiver
 from pl_core.signals import create_defaults
-from pl_lti.role import Role
 
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 @receiver(create_defaults)
 def on_create_defaults(sender, config, **kwargs):
     logger.info('creating pl_users defaults')
-    if 'admins' in config:
-        for item in config['admins']:
-            try:
-                user = User.objects.create_user(
-                    username=item['username'],
-                    password=item['password']
-                )
-                user.is_staff = True
-                user.is_admin = True
-                user.is_superuser = True
-                user.profile.role = Role.ADMINISTRATOR
-                user.save()
-                logger.info(f"User {item['username']} created")
-            except IntegrityError:
-                logger.warning(f"User '{item['username']}' already created")
-                pass
+    if 'users' in config:
+        data = []
+        for item in config['users']:
+            user = User(
+                username=item["username"],
+                is_staff=bool(item.get('is_admin', False)),
+                is_superuser=bool(item.get('is_admin', False)),
+                is_editor=bool(item.get('is_editor', False)),
+                email=item['email'],
+                last_name=item['last_name'],
+                first_name=item['first_name']
+            )
+            user.set_password("password")
+            data.append(user)
+        User.objects.bulk_create(data, ignore_conflicts=True)

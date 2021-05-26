@@ -7,13 +7,15 @@
 #       - Mamadou CISSE <mciissee.@gmail.com>
 #
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import permissions
 from rest_framework.request import Request
 from rest_framework.viewsets import ViewSetMixin
 
 from .enums import CircleTypes, MemberStatus
 from .models import Circle, Member, Resource
+
+User = get_user_model()
 
 
 def is_circle_owner(user: User, circle_id: str) -> bool:
@@ -36,18 +38,17 @@ class CirclePermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        profile = request.user.profile
-        if not profile.is_teacher:
+        if not request.user.is_editor:
             return False
 
-        if profile.is_admin:
+        if request.user.is_admin:
             return True
 
         if request.method in permissions.SAFE_METHODS:
             return True
 
         if request.method == 'POST':
-            return profile.is_admin
+            return request.user.is_admin
 
         return True
 
@@ -55,13 +56,12 @@ class CirclePermission(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        profile = request.user.profile
         if request.method == 'DELETE':
             if obj.type == CircleTypes.PERSONAL:
                 return False
-            return profile.is_admin
+            return request.user.is_admin
 
-        return profile.is_admin or is_circle_owner(request.user, obj.pk)
+        return request.user.is_admin or is_circle_owner(request.user, obj.pk)
 
 
 class EventPermission(permissions.BasePermission):
@@ -69,11 +69,10 @@ class EventPermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        profile = request.user.profile
-        if not profile.is_teacher:
+        if not request.user.is_editor:
             return False
 
-        if profile.is_admin:
+        if request.user.is_admin:
             return True
 
         if request.method in permissions.SAFE_METHODS:
@@ -87,11 +86,10 @@ class MemberPermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        profile = request.user.profile
-        if not profile.is_teacher:
+        if not request.user.is_editor:
             return False
 
-        if profile.is_admin:
+        if request.user.is_admin:
             return True
 
         if request.method in permissions.SAFE_METHODS:
@@ -112,11 +110,10 @@ class ResourcePermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        profile = request.user.profile
-        if not profile.is_teacher:
+        if not request.user.is_editor:
             return False
 
-        if profile.is_admin:
+        if request.user.is_admin:
             return True
 
         if request.method in permissions.SAFE_METHODS:
@@ -152,7 +149,7 @@ class VersionPermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        if not request.user.profile.is_teacher:
+        if not request.user.is_editor:
             return False
 
         editable = self.resource.is_editable_by(request.user)
@@ -177,11 +174,10 @@ class FilePermission(permissions.BasePermission):
             self.message = f'Cannot delete "{path}"'
             return False
 
-        profile = request.user.profile
-        if not profile.is_teacher:
+        if not request.user.is_editor:
             return False
 
-        if profile.is_admin:
+        if request.user.is_admin:
             return True
 
         return self.resource.is_editable_by(request.user)

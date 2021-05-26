@@ -7,11 +7,14 @@
 #       - Mamadou CISSE <mciissee.@gmail.com>
 #
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db import models, transaction
 from django.db.models.aggregates import Count
 
-from .enums import CircleTypes, EventTypes, MemberStatus, ResourceStatus, ResourceTypes
+from .enums import (CircleTypes, EventTypes, MemberStatus, ResourceStatus,
+                    ResourceTypes)
+
+User = get_user_model()
 
 
 class Topic(models.Model):
@@ -308,10 +311,9 @@ class Resource(models.Model):
     def is_editable_by(self, user: User) -> bool:
         if user.id == self.author_id:
             return True
-        profile = user.profile
-        if profile.is_admin:
+        if user.is_admin:
             return True
-        if not profile.is_teacher:
+        if not user.is_editor:
             return False
         return Member.objects.filter(
             user_id=self.author_id,
@@ -321,8 +323,7 @@ class Resource(models.Model):
     def is_deletable_by(self, user: User) -> bool:
         if user.id == self.author_id:
             return True
-        profile = user.profile
-        if profile.is_admin:
+        if user.is_admin:
             return True
         return False
 

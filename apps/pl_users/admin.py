@@ -1,20 +1,21 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
 
-from .models import Profile
-
-
-class ProfileInline(admin.StackedInline):
-    model = Profile
-    can_delete = False
+from .models import User
+from django.contrib.auth.forms import UserChangeForm
 
 
+class CustomUserChangeForm(UserChangeForm):
+    class Meta(UserChangeForm.Meta):
+        model = User
 
-class CustomUserAdmin(UserAdmin):
-    inlines = (ProfileInline,)
+
+class CustomserAdmin(UserAdmin):
+    form = CustomUserChangeForm
+
+    fieldsets = UserAdmin.fieldsets + (
+        ('Profile', {'fields': ('is_editor', 'avatar',)}),
+    )
 
 
-
-admin.site.unregister(User)
-admin.site.register(User, CustomUserAdmin)
+admin.site.register(User, CustomserAdmin)

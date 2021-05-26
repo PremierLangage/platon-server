@@ -1,6 +1,6 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.shortcuts import get_object_or_404
+from django.db import models
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_cookie
@@ -18,6 +18,9 @@ from pl_resources.files import Directory
 
 from . import models, permissions, serializers
 from .filters import CircleFilter, ResourceFilter
+
+User = get_user_model()
+
 
 # LEVELS
 
