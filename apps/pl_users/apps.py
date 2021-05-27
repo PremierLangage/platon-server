@@ -6,4 +6,5 @@ class PlUsersConfig(AppConfig):
     verbose_name = 'Users'
 
     def ready(self):
+        
         from . import receivers  # keep to receive signals
