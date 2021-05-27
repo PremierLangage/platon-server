@@ -23,7 +23,7 @@ from django.urls import include, path
 from .views import api_root
 
 urlpatterns = [
-    path('api/v1/admin/', admin.site.urls),
+    #path('api/v1/admin/', admin.site.urls),
 
     path('api/v1/', api_root),
     path('api/v1/', include('pl_auth.urls', namespace='pl_auth')),
@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/v1/', include('pl_lti.urls', namespace='pl_lti')),
     path('api/v1/', include('pl_sandbox.urls', namespace='pl_sandbox')),
     path('api/v1/', include('pl_resources.urls', namespace='pl_resources')),
+    # path('api/v1/', include('pl_notifications.urls', namespace='pl_notifications')),
 ]
 
 if settings.DEBUG and not settings.TESTING:

@@ -3,6 +3,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import PermissionDenied
 
+
 #todo
 class NotificationConsumer(AsyncWebsocketConsumer):
     """ Allow to send notification with websocket """
