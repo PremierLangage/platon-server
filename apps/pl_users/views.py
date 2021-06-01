@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
+from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework import generics, mixins
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
+
+from pl_users.filters import UserFilter
 
 from .serializers import UserSerializer
 
@@ -13,6 +17,9 @@ class UserListView(mixins.ListModelMixin, generics.GenericAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['username', 'last_name', 'first_name', 'email']
+    filter_class = UserFilter
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
