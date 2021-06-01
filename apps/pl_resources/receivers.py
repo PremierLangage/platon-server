@@ -5,7 +5,7 @@ from django.dispatch.dispatcher import receiver
 from pl_core.signals import create_defaults
 
 from pl_resources.enums import CircleTypes
-from pl_resources.models import Circle, Level, Member
+from pl_resources.models import Circle, Level, Member, Topic
 
 logger = logging.getLogger(__name__)
 
@@ -37,20 +37,14 @@ def on_create_defaults(sender, config, **kwargs):
         }
     )
 
-    Level.objects.bulk_create([
-        Level(name="6e"),
-        Level(name="5e"),
-        Level(name="4e"),
-        Level(name="3e"),
-        Level(name="2nd"),
-        Level(name="1ère"),
-        Level(name="Terminal"),
-        Level(name="L1"),
-        Level(name="L2"),
-        Level(name="M1"),
-        Level(name="M2"),
-        Level(name="DUT 1"),
-        Level(name="DUT 2"),
-        Level(name="BTS 1"),
-        Level(name="BTS 2"),
-    ], ignore_conflicts=True)
+    levels = config.get('levels', [])
+    Level.objects.bulk_create(
+        [Level(name=item) for item in levels],
+        ignore_conflicts=True
+    )
+
+    topics = config.get('topics', [])
+    Topic.objects.bulk_create(
+        [Topic(name=item) for item in topics],
+        ignore_conflicts=True
+    )

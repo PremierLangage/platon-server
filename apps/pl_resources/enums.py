@@ -11,7 +11,7 @@ from django.db import models
 
 
 class MemberStatus(models.TextChoices):
-    OWNER = 'OWNER'
+    ADMIN = 'ADMIN'
     MEMBER = 'MEMBER'
 
 
@@ -21,12 +21,11 @@ class CircleTypes(models.TextChoices):
 
 
 class EventTypes(models.TextChoices):
-    GENERIC = 'GENERIC'
-    MEMBER_ADDED = 'MEMBER_ADDED'
-    MEMBER_REMOVED = 'MEMBER_REMOVED'
+    MEMBER_CREATE = 'MEMBER_CREATE'
+    MEMBER_REMOVE = 'MEMBER_REMOVE'
 
-    RESOURCE_CREATED = 'RESOURCE_CREATED'
-    RESOURCE_UPDATED = 'RESOURCE_UPDATED'
+    RESOURCE_CREATE = 'RESOURCE_CREATE'
+    RESOURCE_STATUS_CHANGE = 'RESOURCE_STATUS_CHANGE'
 
 
 class ResourceTypes(models.TextChoices):

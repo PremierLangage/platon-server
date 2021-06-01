@@ -44,6 +44,8 @@ class CircleFilter(filters.FilterSet):
         return queryset.filter(members__user__username=value)
 
     def filter_updated_at(self, queryset, name, value):
+        if value == 0:
+            return queryset
         date = timezone.now() - datetime.timedelta(days=int(value))
         return queryset.filter(updated_at__date__gte=date)
 

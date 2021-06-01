@@ -6,8 +6,7 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_cookie
 from django_filters.rest_framework import DjangoFilterBackend
 from pl_core.mixins import CrudViewSet
-from pl_core.permissions import (AdminOrReadonlyPermission,
-                                 AdminOrTeacherPermission)
+from pl_core.permissions import AdminOrReadonlyPermission, AdminOrTeacherPermission
 from pl_users.serializers import UserSerializer
 from rest_framework import exceptions, status
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -16,7 +15,8 @@ from rest_framework.views import APIView
 
 from pl_resources.files import Directory
 
-from . import models, permissions, serializers
+from . import permissions, serializers
+from .models import Circle, Event, Invitation, Level, Member, RecentView, Resource, Topic, Version
 from .filters import CircleFilter, ResourceFilter
 
 User = get_user_model()
@@ -24,10 +24,9 @@ User = get_user_model()
 
 # LEVELS
 
-
 class LevelListViews(APIView):
     def get(self, request, *args, **kwargs):
-        return Response([level.name for level in models.Level.objects.all()])
+        return Response([level.name for level in Level.objects.all()])
 
     def get_permissions(self):
         return [AdminOrReadonlyPermission()]
@@ -41,7 +40,7 @@ class TopicViewSet(CrudViewSet):
     lookup_url_kwarg = 'name'
 
     def get_queryset(self):
-        return models.Topic.list_all_with_stats().order_by('-references', 'name')
+        return Topic.list_all_with_stats().order_by('-references', 'name')
 
     def get_permissions(self):
         return [AdminOrReadonlyPermission()]
@@ -69,24 +68,24 @@ class CircleViewSet(CrudViewSet):
 
     def get_queryset(self):
         if self.action == 'list' and self.request.method == 'GET':
-            return models.Circle.list_publics()
-        return models.Circle.list_all()
+            return Circle.list_publics()
+        return Circle.list_all()
 
     def get_permissions(self):
         return [permissions.CirclePermission()]
 
     def get_me(self, request):
-        circle = models.Circle.find_user_personal(request.user)
+        circle = Circle.find_personal(request.user)
         serializer = self.get_serializer(circle)
         return Response(serializer.data)
 
     def get_root(self, request):
-        root = models.Circle.find_root()
+        root = Circle.find_root()
         serializer = self.get_serializer(root)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_tree(self, request):
-        root = models.Circle.find_root()
+        root = Circle.find_root()
 
         def traverse(circle):
             node = {
@@ -128,9 +127,9 @@ class EventViewSet(CrudViewSet):
     lookup_url_kwarg = 'event_id'
 
     def get_queryset(self):
-        return models.Event.list_all_in_circle(
+        return Event.of_circle(
             self.kwargs.get('circle_id')
-        )
+        ).order_by('-date')
 
     def get_permissions(self):
         return [permissions.EventPermission()]
@@ -156,12 +155,19 @@ class MemberViewSet(CrudViewSet):
         )
 
     def get_queryset(self):
-        return models.Member.objects.filter(
+        return Member.objects.filter(
             circle_id=self.kwargs.get('circle_id')
         )
 
     def get_permissions(self):
         return [permissions.MemberPermission()]
+
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        Event.for_member_remove(
+            self.request.user,
+            instance
+        )
 
     @classmethod
     def as_list(cls):
@@ -207,13 +213,13 @@ class InvitationViewSet(CrudViewSet):
     lookup_field = 'invitee__username'
 
     def get_object(self):
-        return models.Invitation.objects.get(
+        return Invitation.objects.get(
             circle__id=self.kwargs.get('circle_id'),
             invitee__username=self.kwargs.get('username'),
         )
 
     def get_queryset(self):
-        return models.Invitation.objects.filter(
+        return Invitation.objects.filter(
             circle_id=self.kwargs.get('circle_id')
         )
 
@@ -226,23 +232,29 @@ class InvitationViewSet(CrudViewSet):
         return serializers.InvitationSerializer
 
     def perform_create(self, serializer):
-        return serializer.save(
+        serializer.save(
             inviter=self.request.user,
-            circle=models.Circle.objects.get(pk=self.kwargs.get('circle_id'))
+            circle=Circle.objects.get(
+                pk=self.kwargs.get('circle_id')
+            )
         )
 
     def partial_update(self, request, *args, **kwargs):
-        invitation = self.get_object()
-        models.Member.objects.create(
-            user=invitation.invitee,
-            circle=invitation.circle,
-            status=invitation.status
+        instance = self.get_object()
+        response = super().destroy(request, *args, **kwargs)
+        Event.for_member_create(
+            instance.inviter,
+            Member.objects.create(
+                user=instance.invitee,
+                circle=instance.circle,
+                status=instance.status
+            )
         )
-        # TODO send notification
-        return super().destroy(request, *args, **kwargs)
+        return response
 
 
 # RESOURCES
+
 
 class ResourceViewSet(CrudViewSet):
     serializer_class = serializers.ResourceSerializer
@@ -256,7 +268,7 @@ class ResourceViewSet(CrudViewSet):
     ordering = ['-updated_at']
 
     def get_queryset(self):
-        return models.Resource.list_all()
+        return Resource.list_all()
 
     def get_permissions(self):
         return [permissions.ResourcePermission()]
@@ -266,14 +278,31 @@ class ResourceViewSet(CrudViewSet):
             return serializers.ResourceCreateSerializer
         return serializers.ResourceSerializer
 
-    def retrieve(self, request, *args, **kwargs):
-        models.RecentView.objects.add_item(request.user, self.get_object())
-        return super().retrieve(request, *args, **kwargs)
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        Directory.delete(self.kwargs.get('resource_id'))
 
-    def destroy(self, request, *args, **kwargs):
-        response = super().destroy(request, *args, **kwargs)
-        Directory.delete(kwargs.get('resource_id'))
-        return response
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        Event.for_resource_create(
+            self.request.user,
+            serializer.instance,
+        )
+
+    def perform_update(self, serializer):
+        before = self.get_object()
+        super().perform_update(serializer)
+        after = serializer.instance
+
+        if before.status != after.status:
+            Event.for_resource_status_change(
+                self.request.user,
+                after
+            )
+
+    def retrieve(self, request, *args, **kwargs):
+        RecentView.objects.add_item(request.user, self.get_object())
+        return super().retrieve(request, *args, **kwargs)
 
 
 # VERSIONS
@@ -288,12 +317,12 @@ class VersionViewSet(CrudViewSet):
         super().__init__(**kwargs)
         self.resource = None
 
-    def get_object(self) -> models.Version:
+    def get_object(self) -> Version:
         number = self.kwargs.get('version')
         return self.get_queryset().get(number=number)
 
     def get_queryset(self):
-        return models.Version.of_resource(
+        return Version.of_resource(
             self.resource.pk
         ).order_by('-created_at')
 
@@ -301,13 +330,16 @@ class VersionViewSet(CrudViewSet):
         if self.resource is None:
             resource_id = self.kwargs.get('resource_id')
             try:
-                self.resource = models.Resource.objects.get(pk=resource_id)
-            except models.Resource.DoesNotExist:
+                self.resource = Resource.objects.get(pk=resource_id)
+            except Resource.DoesNotExist:
                 raise exceptions.NotFound()
         return [permissions.VersionPermission(self.resource)]
 
     def perform_create(self, serializer):
-        directory = Directory.get(self.resource.pk, self.request.user)
+        directory = Directory.get(
+            self.resource.pk,
+            self.request.user
+        )
 
         number = len(directory.versions()) + 1
         version = serializer.save(
@@ -316,7 +348,11 @@ class VersionViewSet(CrudViewSet):
             number=number
         )
 
-        directory.release(f'v{number}', version.message)
+        directory.release(
+            f'v{number}',
+            version.message
+        )
+
         return version
 
     @classmethod
@@ -349,8 +385,8 @@ class FileViewSet(CrudViewSet):
         if self.resource is None:
             resource_id = self.kwargs.get('resource_id')
             try:
-                self.resource = models.Resource.objects.get(pk=resource_id)
-            except models.Resource.DoesNotExist:
+                self.resource = Resource.objects.get(pk=resource_id)
+            except Resource.DoesNotExist:
                 raise exceptions.NotFound()
         return [permissions.FilePermission(self.resource)]
 
@@ -466,7 +502,7 @@ class RecentViewSet(CrudViewSet):
     serializer_class = serializers.RecentViewSerializer
 
     def get_queryset(self):
-        return models.RecentView.objects.filter(user=self.request.user)
+        return RecentView.objects.filter(user=self.request.user)
 
     def get_permissions(self):
         return [AdminOrTeacherPermission()]

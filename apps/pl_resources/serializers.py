@@ -39,7 +39,7 @@ class CircleSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Circle
         fields = [
-            'id', 'name', 'type', 'parent', 'desc', 'topics', 'levels', 'created_at',
+            'id', 'name', 'type', 'parent', 'opened', 'desc', 'topics', 'levels', 'created_at',
             'updated_at', 'children_count', 'watchers_count', 'members_count', 'models_count',
             'exercises_count', 'activities_count', 'resources_count', 'url', 'events_url',
             'members_url', 'watchers_url', 'resources_url', 'invitations_url'
@@ -94,7 +94,7 @@ class CircleSerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Event
-        fields = ['id', 'type', 'text', 'date', 'data']
+        fields = ['id', 'type', 'date', 'data']
 
 
 class MemberSerializer(serializers.ModelSerializer):
