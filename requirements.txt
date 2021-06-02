@@ -30,6 +30,6 @@ pyparsing~=2.4.7
 pydot~=1.4.2
 pylti~=0.7.0
 uvicorn~=0.13.4
-sandbox-api~=1.1.0
+pl-sandbox-api~=1.1.0
 tox~=3.23.0
 whitenoise~=5.2.0
