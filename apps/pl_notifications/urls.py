@@ -1,14 +1,16 @@
 from django.urls import path, re_path
 
-from . import views
+from .views import NotificationViewSet
+from .consumers import NotificationConsumer
 
 app_name = 'pl_notifications'
 
 urlpatterns = [
-    path('notifications/', views.NotificationViewSet.as_list(), name='notification-list'),
-    path('notifications/<int:pk>/', views.NotificationViewSet.as_detail(), name='notification-detail'),   
+    path('notifications/', NotificationViewSet.as_list(), name='notification-list'),
+    path('notifications/<int:pk>/', NotificationViewSet.as_detail(), name='notification-detail'),   
 ]
 
-# websocket_urlpatterns = [
-#     re_path(r'ws/notifications/(?P<user>\w+)/$', consumers.NotificationConsumer.as_asgi()),
-# ]
+websocket_urlpatterns = [
+    re_path(r'ws/notifications/$', NotificationConsumer.as_asgi()),
+    re_path(r'ws/notifications/(?P<user>\w+)/$', NotificationConsumer.as_asgi()),
+]

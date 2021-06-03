@@ -14,8 +14,14 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
         """Connect this consumer."""
-        self.notification_group_name = self.scope["user"].username
+        # self.notification_group_name = self.scope["user"].username
+        self.notification_group_name = self.scope['url_route']['kwargs']['user']
+        print(self.scope)
+        
         await self.accept()
+        await self.send(text_data=json.dumps({
+            'message': self.notification_group_name
+        }))
 
 
     async def notification_message(self, event):
