@@ -19,4 +19,5 @@ def api_root(request, format=None):
         'circles-tree': reverse('pl_resources:circle-tree', request=request, format=format),
         'resources': reverse('pl_resources:resource-list', request=request, format=format),
         'recently-viewed-resources': reverse('pl_resources:resource-recent-views', request=request, format=format),
+        'notifications': reverse('pl_notifications:notification-list', request=request, format=format),
     })
