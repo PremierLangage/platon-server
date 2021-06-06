@@ -20,6 +20,8 @@ User = get_user_model()
 class CircleFilter(filters.FilterSet):
     name = filters.CharFilter(label='Name', method='filter_name')
     member = filters.CharFilter(label='Member', method='filter_member')
+    watcher = filters.CharFilter(label='Watcher', method='filter_watcher')
+
     updated_at = filters.NumberFilter(label='Updated at', method='filter_updated_at')
 
     class Meta:
@@ -42,6 +44,9 @@ class CircleFilter(filters.FilterSet):
             return queryset
 
         return queryset.filter(members__user__username=value)
+
+    def filter_watcher(self, queryset, name, value):
+        return queryset.filter(watchers__username=value)
 
     def filter_updated_at(self, queryset, name, value):
         if value == 0:

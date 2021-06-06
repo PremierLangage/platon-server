@@ -1,12 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from pl_users.serializers import UserSerializer
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
-from pl_resources.enums import ResourceStatus
-from pl_resources.files import Directory
-
 from . import models
+from .enums import ResourceStatus
+from .files import Directory
 
 User = get_user_model()
 
@@ -125,6 +125,36 @@ class MemberSerializer(serializers.ModelSerializer):
             request=request,
             kwargs={'circle_id': value.circle_id}
         )
+
+
+class WatcherSerializer(UserSerializer):
+    username = serializers.CharField(read_only=True)
+    url = serializers.SerializerMethodField(read_only=True)
+    circle_url = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'url', 'circle_url']
+
+
+    def get_url(self, value):
+        kwargs = self.context['view'].kwargs
+        request = self.context['request']
+        return reverse(
+            'pl_resources:circle-watcher-detail',
+            request=request,
+            kwargs={'circle_id': kwargs.get('circle_id'), 'username': value.username}
+        )
+
+    def get_circle_url(self, value):
+        kwargs = self.context['view'].kwargs
+        request = self.context['request']
+        return reverse(
+            'pl_resources:circle-detail',
+            request=request,
+            kwargs={'circle_id': kwargs.get('circle_id')}
+        )
+
 
 
 class InvitationSerializer(serializers.ModelSerializer):

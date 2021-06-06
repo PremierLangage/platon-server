@@ -107,7 +107,18 @@ class MemberPermission(permissions.BasePermission):
 
 
 class WatcherPermission(MemberPermission):
-    pass
+    def has_permission(self,  request: Request, view: ViewSetMixin):
+        if not bool(request.user and request.user.is_authenticated):
+            return False
+
+        if not request.user.is_editor:
+            return False
+
+        if request.method == 'DELETE':
+            return request.user.username == view.kwargs.get("username")
+
+        return True
+
 
 
 class ResourcePermission(permissions.BasePermission):

@@ -1,13 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db import models
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_cookie
 from django_filters.rest_framework import DjangoFilterBackend
 from pl_core.mixins import CrudViewSet
 from pl_core.permissions import AdminOrReadonlyPermission, AdminOrTeacherPermission
-from pl_users.serializers import UserSerializer
 from rest_framework import exceptions, status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
@@ -177,7 +175,6 @@ class MemberViewSet(CrudViewSet):
 # WATCHERS
 
 class WatcherViewSet(CrudViewSet):
-    serializer_class = UserSerializer
     lookup_field = 'username'
 
     def get_object(self):
@@ -193,14 +190,28 @@ class WatcherViewSet(CrudViewSet):
     def get_permissions(self):
         return [permissions.WatcherPermission()]
 
+    def get_serializer_class(self):
+        return serializers.WatcherSerializer
+
     def perform_destroy(self, instance):
         circles = instance.watched_circles
         circle = circles.get(pk=self.kwargs.get('circle_id'))
         circles.remove(circle)
 
+    def create(self, request, *args, **kwargs):
+        circle = Circle.objects.get(pk=self.kwargs.get('circle_id'))
+        if circle.watchers.filter(pk=request.user.pk).exists():
+            return Response(status=status.HTTP_409_CONFLICT)
+    
+        circle.watchers.add(request.user)
+        circle.save()
+        serializer = self.get_serializer(request.user)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     @classmethod
     def as_list(cls):
-        return cls.as_view({'get': 'list'})
+        return cls.as_view({'get': 'list', 'post': 'create'})
 
     @classmethod
     def as_detail(cls):
