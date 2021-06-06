@@ -18,9 +18,9 @@ urlpatterns = [
     path('circles/<int:circle_id>/', views.CircleViewSet.as_detail(), name='circle-detail'),
 
     # Special circles
-    path('circles/me', views.CircleViewSet.as_view({'get': 'get_me'}), name='circle-me'),
-    path('circles/root', views.CircleViewSet.as_view({'get': 'get_root'}), name='circle-root'),
-    path('circles/tree', views.CircleViewSet.as_view({'get': 'get_tree'}), name='circle-tree'),
+    path('circles/me/', views.CircleViewSet.as_view({'get': 'get_me'}), name='circle-me'),
+    path('circles/root/', views.CircleViewSet.as_view({'get': 'get_root'}), name='circle-root'),
+    path('circles/tree/', views.CircleViewSet.as_view({'get': 'get_tree'}), name='circle-tree'),
 
     # Events
     path(
@@ -94,7 +94,7 @@ urlpatterns = [
         name='resource-version-list'
     ),
     path(
-        'resources/<int:resource_id>/versions/<int:version>',
+        'resources/<int:resource_id>/versions/<int:version>/',
         views.VersionViewSet.as_detail(),
         name='resource-version-detail'
     ),
@@ -106,7 +106,7 @@ urlpatterns = [
         name='resource-version-files'
     ),
     url(
-        r'resources/(?P<resource_id>\d+)/files/(?P<path>.*)',
+        r'resources/(?P<resource_id>\d+)/files/(?P<path>.*)/',
         views.FileViewSet.as_master(),
         name='resource-files-master'
     ),
