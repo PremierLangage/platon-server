@@ -86,6 +86,11 @@ urlpatterns = [
         name='resource-recent-views'
     ),
     path(
+        'resources/completion/',
+        views.ResourceViewSet.as_view({'get': 'get_completion'}),
+        name='resource-completion'
+    ),
+    path(
         'resources/<int:resource_id>/',
         views.ResourceViewSet.as_detail(),
         name='resource-detail'

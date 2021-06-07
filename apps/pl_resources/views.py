@@ -109,7 +109,6 @@ class CircleViewSet(CrudViewSet):
         topics = set()
         levels = set()
 
-        print(query)
         for name, topic, level in query:
             names.add(name)
             if topic:
@@ -298,6 +297,7 @@ class ResourceViewSet(CrudViewSet):
     ordering = ['-updated_at']
 
     def get_queryset(self):
+        # TODO remove private resources if no author filter is defined
         return Resource.list_all()
 
     def get_permissions(self):
@@ -333,6 +333,29 @@ class ResourceViewSet(CrudViewSet):
     def retrieve(self, request, *args, **kwargs):
         RecentView.objects.add_item(request.user, self.get_object())
         return super().retrieve(request, *args, **kwargs)
+
+    def get_completion(self, request):
+        query = Resource.objects.filter(
+            type=CircleTypes.PUBLIC
+        ).values_list('name', 'topics', 'levels').distinct()
+
+        names = set()
+        topics = set()
+        levels = set()
+
+        for name, topic, level in query:
+            names.add(name)
+            if topic:
+                topics.add(topic)
+            if level:
+                levels.add(level)
+
+        return Response({
+            "names": names,
+            "topics": topics,
+            "levels": levels
+        }, status=status.HTTP_200_OK)
+
 
 
 # VERSIONS
