@@ -284,7 +284,6 @@ class InvitationViewSet(CrudViewSet):
 
 # RESOURCES
 
-
 class ResourceViewSet(CrudViewSet):
     serializer_class = serializers.ResourceSerializer
 
@@ -355,7 +354,6 @@ class ResourceViewSet(CrudViewSet):
             "topics": topics,
             "levels": levels
         }, status=status.HTTP_200_OK)
-
 
 
 # VERSIONS
