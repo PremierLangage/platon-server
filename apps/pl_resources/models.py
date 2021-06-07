@@ -244,7 +244,6 @@ class Resource(models.Model):
 
     author = models.ForeignKey(User, related_name="resources",  on_delete=models.CASCADE)
     circle: Circle = models.ForeignKey(Circle, related_name="resources", on_delete=models.CASCADE)
-    watchers = models.ManyToManyField(User, related_name='watched_resources', blank=True)
 
     def __str__(self):
         return f'''
