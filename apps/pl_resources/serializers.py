@@ -92,9 +92,20 @@ class CircleSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = models.Event
-        fields = ['id', 'type', 'date', 'data']
+        fields = ['id', 'type', 'date', 'data', 'url']
+
+
+    def get_url(self, value):
+        request = self.context['request']
+        return reverse(
+            'pl_resources:circle-event-detail',
+            request=request,
+            kwargs={'circle_id': value.circle_id, 'event_id': value.id}
+        )
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -105,7 +116,7 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Member
-        fields = ['status', 'username', 'date_joined', 'url', 'circle_url']
+        fields = ['status', 'username', 'date_joined', 'url']
 
     def get_url(self, value):
         request = self.context['request']
@@ -118,23 +129,14 @@ class MemberSerializer(serializers.ModelSerializer):
     def get_username(self, value):
         return value.user.username
 
-    def get_circle_url(self, value):
-        request = self.context['request']
-        return reverse(
-            'pl_resources:circle-detail',
-            request=request,
-            kwargs={'circle_id': value.circle_id}
-        )
-
 
 class WatcherSerializer(UserSerializer):
     username = serializers.CharField(read_only=True)
     url = serializers.SerializerMethodField(read_only=True)
-    circle_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'url', 'circle_url']
+        fields = ['username', 'url']
 
 
     def get_url(self, value):
@@ -146,15 +148,6 @@ class WatcherSerializer(UserSerializer):
             kwargs={'circle_id': kwargs.get('circle_id'), 'username': value.username}
         )
 
-    def get_circle_url(self, value):
-        kwargs = self.context['view'].kwargs
-        request = self.context['request']
-        return reverse(
-            'pl_resources:circle-detail',
-            request=request,
-            kwargs={'circle_id': kwargs.get('circle_id')}
-        )
-
 
 
 class InvitationSerializer(serializers.ModelSerializer):
@@ -162,11 +155,10 @@ class InvitationSerializer(serializers.ModelSerializer):
     invitee = serializers.SlugRelatedField('username', read_only=True)
 
     url = serializers.SerializerMethodField(read_only=True)
-    circle_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Invitation
-        fields = ['inviter', 'invitee', 'date', 'status', 'url', 'circle_url']
+        fields = ['inviter', 'invitee', 'date', 'status', 'url']
 
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
@@ -179,13 +171,6 @@ class InvitationSerializer(serializers.ModelSerializer):
             kwargs={'circle_id': value.circle_id, 'username': value.invitee.username}
         )
 
-    def get_circle_url(self, value):
-        request = self.context['request']
-        return reverse(
-            'pl_resources:circle-detail',
-            request=request,
-            kwargs={'circle_id': value.circle_id}
-        )
 
 
 class InvitationCreateSerializer(serializers.ModelSerializer):
@@ -245,7 +230,6 @@ class ResourceSerializer(serializers.ModelSerializer):
     versions_count = serializers.IntegerField(read_only=True)
 
     url = serializers.SerializerMethodField(read_only=True)
-    circle_url = serializers.SerializerMethodField(read_only=True)
     files_url = serializers.SerializerMethodField(read_only=True)
     versions_url = serializers.SerializerMethodField(read_only=True)
 
@@ -254,7 +238,7 @@ class ResourceSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'type', 'name', 'desc', 'status', 'author',
             'circle', 'topics', 'levels', 'created_at', 'updated_at',
-            'versions_count', 'url', 'files_url', 'circle_url', 'versions_url',
+            'versions_count', 'url', 'files_url', 'versions_url',
         ]
 
     def get_url(self, value):
@@ -273,13 +257,6 @@ class ResourceSerializer(serializers.ModelSerializer):
             kwargs={'resource_id': value.pk, 'path': ''}
         )
 
-    def get_circle_url(self, value):
-        request = self.context['request']
-        return reverse(
-            'pl_resources:circle-detail',
-            request=request,
-            kwargs={'circle_id': value.circle_id}
-        )
 
     def get_versions_url(self, value):
         request = self.context['request']

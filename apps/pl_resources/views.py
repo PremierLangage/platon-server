@@ -10,6 +10,7 @@ from rest_framework import exceptions, status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from pl_resources.enums import CircleTypes
 
 from pl_resources.files import Directory
 
@@ -54,7 +55,7 @@ class CircleViewSet(CrudViewSet):
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CircleFilter
-    search_fields = ['name']
+    search_fields = ['name', 'topics__name', 'levels__name']
     ordering_fields = [
         'watchers_count',
         'members_count',
@@ -77,11 +78,6 @@ class CircleViewSet(CrudViewSet):
         serializer = self.get_serializer(circle)
         return Response(serializer.data)
 
-    def get_root(self, request):
-        root = Circle.find_root()
-        serializer = self.get_serializer(root)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
     def get_tree(self, request):
         root = Circle.find_root()
 
@@ -103,6 +99,29 @@ class CircleViewSet(CrudViewSet):
             return node
 
         return Response(traverse(root), status=status.HTTP_200_OK)
+
+    def get_completion(self, request):
+        query = Circle.objects.filter(
+            type=CircleTypes.PUBLIC
+        ).values_list('name', 'topics', 'levels').distinct()
+
+        names = set()
+        topics = set()
+        levels = set()
+
+        print(query)
+        for name, topic, level in query:
+            names.add(name)
+            if topic:
+                topics.add(topic)
+            if level:
+                levels.add(level)
+
+        return Response({
+            "names": names,
+            "topics": topics,
+            "levels": levels
+        }, status=status.HTTP_200_OK)
 
 
 # EVENTS
@@ -202,7 +221,7 @@ class WatcherViewSet(CrudViewSet):
         circle = Circle.objects.get(pk=self.kwargs.get('circle_id'))
         if circle.watchers.filter(pk=request.user.pk).exists():
             return Response(status=status.HTTP_409_CONFLICT)
-    
+
         circle.watchers.add(request.user)
         circle.save()
         serializer = self.get_serializer(request.user)

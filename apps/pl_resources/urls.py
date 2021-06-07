@@ -19,8 +19,12 @@ urlpatterns = [
 
     # Special circles
     path('circles/me/', views.CircleViewSet.as_view({'get': 'get_me'}), name='circle-me'),
-    path('circles/root/', views.CircleViewSet.as_view({'get': 'get_root'}), name='circle-root'),
     path('circles/tree/', views.CircleViewSet.as_view({'get': 'get_tree'}), name='circle-tree'),
+    path(
+        'circles/completion/',
+        views.CircleViewSet.as_view({'get': 'get_completion'}),
+        name='circle-completion'
+    ),
 
     # Events
     path(

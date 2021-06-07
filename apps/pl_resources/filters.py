@@ -30,6 +30,7 @@ class CircleFilter(filters.FilterSet):
             'topics': ['exact'],
             'levels': ['exact'],
             'parent': ['exact'],
+            'opened': ['exact']
         }
 
     def filter_name(self, queryset, name, value):
