@@ -44,9 +44,10 @@ TESTING = sys.argv[1:2] == ['test']
 # Allowed Hosts
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').strip().split(',')
 
-# https://stackoverflow.com/questions/8153875/how-to-deploy-an-https-only-site-with-django-nginx
-SECURE_SSL_REDIRECT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+if not TESTING:
+    # https://stackoverflow.com/questions/8153875/how-to-deploy-an-https-only-site-with-django-nginx
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 PREREQ_APPS = [
