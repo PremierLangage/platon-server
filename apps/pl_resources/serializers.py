@@ -235,11 +235,7 @@ class ResourceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Resource
-        fields = [
-            'id', 'type', 'name', 'desc', 'status', 'author',
-            'circle', 'topics', 'levels', 'created_at', 'updated_at',
-            'versions_count', 'url', 'files_url', 'versions_url',
-        ]
+        fields = '__all__'
 
     def get_url(self, value):
         request = self.context['request']
@@ -257,7 +253,6 @@ class ResourceSerializer(serializers.ModelSerializer):
             kwargs={'resource_id': value.pk, 'path': ''}
         )
 
-
     def get_versions_url(self, value):
         request = self.context['request']
         return reverse(
@@ -268,6 +263,11 @@ class ResourceSerializer(serializers.ModelSerializer):
 
 
 class ResourceCreateSerializer(serializers.ModelSerializer):
+    versions_count = serializers.IntegerField(read_only=True)
+    url = serializers.SerializerMethodField(read_only=True)
+    files_url = serializers.SerializerMethodField(read_only=True)
+    versions_url = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = models.Resource
         fields = '__all__'
@@ -284,6 +284,30 @@ class ResourceCreateSerializer(serializers.ModelSerializer):
         )
         Directory.create(instance.pk, request.user)
         return instance
+
+    def get_url(self, value):
+        request = self.context['request']
+        return reverse(
+            'pl_resources:resource-detail',
+            request=request,
+            kwargs={'resource_id': value.pk}
+        )
+
+    def get_files_url(self, value):
+        request = self.context['request']
+        return reverse(
+            'pl_resources:resource-files-master',
+            request=request,
+            kwargs={'resource_id': value.pk, 'path': ''}
+        )
+
+    def get_versions_url(self, value):
+        request = self.context['request']
+        return reverse(
+            'pl_resources:resource-version-list',
+            request=request,
+            kwargs={'resource_id': value.pk}
+        )
 
 
 class VersionSerializer(serializers.ModelSerializer):
@@ -327,18 +351,18 @@ class VersionSerializer(serializers.ModelSerializer):
 
 
 class FileCreateSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=['file', 'folder', 'batch'], required=True)
-    path = serializers.CharField(max_length=100, required=False)
-    content = serializers.CharField(max_length=134217728, required=False)
-    batch = serializers.JSONField(required=False)
     file = serializers.FileField(required=False)
+    files = serializers.JSONField(required=False)
+
+
+class FileRenameSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=['move', 'rename'], required=True)
+    newpath = serializers.CharField(max_length=100, required=True)
+    copy = serializers.BooleanField(required=False)
 
 
 class FileUpdateSerializer(serializers.Serializer):
-    action = serializers.ChoiceField(choices=['move', 'rename'], required=True)
-    oldpath = serializers.CharField(max_length=100, required=True)
-    newpath = serializers.CharField(max_length=100, required=True)
-    copy = serializers.BooleanField(required=False)
+    content = serializers.CharField(max_length=134217728, required=False)
 
 
 class RecentViewSerializer(serializers.ModelSerializer):

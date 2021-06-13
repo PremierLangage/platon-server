@@ -110,12 +110,12 @@ urlpatterns = [
 
     # Files
     url(
-        r'resources/(?P<resource_id>\d+)/versions/(?P<version>\d+)?/files/(?P<path>[^/?]*)',
+        r'resources/(?P<resource_id>\d+)/versions/(?P<version>\d+)?/files/(?P<path>[^\?]*)',
         views.FileViewSet.as_version(),
         name='resource-version-files'
     ),
     url(
-        r'resources/(?P<resource_id>\d+)/files/(?P<path>.*)/',
+        r'resources/(?P<resource_id>\d+)/files/(?P<path>[^\?]*)',
         views.FileViewSet.as_master(),
         name='resource-files-master'
     ),

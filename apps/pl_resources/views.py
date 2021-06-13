@@ -428,6 +428,9 @@ class FileViewSet(CrudViewSet):
             return serializers.FileCreateSerializer
 
         if self.request.method == 'PATCH':
+            return serializers.FileRenameSerializer
+
+        if self.request.method == 'PUT':
             return serializers.FileUpdateSerializer
 
         return None
@@ -445,76 +448,93 @@ class FileViewSet(CrudViewSet):
         return self._handle_get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        path = self.kwargs.get('path')
+        resource_id = kwargs.get('resource_id')
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        type = serializer.validated_data.get('type')
-        path = serializer.validated_data.get('path')
-        content = serializer.validated_data.get('content')
-        batch = serializer.validated_data.get('batch')
+        file = serializer.validated_data.get('file')
+        files = serializer.validated_data.get('files')
 
-        directory = Directory.get(kwargs.get('resource_id'), request.user)
-        file: InMemoryUploadedFile = serializer.validated_data.get('file')
+        directory = Directory.get(resource_id, request.user)
 
         if file:
             directory.upload_file(path, file)
             return Response(status=status.HTTP_201_CREATED)
 
-        if type == 'file':
-            directory.create_file(path, content)
-            return Response(status=status.HTTP_201_CREATED)
-
-        if type == 'batch':
+        if files:
             directory.ignore_commits = True
-            for k, v in batch.items():
+            for k, v in files.items():
                 if v["type"] == "file":
                     directory.create_file(k, v["content"])
                 else:
                     directory.create_dir(k)
             directory.ignore_commits = False
             directory.commit('batch add files')
+            return Response(status=status.HTTP_201_CREATED)
 
-        directory.create_dir(path)
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, *args, **kwargs):
+        path = kwargs.get('path')
+        resource_id = kwargs.get('resource_id')
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        directory = Directory.get(kwargs.get('resource_id'), request.user)
+        directory = Directory.get(resource_id, request.user)
 
         action = serializer.validated_data.get('action')
         if action == 'rename':
             directory.rename(
-                serializer.validated_data.get('oldpath'),
+                path,
                 serializer.validated_data.get('newpath')
             )
+            return Response(status=status.HTTP_200_OK)
 
         if action == "move":
             directory.move(
-                serializer.validated_data.get('oldpath'),
+                path,
                 serializer.validated_data.get('newpath'),
                 serializer.validated_data.get('copy')
             )
+            return Response(status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request, *args, **kwargs):
+        path = self.kwargs.get('path')
+        resource_id = self.kwargs.get('resource_id')
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        directory = Directory.get(resource_id, request.user)
+        directory.write_text(path, serializer.validated_data.get('content'))
+
+        return Response(status=status.HTTP_200_OK)
+
     def delete(self, request, *args, **kwargs):
-        directory = Directory.get(kwargs.get('resource_id'), request.user)
-        directory.remove(kwargs.get('path'))
+        path = kwargs.get('path')
+        resource_id = kwargs.get('resource_id')
+
+        directory = Directory.get(resource_id, request.user)
+        directory.remove(path)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _handle_get(cls, request, *args, **kwargs):
         path = kwargs.get('path', '.')
         version = kwargs.get('version', 'master')
+        resource_id = kwargs.get('resource_id')
 
         if version != 'master':
             version = 'v' + version
 
-        directory = Directory.get(kwargs.get('resource_id'), request.user)
+        directory = Directory.get(resource_id, request.user)
         if 'download' in request.query_params:
             return directory.download(path, version)
-
 
         search = request.query_params.get('search')
         if search:  # search supported only in master
@@ -540,7 +560,12 @@ class FileViewSet(CrudViewSet):
 
     @classmethod
     def as_master(cls):
-        return cls.as_view({'get': 'get', 'patch': 'patch', 'post': 'post', 'delete': 'delete'})
+        return cls.as_view({
+            'get': 'get',
+            'patch': 'patch',
+            'post': 'post',
+            'delete': 'delete'
+        })
 
     @classmethod
     def as_version(cls):
