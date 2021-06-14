@@ -4,8 +4,9 @@ from pl_users.serializers import UserSerializer
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
+from pl_resources.enums import ResourceStatus
+
 from . import models
-from .enums import ResourceStatus
 from .files import Directory
 
 User = get_user_model()
@@ -44,6 +45,15 @@ class CircleSerializer(serializers.ModelSerializer):
             'exercises_count', 'activities_count', 'resources_count', 'url', 'events_url',
             'members_url', 'watchers_url', 'resources_url', 'invitations_url'
         ]
+
+    def to_representation(self, value):
+        repr = super().to_representation(value)
+        if value.parent:
+            repr['parent'] = {
+                'id': value.parent.id,
+                'name': value.parent.name
+            }
+        return repr
 
     def get_url(self, value):
         request = self.context['request']
@@ -149,7 +159,6 @@ class WatcherSerializer(UserSerializer):
         )
 
 
-
 class InvitationSerializer(serializers.ModelSerializer):
     inviter = serializers.SlugRelatedField('username', read_only=True)
     invitee = serializers.SlugRelatedField('username', read_only=True)
@@ -170,7 +179,6 @@ class InvitationSerializer(serializers.ModelSerializer):
             request=request,
             kwargs={'circle_id': value.circle_id, 'username': value.invitee.username}
         )
-
 
 
 class InvitationCreateSerializer(serializers.ModelSerializer):
@@ -227,63 +235,34 @@ class InvitationCreateSerializer(serializers.ModelSerializer):
 
 class ResourceSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    versions_count = serializers.IntegerField(read_only=True, default=0)
-
     url = serializers.SerializerMethodField(read_only=True)
     files_url = serializers.SerializerMethodField(read_only=True)
     versions_url = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = models.Resource
-        fields = '__all__'
-
-    def get_url(self, value):
-        request = self.context['request']
-        return reverse(
-            'pl_resources:resource-detail',
-            request=request,
-            kwargs={'resource_id': value.pk}
-        )
-
-    def get_files_url(self, value):
-        request = self.context['request']
-        return reverse(
-            'pl_resources:resource-files-master',
-            request=request,
-            kwargs={'resource_id': value.pk, 'path': ''}
-        )
-
-    def get_versions_url(self, value):
-        request = self.context['request']
-        return reverse(
-            'pl_resources:resource-version-list',
-            request=request,
-            kwargs={'resource_id': value.pk}
-        )
-
-
-class ResourceCreateSerializer(serializers.ModelSerializer):
     versions_count = serializers.IntegerField(read_only=True, default=0)
-    url = serializers.SerializerMethodField(read_only=True)
-    files_url = serializers.SerializerMethodField(read_only=True)
-    versions_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Resource
         fields = '__all__'
         extra_kwargs = {
-            'author': {'read_only': True},
-            'status': {'read_only': True},
+            'status': {'default': ResourceStatus.DRAFT},
         }
 
     def save(self, **kwargs):
         request = self.context['request']
-        instance = super().save(
-            author=request.user,
-            status=ResourceStatus.DRAFT
-        )
-        Directory.create(instance.pk, request.user)
+        return super().save(**{"author": request.user, **kwargs})
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        Directory.create(instance.pk, instance.author)
         return instance
+
+    def to_representation(self, value):
+        repr = super().to_representation(value)
+        repr['circle'] = {
+            'id': value.circle.id,
+            'name': value.circle.name
+        }
+        return repr
 
     def get_url(self, value):
         request = self.context['request']

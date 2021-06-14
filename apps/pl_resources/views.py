@@ -303,8 +303,6 @@ class ResourceViewSet(CrudViewSet):
         return [permissions.ResourcePermission()]
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return serializers.ResourceCreateSerializer
         return serializers.ResourceSerializer
 
     def perform_destroy(self, instance):
@@ -576,6 +574,7 @@ class FileViewSet(CrudViewSet):
 
 class RecentViewSet(CrudViewSet):
     serializer_class = serializers.ResourceSerializer
+    pagination_class = None
 
     def get_queryset(self):
         return RecentView.objects.of_user(self.request.user)
