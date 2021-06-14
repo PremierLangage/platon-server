@@ -575,10 +575,10 @@ class FileViewSet(CrudViewSet):
 # RECENT VIEWS
 
 class RecentViewSet(CrudViewSet):
-    serializer_class = serializers.RecentViewSerializer
+    serializer_class = serializers.ResourceSerializer
 
     def get_queryset(self):
-        return RecentView.objects.filter(user=self.request.user)
+        return RecentView.objects.of_user(self.request.user)
 
     def get_permissions(self):
         return [AdminOrTeacherPermission()]

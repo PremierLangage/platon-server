@@ -227,7 +227,7 @@ class InvitationCreateSerializer(serializers.ModelSerializer):
 
 class ResourceSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    versions_count = serializers.IntegerField(read_only=True)
+    versions_count = serializers.IntegerField(read_only=True, default=0)
 
     url = serializers.SerializerMethodField(read_only=True)
     files_url = serializers.SerializerMethodField(read_only=True)
@@ -263,7 +263,7 @@ class ResourceSerializer(serializers.ModelSerializer):
 
 
 class ResourceCreateSerializer(serializers.ModelSerializer):
-    versions_count = serializers.IntegerField(read_only=True)
+    versions_count = serializers.IntegerField(read_only=True, default=0)
     url = serializers.SerializerMethodField(read_only=True)
     files_url = serializers.SerializerMethodField(read_only=True)
     versions_url = serializers.SerializerMethodField(read_only=True)
@@ -363,11 +363,3 @@ class FileRenameSerializer(serializers.Serializer):
 
 class FileUpdateSerializer(serializers.Serializer):
     content = serializers.CharField(max_length=134217728, required=False)
-
-
-class RecentViewSerializer(serializers.ModelSerializer):
-    item = ResourceSerializer()
-
-    class Meta:
-        model = models.RecentView
-        fields = ['item']

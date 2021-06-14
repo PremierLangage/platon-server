@@ -311,8 +311,8 @@ class Resource(models.Model):
         return member and member.status == MemberStatus.ADMIN
 
     @classmethod
-    def list_all(cls):
-        return Resource.objects\
+    def list_all(cls, *args, **kwargs):
+        return Resource.objects.filter(*args, **kwargs)\
             .select_related('author', 'circle')\
             .prefetch_related('topics', 'levels')\
             .annotate(versions_count=Count('versions', distinct=True))
@@ -427,7 +427,7 @@ class Event(models.Model):
 
 
 class RecentView(models.Model):
-    user = models.ForeignKey(User, related_name="recent_viewed_resources", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Resource, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now=True)
 
@@ -454,6 +454,11 @@ class RecentView(models.Model):
 
             self.prune_lrv(user)
             return lrv
+
+        def of_user(self, user):
+            ids = list(self.filter(user=user).values_list('pk', flat=True))
+            # use Resource.list_all instead of self.filter to include annotations
+            return Resource.list_all(id__in=ids)
 
         def prune_lrv(self, user):
             # One example of how to clean up the recent visits
