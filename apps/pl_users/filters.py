@@ -21,7 +21,7 @@ class UserFilter(filters.FilterSet):
     class Meta:
         model = User
         fields = {
-            'is_editor': ['exact']
+            'is_editor': ['exact'],
         }
 
     def filter_is_admin(self, queryset, name, value):

@@ -22,6 +22,8 @@ class UserListView(mixins.ListModelMixin, generics.GenericAPIView):
     filter_class = UserFilter
 
     def get(self, request, *args, **kwargs):
+        if 'no_page' in self.request.query_params:
+            self.pagination_class = None
         return self.list(request, *args, **kwargs)
 
 

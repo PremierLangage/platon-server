@@ -122,7 +122,6 @@ class MemberSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField('get_username', read_only=True)
 
     url = serializers.SerializerMethodField(read_only=True)
-    circle_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Member
