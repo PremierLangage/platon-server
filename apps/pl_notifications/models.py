@@ -3,6 +3,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db.models.aggregates import Count
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 # Create your models here.
 class Notification(models.Model):
     """Representation of a `Notification`.
@@ -26,6 +29,14 @@ class Notification(models.Model):
                 type="{self.type}"
             >
         '''
+        
+    def save(self, *args, **kwargs):
+        channel_layer = get_channel_layer()
+        async_to_sync (channel_layer.send) (self.user.username, {
+        "type": "notification.message",
+        "text": "Notifications are available now.",
+        })
+        super(self).save(*args, **kwargs)
     
     @classmethod
     def list_all(cls):

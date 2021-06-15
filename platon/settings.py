@@ -65,6 +65,7 @@ THIRD_PARTY_APPS = [
     'django_elasticsearch_dsl_drf',
     'django_filters',
     'rest_framework',
+    'notifications',
 ]
 
 PROJECT_APPS = [

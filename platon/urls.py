@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import notifications.urls
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -31,7 +32,9 @@ urlpatterns = [
     path('api/v1/', include('pl_lti.urls', namespace='pl_lti')),
     path('api/v1/', include('pl_sandbox.urls', namespace='pl_sandbox')),
     path('api/v1/', include('pl_resources.urls', namespace='pl_resources')),
-    path('api/v1/', include('pl_notifications.urls', namespace='pl_notifications')),
+    path('api/v1/notifications/', include(notifications.urls, namespace='notifications')),
+    #path('api/v1/', include('pl_notifications.urls', namespace='pl_notifications')),
+    
 ]
 
 if settings.DEBUG and not settings.TESTING:
