@@ -372,7 +372,7 @@ class Event(models.Model):
     @classmethod
     def for_member_remove(cls, actor: User, member: Member):
         Event.objects.create(
-            type=EventTypes.MEMBER_DELETED,
+            type=EventTypes.MEMBER_REMOVE,
             circle=member.circle,
             data={
                 'actor_id': actor.id,

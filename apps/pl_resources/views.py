@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_cookie
@@ -55,7 +54,11 @@ class CircleViewSet(CrudViewSet):
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CircleFilter
-    search_fields = ['name', 'topics__name', 'levels__name']
+    search_fields = [
+        'name',
+        'topics__name',
+        'levels__name'
+    ]
     ordering_fields = [
         'watchers_count',
         'members_count',
@@ -159,41 +162,14 @@ class EventViewSet(CrudViewSet):
         return cls.as_view({'get': 'retrieve', 'delete': 'destroy'})
 
 
-# MEMBERS
-
-class MemberViewSet(CrudViewSet):
-    serializer_class = serializers.MemberSerializer
-    lookup_field = 'user__username'
-
-    def get_object(self):
-        return self.get_queryset().get(
-            user__username=self.kwargs.get('username'),
-        )
-
-    def get_queryset(self):
-        return Member.objects.filter(
-            circle_id=self.kwargs.get('circle_id')
-        )
-
-    def get_permissions(self):
-        return [permissions.MemberPermission()]
-
-    def perform_destroy(self, instance):
-        super().perform_destroy(instance)
-        Event.for_member_remove(
-            self.request.user,
-            instance
-        )
-
-    @classmethod
-    def as_list(cls):
-        return cls.as_view({'get': 'list'})
-
-
 # WATCHERS
 
 class WatcherViewSet(CrudViewSet):
     lookup_field = 'username'
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ['username', 'first_name', 'last_name', 'email']
+    ordering_fields = ['username']
+    ordering = ['username']
 
     def get_object(self):
         return self.get_queryset().get(
@@ -236,10 +212,60 @@ class WatcherViewSet(CrudViewSet):
         return cls.as_view({'get': 'retrieve', 'delete': 'destroy'})
 
 
+# MEMBERS
+
+class MemberViewSet(CrudViewSet):
+    serializer_class = serializers.MemberSerializer
+    lookup_field = 'user__username'
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        'user__username',
+        'user__first_name',
+        'user__last_name',
+        'user__email'
+    ]
+    ordering_fields = ['-date_joined', 'user__username']
+    ordering = ['-date_joined', 'user__username']
+
+    def get_object(self):
+        return self.get_queryset().get(
+            user__username=self.kwargs.get('username'),
+        )
+
+    def get_queryset(self):
+        return Member.objects.filter(
+            circle_id=self.kwargs.get('circle_id')
+        )
+
+    def get_permissions(self):
+        return [permissions.MemberPermission()]
+
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        Event.for_member_remove(
+            self.request.user,
+            instance
+        )
+
+    @classmethod
+    def as_list(cls):
+        return cls.as_view({'get': 'list'})
+
+
+
 # INVITATIONS
 
 class InvitationViewSet(CrudViewSet):
     lookup_field = 'invitee__username'
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        'invitee__username',
+        'invitee__first_name',
+        'invitee__last_name',
+        'invitee__email'
+    ]
+    ordering_fields = ['-date', 'invitee__username']
+    ordering = ['-date', 'invitee__username']
 
     def get_object(self):
         return Invitation.objects.get(
@@ -292,6 +318,7 @@ class ResourceViewSet(CrudViewSet):
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ResourceFilter
+    search_fields = ['name', 'topics__name', 'levels__name']
     ordering_fields = ['updated_at', 'name']
     ordering = ['-updated_at']
 
