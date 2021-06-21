@@ -199,7 +199,7 @@ class Invitation(models.Model):
 
     class Meta:
         unique_together = (
-            ('circle', 'inviter', 'invitee')
+            ('circle', 'invitee')
         )
 
 

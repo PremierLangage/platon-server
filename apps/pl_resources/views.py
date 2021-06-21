@@ -182,7 +182,7 @@ class WatcherViewSet(CrudViewSet):
         )
 
     def get_permissions(self):
-        return [permissions.WatcherPermission()]
+        return [permissions.MemberPermission()]
 
     def get_serializer_class(self):
         return serializers.WatcherSerializer
@@ -279,7 +279,7 @@ class InvitationViewSet(CrudViewSet):
         )
 
     def get_permissions(self):
-        return [permissions.WatcherPermission()]
+        return [permissions.MemberPermission()]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
