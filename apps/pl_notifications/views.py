@@ -10,7 +10,12 @@ from .models import Notification
 
 
 class NotificationViewSet(CrudViewSet):
+    
+    serializer_class = NotificationSerializer
+    
     def get_serializer_class(self):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         return NotificationSerializer
 
     def get_queryset(self):

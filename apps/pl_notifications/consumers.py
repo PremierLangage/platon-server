@@ -1,35 +1,34 @@
 import json
-
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import PermissionDenied
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
-
-#todo
 class NotificationConsumer(AsyncWebsocketConsumer):
     """ Allow to send notification with websocket """
-    
-    notification_group_name: str
-    # sandbox_id: int
 
-    
+    group_name: str
+
     async def connect(self):
         """Connect this consumer."""
-        # self.notification_group_name = self.scope["user"].username
-        self.notification_group_name = self.scope['url_route']['kwargs']['user']
-        print(self.scope)
+        self.user = self.scope['user']
+        # TODO refuse non logged user (anonymous)
         
+        self.group_name = self.user.username
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
-        await self.send(text_data=json.dumps({
-            'message': self.notification_group_name
-        }))
 
-
-    async def notification_message(self, event):
-        message_text = event['text']
-        
-        await self.send(text_data=json.dumps({
-            'username': self.notification_group_name,
-            'text': message_text
-        }))
-        
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
     
+    async def notification_available(self, event):
+        print('OKOK')
+        await self.send(text_data=json.dumps(event))
+
+def send_notification(username: str, unreaded=1):
+    channel_layer = get_channel_layer()
+    group_send = async_to_sync(channel_layer.group_send)
+    group_send(username, {
+        "type": "notification.available",
+        "unreaded": unreaded,
+    })

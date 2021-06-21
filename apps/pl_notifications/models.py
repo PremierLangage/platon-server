@@ -40,9 +40,6 @@ class Notification(models.Model):
     
     @classmethod
     def list_all(cls):
-        return Notification.objects.all()\
+        return Notification.objects\
             .select_related('user')
-            
-    
-    
-    
+        
