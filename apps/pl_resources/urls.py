@@ -18,9 +18,13 @@ urlpatterns = [
     path('circles/<int:circle_id>/', views.CircleViewSet.as_detail(), name='circle-detail'),
 
     # Special circles
-    path('circles/me', views.CircleViewSet.as_view({'get': 'get_me'}), name='circle-me'),
-    path('circles/root', views.CircleViewSet.as_view({'get': 'get_root'}), name='circle-root'),
-    path('circles/tree', views.CircleViewSet.as_view({'get': 'get_tree'}), name='circle-tree'),
+    path('circles/me/', views.CircleViewSet.as_view({'get': 'get_me'}), name='circle-me'),
+    path('circles/tree/', views.CircleViewSet.as_view({'get': 'get_tree'}), name='circle-tree'),
+    path(
+        'circles/completion/',
+        views.CircleViewSet.as_view({'get': 'get_completion'}),
+        name='circle-completion'
+    ),
 
     # Events
     path(
@@ -82,6 +86,11 @@ urlpatterns = [
         name='resource-recent-views'
     ),
     path(
+        'resources/completion/',
+        views.ResourceViewSet.as_view({'get': 'get_completion'}),
+        name='resource-completion'
+    ),
+    path(
         'resources/<int:resource_id>/',
         views.ResourceViewSet.as_detail(),
         name='resource-detail'
@@ -94,19 +103,19 @@ urlpatterns = [
         name='resource-version-list'
     ),
     path(
-        'resources/<int:resource_id>/versions/<int:version>',
+        'resources/<int:resource_id>/versions/<int:version>/',
         views.VersionViewSet.as_detail(),
         name='resource-version-detail'
     ),
 
     # Files
     url(
-        r'resources/(?P<resource_id>\d+)/versions/(?P<version>\d+)?/files/(?P<path>[^/?]*)',
+        r'resources/(?P<resource_id>\d+)/versions/(?P<version>\d+)?/files/(?P<path>[^\?]*)',
         views.FileViewSet.as_version(),
         name='resource-version-files'
     ),
     url(
-        r'resources/(?P<resource_id>\d+)/files/(?P<path>.*)',
+        r'resources/(?P<resource_id>\d+)/files/(?P<path>[^\?]*)',
         views.FileViewSet.as_master(),
         name='resource-files-master'
     ),

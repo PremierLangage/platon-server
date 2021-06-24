@@ -93,10 +93,14 @@ def setup_celery_tasks(sender, *args, **kwargs):
 def on_create_defaults(sender, config, **kwargs):
     logger.info('creating pl_sandbox defaults')
     Sandbox = apps.get_model(app_label='pl_sandbox', model_name='Sandbox')
-    sandbox, created = Sandbox.objects.get_or_create(
-        name="Default",
-        url=settings.SANDBOX_URL,
-        enabled=True
-    )
+    sandbox = Sandbox.objects.filter(name="Default").first()
+    if not sandbox:
+        sandbox = Sandbox.objects.create(
+            name="Default",
+            url=settings.SANDBOX_URL,
+            enabled=True
+        )
+
     sandbox.url = settings.SANDBOX_URL
+    sandbox.enabled = True
     sandbox.save()

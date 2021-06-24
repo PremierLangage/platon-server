@@ -18,15 +18,22 @@ from .models import Circle, Member, Resource
 User = get_user_model()
 
 
-def is_circle_owner(user: User, circle_id: str) -> bool:
+def is_circle_admin(user: User, circle_id: str) -> bool:
+    if user.is_admin:
+        return True
+
     member = Member.objects.filter(
         user_id=user.id,
         circle_id=circle_id,
     ).first()
-    return member and member.status == MemberStatus.OWNER
+
+    return member and member.status == MemberStatus.ADMIN
 
 
 def is_circle_member(user: User, circle_id: str) -> bool:
+    if user.is_admin:
+        return True
+
     return Member.objects.filter(
         user_id=user.id,
         circle_id=circle_id,
@@ -56,12 +63,10 @@ class CirclePermission(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        if request.method == 'DELETE':
-            if obj.type == CircleTypes.PERSONAL:
-                return False
-            return request.user.is_admin
+        if request.method == 'DELETE' and obj.type == CircleTypes.PERSONAL:
+            return False
 
-        return request.user.is_admin or is_circle_owner(request.user, obj.pk)
+        return is_circle_admin(request.user, obj.pk)
 
 
 class EventPermission(permissions.BasePermission):
@@ -78,7 +83,7 @@ class EventPermission(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        return is_circle_owner(request.user, view.kwargs.get("circle_id"))
+        return is_circle_admin(request.user, view.kwargs.get("circle_id"))
 
 
 class MemberPermission(permissions.BasePermission):
@@ -98,11 +103,8 @@ class MemberPermission(permissions.BasePermission):
         if request.user.username == view.kwargs.get("username"):
             return True
 
-        return is_circle_owner(request.user, view.kwargs.get("circle_id"))
+        return is_circle_admin(request.user, view.kwargs.get("circle_id"))
 
-
-class WatcherPermission(MemberPermission):
-    pass
 
 
 class ResourcePermission(permissions.BasePermission):

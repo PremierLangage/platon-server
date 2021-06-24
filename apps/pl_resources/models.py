@@ -60,6 +60,7 @@ class Circle(models.Model):
         name (`str`): Name of the circle.
         type (`CircleTypes`): Type of the circle.
         desc (`str`): Description of the circle.
+        opened (`bool`): Indicates whether an invitation is required to add new member.
         updated_at (`datetime`): Update date of the resource.
         created_at (`datetime`): Creation date of the resource.
 
@@ -79,6 +80,7 @@ class Circle(models.Model):
     type = models.CharField(max_length=20, choices=CircleTypes.choices, default=CircleTypes.PUBLIC)
     desc = models.CharField(max_length=300, blank=True, default='Aucune description')
     topics = models.ManyToManyField(Topic, related_name='circles', blank=True)
+    opened = models.BooleanField(default=False)
     levels = models.ManyToManyField(Level, related_name='circles', blank=True)
     watchers = models.ManyToManyField(User, related_name='watched_circles', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -91,118 +93,61 @@ class Circle(models.Model):
 
     @classmethod
     def list_all(cls):
-        return Circle.objects \
-            .prefetch_related('topics', 'levels') \
-            .annotate(**cls.__annotate_with_stats())
+        return cls.__queryset()
 
     @classmethod
     def list_publics(cls):
-        return Circle.objects \
-            .prefetch_related('topics', 'levels') \
-            .filter(type=CircleTypes.PUBLIC) \
-            .annotate(**cls.__annotate_with_stats())
+        return cls.__queryset(type=CircleTypes.PUBLIC)
 
     @classmethod
     def find_root(cls):
-        return cls.objects.prefetch_related('topics', 'levels') \
-            .filter(type=CircleTypes.PUBLIC, parent=None) \
-            .annotate(**cls.__annotate_with_stats()) \
-            .get()
+        return cls.__queryset(type=CircleTypes.PUBLIC, parent=None).get()
 
     @classmethod
-    def find_user_personal(cls, user: User):
-        circle = cls.objects.prefetch_related('topics', 'levels') \
-            .filter(type=CircleTypes.PERSONAL, members__user=user) \
-            .annotate(**cls.__annotate_with_stats())\
-            .first()
+    def find_personal(cls, user: User):
+        circle = cls.__queryset(type=CircleTypes.PERSONAL, members__user=user).first()
         if not circle:
             circle = cls.objects.create(
                 type=CircleTypes.PERSONAL,
-                name=f'Cercle de “{user.username}”',
+                name=user.username,
                 desc='Aucune description'
             )
             Member.objects.create(
                 user=user,
                 circle=circle,
-                status=MemberStatus.OWNER
+                status=MemberStatus.ADMIN
             )
         return circle
 
-
     @classmethod
-    def __annotate_with_stats(cls):
-        return {
-            'members_count': Count("members", distinct=True),
-            "children_count": Count("children", distinct=True),
-            "watchers_count": Count("watchers", distinct=True),
-            "models_count": Count(
-                "resources", distinct=True,
-                filter=models.Q(resources__type=ResourceTypes.MODEL)
-            ),
-            "exercises_count": Count(
-                "resources",
-                distinct=True,
-                filter=models.Q(resources__type=ResourceTypes.EXERCISE)
-            ),
-            "activities_count": Count(
-                "resources",
-                distinct=True,
-                filter=models.Q(resources__type=ResourceTypes.ACTIVITY)
-            ),
-            "resources_count": (
-                models.F("models_count")
-                + models.F("exercises_count")
-                + models.F("activities_count")
-            ),
-        }
-
-
-class Event(models.Model):
-    """Representation of an event in a `Circle`.
-
-    Attributes:
-        text (`str`): Human readable text describing the event.
-        data (`dict`): Extra informations about the event.
-        date (`datetime`): Creation date of the event.
-        type (`EventTypes`): Type of the event.
-        circle (`Circle`): ForeignKey to the `Circle` model on which the event belongs to.
-    """
-
-    text = models.TextField(blank=True)
-    data = models.JSONField(default=dict, blank=True)
-    date = models.DateTimeField(auto_now_add=True)
-    type = models.CharField(
-        max_length=20,
-        choices=EventTypes.choices,
-        default=EventTypes.GENERIC
-    )
-    circle: Circle = models.ForeignKey(
-        Circle,
-        on_delete=models.CASCADE,
-        related_name='events',
-    )
-
-    def __str__(self):
-        return f'''
-            <Event
-                pk="{self.pk}""
-                type="{self.type}"
-                text="{self.text}"
-            >
-        '''
-
-    @classmethod
-    def list_all_in_circle(cls, circle_id: int):
-        """List all events in the circle identified by the pk `circle_id`
-
-        Args:
-            circle_id (`int`): Identifier of a `Circle`.
-
-        Returns:
-            `QuerySet`: A query that resolves with the matched `Event` objects.
-        """
-
-        return Event.objects.filter(circle_id=circle_id).order_by('-date')
+    def __queryset(cls, **kwargs):
+        return cls.objects.prefetch_related('topics', 'levels') \
+            .filter(**kwargs) \
+            .annotate(
+                members_count=Count("members", distinct=True),
+                children_count=Count("children", distinct=True),
+                watchers_count=Count("watchers", distinct=True),
+                models_count=Count(
+                    "resources",
+                    distinct=True,
+                    filter=models.Q(resources__type=ResourceTypes.MODEL)
+                ),
+                exercises_count=Count(
+                    "resources",
+                    distinct=True,
+                    filter=models.Q(resources__type=ResourceTypes.EXERCISE)
+                ),
+                activities_count=Count(
+                    "resources",
+                    distinct=True,
+                    filter=models.Q(resources__type=ResourceTypes.ACTIVITY)
+                ),
+                resources_count=(
+                    models.F("models_count")
+                    + models.F("exercises_count")
+                    + models.F("activities_count")
+                ),
+        )
 
 
 class Member(models.Model):
@@ -254,7 +199,7 @@ class Invitation(models.Model):
 
     class Meta:
         unique_together = (
-            ('circle', 'inviter', 'invitee')
+            ('circle', 'invitee')
         )
 
 
@@ -309,27 +254,65 @@ class Resource(models.Model):
         '''
 
     def is_editable_by(self, user: User) -> bool:
-        if user.id == self.author_id:
+        """Indicates whether the given `user` can edit this resource.
+        A resource is editable by an user if:
+        - The user is an admin user of the platform.
+        - The user is the author of the resource.
+        - The user is a member of the circle where the resource is created.
+        - The user is an editor and the resource is in a `opened` circle.
+        Args:
+            user (User): An user object.
+
+        Returns:
+            bool: `True` if the user can edit the resource `False` otherwise.
+        """
+
+        if user.is_admin or user.id == self.author_id:
             return True
-        if user.is_admin:
-            return True
-        if not user.is_editor:
-            return False
-        return Member.objects.filter(
-            user_id=self.author_id,
+
+        if Member.objects.filter(
+            user_id=user.id,
             circle_id=self.circle_id,
-        ).exists()
+        ).exists():
+            return True
+
+        return user.is_editor and self.circle.opened
 
     def is_deletable_by(self, user: User) -> bool:
-        if user.id == self.author_id:
-            return True
+        """Indicates whether the given `user` can delete this resource.
+        A resource is detelable by an user if:
+        - The user is an admin user.
+        - The user is the author of the resource.
+        - The user is an admin member of the circle where the resource is created.
+
+        Note:
+        A resource that is already versioned cannot be deleted.
+        Args:
+            user (User): An user object.
+
+        Returns:
+            bool: `True` if the user can edit the resource `False` otherwise.
+        """
+
+        if self.versions.count():
+            return False
+
         if user.is_admin:
             return True
-        return False
+
+        if user.id == self.author_id:
+            return True
+
+        member = Member.objects.filter(
+            user_id=user.id,
+            circle_id=self.circle_id,
+        ).first()
+
+        return member and member.status == MemberStatus.ADMIN
 
     @classmethod
-    def list_all(cls):
-        return Resource.objects\
+    def list_all(cls, *args, **kwargs):
+        return Resource.objects.filter(*args, **kwargs)\
             .select_related('author', 'circle')\
             .prefetch_related('topics', 'levels')\
             .annotate(versions_count=Count('versions', distinct=True))
@@ -356,8 +339,95 @@ class Version(models.Model):
             .filter(resource_id=resource_id)
 
 
+class Event(models.Model):
+    """Representation of an event in a `Circle`.
+
+    Attributes:
+        data (`dict`): Extra informations about the event.
+        date (`datetime`): Creation date of the event.
+        circle (`Circle`): ForeignKey to the `Circle` model on which the event belongs to.
+    """
+
+    type = models.CharField(max_length=50, choices=EventTypes.choices)
+    data = models.JSONField(default=dict, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+    circle: Circle = models.ForeignKey(Circle, on_delete=models.CASCADE, related_name='events')
+
+    def __str__(self):
+        return f'<Event pk="{self.pk}" type="{self.type}">'
+
+    @classmethod
+    def for_member_create(cls, actor: User, member: Member):
+        Event.objects.create(
+            type=EventTypes.MEMBER_CREATE,
+            circle=member.circle,
+            data={
+                'actor_id': actor.id,
+                'actor_name': actor.username,
+                'member_id': member.user.id,
+                'member_name': member.user.username,
+            }
+        )
+
+    @classmethod
+    def for_member_remove(cls, actor: User, member: Member):
+        Event.objects.create(
+            type=EventTypes.MEMBER_REMOVE,
+            circle=member.circle,
+            data={
+                'actor_id': actor.id,
+                'actor_name': actor.username,
+                'member_id': member.user.id,
+                'member_name': member.user.username,
+            }
+        )
+
+    @classmethod
+    def for_resource_create(cls, actor: User, resource: Resource):
+        Event.objects.create(
+            type=EventTypes.RESOURCE_CREATE,
+            circle=resource.circle,
+            data={
+                'actor_id': actor.id,
+                'actor_name': actor.username,
+                'resource_id': resource.id,
+                'resource_name': resource.name,
+                'resource_type': resource.type,
+            }
+        )
+
+    @classmethod
+    def for_resource_status_change(cls, actor: User, resource: Resource):
+        Event.objects.create(
+            type=EventTypes.RESOURCE_STATUS_CHANGE,
+            circle=resource.circle,
+            data={
+                'actor_id': actor.id,
+                'actor_name': actor.username,
+                'resource_id': resource.id,
+                'resource_name': resource.name,
+                'resource_type': resource.type,
+                'resource_status': resource.status,
+            }
+        )
+
+
+    @classmethod
+    def of_circle(cls, circle_id: int):
+        """List all events in the circle identified by the pk `circle_id`
+
+        Args:
+            circle_id (`int`): Identifier of a `Circle`.
+
+        Returns:
+            `QuerySet`: A query that resolves with the matched `Event` objects.
+        """
+
+        return Event.objects.filter(circle_id=circle_id)
+
+
 class RecentView(models.Model):
-    user = models.ForeignKey(User, related_name="recent_viewed_resources", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Resource, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now=True)
 
@@ -384,6 +454,11 @@ class RecentView(models.Model):
 
             self.prune_lrv(user)
             return lrv
+
+        def of_user(self, user):
+            ids = list(self.filter(user=user).values_list('pk', flat=True))
+            # use Resource.list_all instead of self.filter to include annotations
+            return Resource.list_all(id__in=ids)
 
         def prune_lrv(self, user):
             # One example of how to clean up the recent visits

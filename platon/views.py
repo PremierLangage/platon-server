@@ -15,7 +15,6 @@ def api_root(request, format=None):
         'levels': reverse('pl_resources:level-list', request=request, format=format),
         'circles': reverse('pl_resources:circle-list', request=request, format=format),
         'my-circle': reverse('pl_resources:circle-me', request=request, format=format),
-        'root-circle': reverse('pl_resources:circle-root', request=request, format=format),
         'circles-tree': reverse('pl_resources:circle-tree', request=request, format=format),
         'resources': reverse('pl_resources:resource-list', request=request, format=format),
         'recently-viewed-resources': reverse('pl_resources:resource-recent-views', request=request, format=format),

@@ -66,7 +66,7 @@ class Version(TypedDict):
 class TreeNode(TypedDict):
     path: str
     parent: str
-    type: Literal['file', 'directory']
+    type: Literal['file', 'folder']
     children: Optional[List['TreeNode']]
 
 

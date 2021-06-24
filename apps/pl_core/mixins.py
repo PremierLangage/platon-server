@@ -3,7 +3,7 @@ import asyncio
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import classonlymethod
 from django.views.generic.base import View
-from rest_framework import mixins, status, viewsets
+from rest_framework import mixins, exceptions, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
@@ -52,10 +52,13 @@ class CrudViewSet(
         old_get_object = self.get_object
 
         def get_object():
-            if not hasattr(self, '__get_object__'):
-                self.__get_object__ = old_get_object()
-            self.check_object_permissions(request, self.__get_object__)
-            return self.__get_object__
+            try:
+                if not hasattr(self, '__get_object__'):
+                    self.__get_object__ = old_get_object()
+                self.check_object_permissions(request, self.__get_object__)
+                return self.__get_object__
+            except ObjectDoesNotExist:
+                raise exceptions.NotFound()
         setattr(self, 'get_object', get_object)
 
         return request

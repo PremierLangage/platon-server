@@ -1,22 +1,20 @@
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db import models
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_cookie
 from django_filters.rest_framework import DjangoFilterBackend
 from pl_core.mixins import CrudViewSet
-from pl_core.permissions import (AdminOrReadonlyPermission,
-                                 AdminOrTeacherPermission)
-from pl_users.serializers import UserSerializer
+from pl_core.permissions import AdminOrReadonlyPermission, AdminOrTeacherPermission
 from rest_framework import exceptions, status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from pl_resources.enums import CircleTypes
 
 from pl_resources.files import Directory
 
-from . import models, permissions, serializers
+from . import permissions, serializers
+from .models import Circle, Event, Invitation, Level, Member, RecentView, Resource, Topic, Version
 from .filters import CircleFilter, ResourceFilter
 
 User = get_user_model()
@@ -24,10 +22,9 @@ User = get_user_model()
 
 # LEVELS
 
-
 class LevelListViews(APIView):
     def get(self, request, *args, **kwargs):
-        return Response([level.name for level in models.Level.objects.all()])
+        return Response([level.name for level in Level.objects.all()])
 
     def get_permissions(self):
         return [AdminOrReadonlyPermission()]
@@ -41,7 +38,7 @@ class TopicViewSet(CrudViewSet):
     lookup_url_kwarg = 'name'
 
     def get_queryset(self):
-        return models.Topic.list_all_with_stats().order_by('-references', 'name')
+        return Topic.list_all_with_stats().order_by('-references', 'name')
 
     def get_permissions(self):
         return [AdminOrReadonlyPermission()]
@@ -57,7 +54,11 @@ class CircleViewSet(CrudViewSet):
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CircleFilter
-    search_fields = ['name']
+    search_fields = [
+        'name',
+        'topics__name',
+        'levels__name'
+    ]
     ordering_fields = [
         'watchers_count',
         'members_count',
@@ -69,24 +70,19 @@ class CircleViewSet(CrudViewSet):
 
     def get_queryset(self):
         if self.action == 'list' and self.request.method == 'GET':
-            return models.Circle.list_publics()
-        return models.Circle.list_all()
+            return Circle.list_publics()
+        return Circle.list_all()
 
     def get_permissions(self):
         return [permissions.CirclePermission()]
 
     def get_me(self, request):
-        circle = models.Circle.find_user_personal(request.user)
+        circle = Circle.find_personal(request.user)
         serializer = self.get_serializer(circle)
         return Response(serializer.data)
 
-    def get_root(self, request):
-        root = models.Circle.find_root()
-        serializer = self.get_serializer(root)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
     def get_tree(self, request):
-        root = models.Circle.find_root()
+        root = Circle.find_root()
 
         def traverse(circle):
             node = {
@@ -106,6 +102,28 @@ class CircleViewSet(CrudViewSet):
             return node
 
         return Response(traverse(root), status=status.HTTP_200_OK)
+
+    def get_completion(self, request):
+        query = Circle.objects.filter(
+            type=CircleTypes.PUBLIC
+        ).values_list('name', 'topics', 'levels').distinct()
+
+        names = set()
+        topics = set()
+        levels = set()
+
+        for name, topic, level in query:
+            names.add(name)
+            if topic:
+                topics.add(topic)
+            if level:
+                levels.add(level)
+
+        return Response({
+            "names": names,
+            "topics": topics,
+            "levels": levels
+        }, status=status.HTTP_200_OK)
 
 
 # EVENTS
@@ -128,9 +146,9 @@ class EventViewSet(CrudViewSet):
     lookup_url_kwarg = 'event_id'
 
     def get_queryset(self):
-        return models.Event.list_all_in_circle(
+        return Event.of_circle(
             self.kwargs.get('circle_id')
-        )
+        ).order_by('-date')
 
     def get_permissions(self):
         return [permissions.EventPermission()]
@@ -144,35 +162,14 @@ class EventViewSet(CrudViewSet):
         return cls.as_view({'get': 'retrieve', 'delete': 'destroy'})
 
 
-# MEMBERS
-
-class MemberViewSet(CrudViewSet):
-    serializer_class = serializers.MemberSerializer
-    lookup_field = 'user__username'
-
-    def get_object(self):
-        return self.get_queryset().get(
-            user__username=self.kwargs.get('username'),
-        )
-
-    def get_queryset(self):
-        return models.Member.objects.filter(
-            circle_id=self.kwargs.get('circle_id')
-        )
-
-    def get_permissions(self):
-        return [permissions.MemberPermission()]
-
-    @classmethod
-    def as_list(cls):
-        return cls.as_view({'get': 'list'})
-
-
 # WATCHERS
 
 class WatcherViewSet(CrudViewSet):
-    serializer_class = UserSerializer
     lookup_field = 'username'
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ['username', 'first_name', 'last_name', 'email']
+    ordering_fields = ['username']
+    ordering = ['username']
 
     def get_object(self):
         return self.get_queryset().get(
@@ -185,40 +182,104 @@ class WatcherViewSet(CrudViewSet):
         )
 
     def get_permissions(self):
-        return [permissions.WatcherPermission()]
+        return [permissions.MemberPermission()]
+
+    def get_serializer_class(self):
+        return serializers.WatcherSerializer
 
     def perform_destroy(self, instance):
         circles = instance.watched_circles
         circle = circles.get(pk=self.kwargs.get('circle_id'))
         circles.remove(circle)
 
+    def create(self, request, *args, **kwargs):
+        circle = Circle.objects.get(pk=self.kwargs.get('circle_id'))
+        if circle.watchers.filter(pk=request.user.pk).exists():
+            return Response(status=status.HTTP_409_CONFLICT)
+
+        circle.watchers.add(request.user)
+        circle.save()
+        serializer = self.get_serializer(request.user)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     @classmethod
     def as_list(cls):
-        return cls.as_view({'get': 'list'})
+        return cls.as_view({'get': 'list', 'post': 'create'})
 
     @classmethod
     def as_detail(cls):
         return cls.as_view({'get': 'retrieve', 'delete': 'destroy'})
 
 
+# MEMBERS
+
+class MemberViewSet(CrudViewSet):
+    serializer_class = serializers.MemberSerializer
+    lookup_field = 'user__username'
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        'user__username',
+        'user__first_name',
+        'user__last_name',
+        'user__email'
+    ]
+    ordering_fields = ['-date_joined', 'user__username']
+    ordering = ['-date_joined', 'user__username']
+
+    def get_object(self):
+        return self.get_queryset().get(
+            user__username=self.kwargs.get('username'),
+        )
+
+    def get_queryset(self):
+        return Member.objects.filter(
+            circle_id=self.kwargs.get('circle_id')
+        )
+
+    def get_permissions(self):
+        return [permissions.MemberPermission()]
+
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        Event.for_member_remove(
+            self.request.user,
+            instance
+        )
+
+    @classmethod
+    def as_list(cls):
+        return cls.as_view({'get': 'list'})
+
+
+
 # INVITATIONS
 
 class InvitationViewSet(CrudViewSet):
     lookup_field = 'invitee__username'
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        'invitee__username',
+        'invitee__first_name',
+        'invitee__last_name',
+        'invitee__email'
+    ]
+    ordering_fields = ['-date', 'invitee__username']
+    ordering = ['-date', 'invitee__username']
 
     def get_object(self):
-        return models.Invitation.objects.get(
+        return Invitation.objects.get(
             circle__id=self.kwargs.get('circle_id'),
             invitee__username=self.kwargs.get('username'),
         )
 
     def get_queryset(self):
-        return models.Invitation.objects.filter(
+        return Invitation.objects.filter(
             circle_id=self.kwargs.get('circle_id')
         )
 
     def get_permissions(self):
-        return [permissions.WatcherPermission()]
+        return [permissions.MemberPermission()]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -226,20 +287,25 @@ class InvitationViewSet(CrudViewSet):
         return serializers.InvitationSerializer
 
     def perform_create(self, serializer):
-        return serializer.save(
+        serializer.save(
             inviter=self.request.user,
-            circle=models.Circle.objects.get(pk=self.kwargs.get('circle_id'))
+            circle=Circle.objects.get(
+                pk=self.kwargs.get('circle_id')
+            )
         )
 
     def partial_update(self, request, *args, **kwargs):
-        invitation = self.get_object()
-        models.Member.objects.create(
-            user=invitation.invitee,
-            circle=invitation.circle,
-            status=invitation.status
+        instance = self.get_object()
+        response = super().destroy(request, *args, **kwargs)
+        Event.for_member_create(
+            instance.inviter,
+            Member.objects.create(
+                user=instance.invitee,
+                circle=instance.circle,
+                status=instance.status
+            )
         )
-        # TODO send notification
-        return super().destroy(request, *args, **kwargs)
+        return response
 
 
 # RESOURCES
@@ -252,28 +318,67 @@ class ResourceViewSet(CrudViewSet):
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ResourceFilter
+    search_fields = ['name', 'topics__name', 'levels__name']
     ordering_fields = ['updated_at', 'name']
     ordering = ['-updated_at']
 
     def get_queryset(self):
-        return models.Resource.list_all()
+        # TODO remove private resources if no author filter is defined
+        return Resource.list_all()
 
     def get_permissions(self):
         return [permissions.ResourcePermission()]
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return serializers.ResourceCreateSerializer
         return serializers.ResourceSerializer
 
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        Directory.delete(self.kwargs.get('resource_id'))
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        Event.for_resource_create(
+            self.request.user,
+            serializer.instance,
+        )
+
+    def perform_update(self, serializer):
+        before = self.get_object()
+        super().perform_update(serializer)
+        after = serializer.instance
+
+        if before.status != after.status:
+            Event.for_resource_status_change(
+                self.request.user,
+                after
+            )
+
     def retrieve(self, request, *args, **kwargs):
-        models.RecentView.objects.add_item(request.user, self.get_object())
+        RecentView.objects.add_item(request.user, self.get_object())
         return super().retrieve(request, *args, **kwargs)
 
-    def destroy(self, request, *args, **kwargs):
-        response = super().destroy(request, *args, **kwargs)
-        Directory.delete(kwargs.get('resource_id'))
-        return response
+    def get_completion(self, request):
+        query = Resource.objects.filter(
+            type=CircleTypes.PUBLIC
+        ).values_list('name', 'topics', 'levels').distinct()
+
+        names = set()
+        topics = set()
+        levels = set()
+
+        for name, topic, level in query:
+            names.add(name)
+            if topic:
+                topics.add(topic)
+            if level:
+                levels.add(level)
+
+        return Response({
+            "names": names,
+            "topics": topics,
+            "levels": levels
+        }, status=status.HTTP_200_OK)
 
 
 # VERSIONS
@@ -288,12 +393,12 @@ class VersionViewSet(CrudViewSet):
         super().__init__(**kwargs)
         self.resource = None
 
-    def get_object(self) -> models.Version:
+    def get_object(self) -> Version:
         number = self.kwargs.get('version')
         return self.get_queryset().get(number=number)
 
     def get_queryset(self):
-        return models.Version.of_resource(
+        return Version.of_resource(
             self.resource.pk
         ).order_by('-created_at')
 
@@ -301,13 +406,16 @@ class VersionViewSet(CrudViewSet):
         if self.resource is None:
             resource_id = self.kwargs.get('resource_id')
             try:
-                self.resource = models.Resource.objects.get(pk=resource_id)
-            except models.Resource.DoesNotExist:
+                self.resource = Resource.objects.get(pk=resource_id)
+            except Resource.DoesNotExist:
                 raise exceptions.NotFound()
         return [permissions.VersionPermission(self.resource)]
 
     def perform_create(self, serializer):
-        directory = Directory.get(self.resource.pk, self.request.user)
+        directory = Directory.get(
+            self.resource.pk,
+            self.request.user
+        )
 
         number = len(directory.versions()) + 1
         version = serializer.save(
@@ -316,7 +424,11 @@ class VersionViewSet(CrudViewSet):
             number=number
         )
 
-        directory.release(f'v{number}', version.message)
+        directory.release(
+            f'v{number}',
+            version.message
+        )
+
         return version
 
     @classmethod
@@ -341,6 +453,9 @@ class FileViewSet(CrudViewSet):
             return serializers.FileCreateSerializer
 
         if self.request.method == 'PATCH':
+            return serializers.FileRenameSerializer
+
+        if self.request.method == 'PUT':
             return serializers.FileUpdateSerializer
 
         return None
@@ -349,8 +464,8 @@ class FileViewSet(CrudViewSet):
         if self.resource is None:
             resource_id = self.kwargs.get('resource_id')
             try:
-                self.resource = models.Resource.objects.get(pk=resource_id)
-            except models.Resource.DoesNotExist:
+                self.resource = Resource.objects.get(pk=resource_id)
+            except Resource.DoesNotExist:
                 raise exceptions.NotFound()
         return [permissions.FilePermission(self.resource)]
 
@@ -358,76 +473,93 @@ class FileViewSet(CrudViewSet):
         return self._handle_get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        path = self.kwargs.get('path')
+        resource_id = kwargs.get('resource_id')
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        type = serializer.validated_data.get('type')
-        path = serializer.validated_data.get('path')
-        content = serializer.validated_data.get('content')
-        batch = serializer.validated_data.get('batch')
+        file = serializer.validated_data.get('file')
+        files = serializer.validated_data.get('files')
 
-        directory = Directory.get(kwargs.get('resource_id'), request.user)
-        file: InMemoryUploadedFile = serializer.validated_data.get('file')
+        directory = Directory.get(resource_id, request.user)
 
         if file:
             directory.upload_file(path, file)
             return Response(status=status.HTTP_201_CREATED)
 
-        if type == 'file':
-            directory.create_file(path, content)
-            return Response(status=status.HTTP_201_CREATED)
-
-        if type == 'batch':
+        if files:
             directory.ignore_commits = True
-            for k, v in batch.items():
+            for k, v in files.items():
                 if v["type"] == "file":
                     directory.create_file(k, v["content"])
                 else:
                     directory.create_dir(k)
             directory.ignore_commits = False
             directory.commit('batch add files')
+            return Response(status=status.HTTP_201_CREATED)
 
-        directory.create_dir(path)
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, *args, **kwargs):
+        path = kwargs.get('path')
+        resource_id = kwargs.get('resource_id')
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        directory = Directory.get(kwargs.get('resource_id'), request.user)
+        directory = Directory.get(resource_id, request.user)
 
         action = serializer.validated_data.get('action')
         if action == 'rename':
             directory.rename(
-                serializer.validated_data.get('oldpath'),
+                path,
                 serializer.validated_data.get('newpath')
             )
+            return Response(status=status.HTTP_200_OK)
 
         if action == "move":
             directory.move(
-                serializer.validated_data.get('oldpath'),
+                path,
                 serializer.validated_data.get('newpath'),
                 serializer.validated_data.get('copy')
             )
+            return Response(status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request, *args, **kwargs):
+        path = self.kwargs.get('path')
+        resource_id = self.kwargs.get('resource_id')
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        directory = Directory.get(resource_id, request.user)
+        directory.write_text(path, serializer.validated_data.get('content'))
+
+        return Response(status=status.HTTP_200_OK)
+
     def delete(self, request, *args, **kwargs):
-        directory = Directory.get(kwargs.get('resource_id'), request.user)
-        directory.remove(kwargs.get('path'))
+        path = kwargs.get('path')
+        resource_id = kwargs.get('resource_id')
+
+        directory = Directory.get(resource_id, request.user)
+        directory.remove(path)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def _handle_get(cls, request, *args, **kwargs):
         path = kwargs.get('path', '.')
         version = kwargs.get('version', 'master')
+        resource_id = kwargs.get('resource_id')
 
         if version != 'master':
             version = 'v' + version
 
-        directory = Directory.get(kwargs.get('resource_id'), request.user)
+        directory = Directory.get(resource_id, request.user)
         if 'download' in request.query_params:
             return directory.download(path, version)
-
 
         search = request.query_params.get('search')
         if search:  # search supported only in master
@@ -453,7 +585,12 @@ class FileViewSet(CrudViewSet):
 
     @classmethod
     def as_master(cls):
-        return cls.as_view({'get': 'get', 'patch': 'patch', 'post': 'post', 'delete': 'delete'})
+        return cls.as_view({
+            'get': 'get',
+            'patch': 'patch',
+            'post': 'post',
+            'delete': 'delete'
+        })
 
     @classmethod
     def as_version(cls):
@@ -463,10 +600,11 @@ class FileViewSet(CrudViewSet):
 # RECENT VIEWS
 
 class RecentViewSet(CrudViewSet):
-    serializer_class = serializers.RecentViewSerializer
+    serializer_class = serializers.ResourceSerializer
+    pagination_class = None
 
     def get_queryset(self):
-        return models.RecentView.objects.filter(user=self.request.user)
+        return RecentView.objects.of_user(self.request.user)
 
     def get_permissions(self):
         return [AdminOrTeacherPermission()]
