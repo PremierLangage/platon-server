@@ -569,6 +569,9 @@ class Directory:
                 return self.root
             raise TypeError('argument "path" should not point to the root')
 
+        if path.startswith('/'):
+            path = path[1:]
+
         abspath = Path(os.path.join(self.root, path)).resolve()
 
         # ensure that path does not point to a file outside of self.root
@@ -577,57 +580,69 @@ class Directory:
 
         return abspath
 
-    def _list_files(self, tree, path, version, request=None) -> List[TreeNode]:
-        def iterate(item: Union[Tree, Blob]) -> TreeNode:
-            node: TreeNode = {
-                "path": item.path,
-                "hexsha": item.hexsha,
-                "size": item.size,
-                "type": "folder" if item.type == "tree" else "file"
-            }
-
-            if request:
-                if version == "master":
-                    node["url"] = reverse(
-                        "pl_resources:resource-files-master",
-                        request=request,
-                        kwargs={"resource_id": self.root.name, "path": node["path"]}
-                    )
-                else:
-                    node["url"] = reverse(
-                        "pl_resources:resource-version-files",
-                        request=request,
-                        kwargs={
-                            "resource_id": self.root.name,
-                            "version": version[1:],  # remove the v prefix
-                            "path": node["path"],
-                        }
-                    )
-
-                node["download_url"] = node["url"] + "?download"
-
-            if node["type"] == "folder":
-                children: List[TreeNode] = []
-                for entry in item:
-                    if os.path.basename(entry.path).startswith("."):
-                        continue
-                    children.append(iterate(item=entry))
-
-                node["children"] = sorted(
-                    children,
-                    key=lambda x: (x["type"], x["path"])
-                )
-            else:
-                node["mime"] = item.mime_type
-
-            return node
-
+    def _list_files(self, tree: Tree, path: str, version: str, request=None):
         path = self.root.joinpath(path).relative_to(self.root)
-
-        return {
+        response = {
             "path": str(path),
             "hexsha": tree.hexsha,
             "version": version,
             "directory": self.root.name,
-            "files": iterate(tree)["children"]
         }
+
+        if request:
+            response['url'] = self._build_urls(response["path"], version, request)
+            response["download_url"] = response["url"] + "?download"
+
+        response["files"] = self._iterate_tree(tree, version, request)["children"]
+
+        return response
+
+    def _iterate_tree(self, item: Union[Tree, Blob], version: str, request=None) -> TreeNode:
+        node: TreeNode = {
+            "path": item.path,
+            "hexsha": item.hexsha,
+            "size": item.size,
+            "type": "folder" if item.type == "tree" else "file"
+        }
+
+        if request:
+            node["url"] = self._build_urls(node["path"], version, request)
+            node["download_url"] = node["url"] + "?download"
+
+
+        if node["type"] == "folder":
+            children: List[TreeNode] = []
+            for entry in item:
+                if os.path.basename(entry.path).startswith("."):
+                    continue
+                children.append(self._iterate_tree(entry, version, request))
+
+            node["children"] = sorted(
+                children,
+                key=lambda x: (x["type"], x["path"])
+            )
+        else:
+            node["mime"] = item.mime_type
+
+        return node
+
+
+    def _build_urls(self, path: str, version: str, request):
+        if version == "master":
+            return reverse(
+                "pl_resources:resource-files-master",
+                request=request,
+                kwargs={
+                    "path": path,
+                    "resource_id": self.root.name
+                }
+            )
+        return reverse(
+            "pl_resources:resource-version-files",
+            request=request,
+            kwargs={
+                "path": path,
+                "resource_id": self.root.name,
+                "version": version[1:],  # remove the v prefix
+            }
+        )
