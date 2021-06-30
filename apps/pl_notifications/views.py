@@ -9,10 +9,11 @@ from .models import Notification
 
 User = get_user_model()
 
+
 class NotificationViewSet(CrudViewSet):
-    
+
     serializer_class = NotificationSerializer
-    
+
     def get_serializer_class(self):
         # serializer = self.get_serializer(data=self.request.data)
         # serializer.is_valid(raise_exception=True)
@@ -24,4 +25,4 @@ class NotificationViewSet(CrudViewSet):
 
     @classmethod
     def as_detail(cls):
-        return cls.as_view({'get': 'retrieve', 'patch': 'partial_update','delete': 'destroy'})
+        return cls.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'})

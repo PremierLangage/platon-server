@@ -7,6 +7,8 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 # Create your models here.
+
+
 class Notification(models.Model):
     """Representation of a `Notification`.
 
@@ -20,8 +22,8 @@ class Notification(models.Model):
     data: models.JSONField = models.JSONField(default=dict, blank=True)
     date: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     user: User = models.ForeignKey(get_user_model(), related_name="notifications_users", on_delete=models.CASCADE)
-    
-    
+
+
     def __str__(self):
         return f'''
             <Notification
@@ -29,16 +31,16 @@ class Notification(models.Model):
                 type="{self.type}"
             >
         '''
-        
+
     def save(self, *args, **kwargs):
         channel_layer = get_channel_layer()
-        async_to_sync (channel_layer.send) (self.user.username, {
-        "type": "notification.message",
-        "text": "Notifications are available now.",
+        async_to_sync(channel_layer.send)(self.user.username, {
+            "type": "notification.message",
+            "text": "Notifications are available now.",
         })
         super(self).save(*args, **kwargs)
-    
+
     @classmethod
     def list_all(cls):
         return Notification.objects\
-            .select_related('user')    
+            .select_related('user')
