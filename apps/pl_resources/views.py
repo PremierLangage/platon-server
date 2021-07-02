@@ -4,18 +4,20 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_cookie
 from django_filters.rest_framework import DjangoFilterBackend
 from pl_core.mixins import CrudViewSet
-from pl_core.permissions import AdminOrReadonlyPermission, AdminOrTeacherPermission
+from pl_core.permissions import (AdminOrReadonlyPermission,
+                                 AdminOrTeacherPermission)
 from rest_framework import exceptions, status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from pl_resources.enums import CircleTypes
 
+from pl_resources.enums import CircleTypes
 from pl_resources.files import Directory
 
 from . import permissions, serializers
-from .models import Circle, Event, Invitation, Level, Member, RecentView, Resource, Topic, Version
 from .filters import CircleFilter, ResourceFilter
+from .models import (Circle, Event, Invitation, Level, Member, RecentView,
+                     Resource, Topic, Version)
 
 User = get_user_model()
 
