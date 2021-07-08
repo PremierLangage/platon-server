@@ -10,7 +10,6 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from pl_resources.enums import CircleTypes
-
 from pl_resources.files import Directory
 
 from . import permissions, serializers
@@ -250,7 +249,6 @@ class MemberViewSet(CrudViewSet):
     @classmethod
     def as_list(cls):
         return cls.as_view({'get': 'list'})
-
 
 
 # INVITATIONS
