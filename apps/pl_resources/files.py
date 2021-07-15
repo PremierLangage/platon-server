@@ -82,7 +82,7 @@ class Directory:
 
         with self.repo.config_writer() as cw:
             cw.set_value('user', 'name', user.username)
-            cw.set_value('user', 'email', user.email or 'no-email@platon')
+            cw.set_value('user', 'email', getattr(user, 'email', 'no-email@platon'))
             cw.release()
 
     @classmethod
