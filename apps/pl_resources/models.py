@@ -438,7 +438,7 @@ class RecentView(models.Model):
         )
 
     class QS(models.QuerySet):
-        MAX_LRV = 10  # Max Last Recent Visits
+        MAX = 10
 
         @transaction.atomic
         def add_item(self, user, item):
@@ -452,19 +452,20 @@ class RecentView(models.Model):
                 lrv.save()  # update timestamp
                 return lrv
 
-            self.prune_lrv(user)
+            self.prune(user)
             return lrv
 
         def of_user(self, user):
-            ids = list(self.filter(user=user).values_list('pk', flat=True))
-            # use Resource.list_all instead of self.filter to include annotations
+            ids = list(
+                self.filter(user=user).values_list('item_id', flat=True)
+            )
+            # usage of Resource.list_all will include annotations
             return Resource.list_all(id__in=ids)
 
-        def prune_lrv(self, user):
-            # One example of how to clean up the recent visits
+        def prune(self, user):
             qs = self.filter(user=user)
-            if qs.count() > self.MAX_LRV:
-                pending_delete = qs[self.MAX_LRV:]
+            if qs.count() > self.MAX:
+                pending_delete = qs[self.MAX:]
                 self.filter(user=user, pk__in=pending_delete).delete()
 
     objects = QS.as_manager()
