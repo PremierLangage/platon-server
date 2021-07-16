@@ -560,8 +560,12 @@ class FileViewSet(CrudViewSet):
             version = 'v' + version
 
         directory = Directory.get(resource_id, request.user)
+
+        if 'bundle' in request.query_params:
+            return directory.bundle(version)
+
         if 'download' in request.query_params:
-            return directory.download(path, version)
+            return directory.archive(path, version)
 
         search = request.query_params.get('search')
         if search:  # search supported only in master

@@ -7,9 +7,15 @@
 #       - Mamadou CISSE <mciissee.@gmail.com>
 #
 
+# https://azzamsa.com/n/gitpython-intro/
+# https://www.devdungeon.com/content/working-git-repositories-python
+# https://github.com/ishepard/pydriller/blob/master/pydriller/git.py
+
 import os
 import shutil
 import subprocess
+import tempfile
+import uuid
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple, TypedDict, Union
 from wsgiref.util import FileWrapper
@@ -429,7 +435,17 @@ class Directory:
             return self._list_files(object, path, version, request=request)
         return object.data_stream.read()
 
-    def download(self, path='.', version='master') -> HttpResponse:
+    def bundle(self, version='master') -> HttpResponse:
+        path = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()) + '.git')
+        self.repo.git.bundle('create', path, 'HEAD', version)
+        with open(path, 'rb') as file:
+            response = HttpResponse(content_type="application/force-download")
+            response['Content-Disposition'] = f'attachment; filename=bundle.git'
+            response.write(file.read())
+            return response
+
+
+    def archive(self, path='.', version='master') -> HttpResponse:
         path = '.' if not path else path
         abspath = self._validate(path, authorize_root=True)
         if abspath.is_file():
@@ -591,6 +607,7 @@ class Directory:
 
         if request:
             response['url'] = self._build_urls(response["path"], version, request)
+            response["bundle_url"] = response["url"] + "?bundle"
             response["download_url"] = response["url"] + "?download"
 
         response["files"] = self._iterate_tree(tree, version, request)["children"]
