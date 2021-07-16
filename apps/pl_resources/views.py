@@ -254,9 +254,7 @@ class MemberViewSet(CrudViewSet):
         return cls.as_view({'get': 'list'})
 
 
-
 # INVITATIONS
-
 class InvitationViewSet(CrudViewSet):
     lookup_field = 'invitee__username'
     filter_backends = [SearchFilter, OrderingFilter]
