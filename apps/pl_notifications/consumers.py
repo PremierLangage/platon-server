@@ -12,17 +12,22 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         """Connect this consumer."""
+        if self.scope['user'].is_anonymous:
+            return await self.close()
+        
+            
         self.user = self.scope['user']
-        # TODO refuse non logged user (anonymous)
+        print(f"{self.user} is connected now !")
         self.group_name = self.user.username
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
+        if self.scope['user'].is_anonymous:
+            return await super().disconnect(close_code)
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def notification_available(self, event):
-        print('OKOK')
         await self.send(text_data=json.dumps(event))
 
 

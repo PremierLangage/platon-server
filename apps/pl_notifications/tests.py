@@ -25,13 +25,13 @@
     
 #     async def test_notification_consumer(self):
         
-#         response = await sync_to_async(self.client.post(self.sign_in_url, self.user_data))()
+#         response = await sync_to_async(self.client.post)(self.sign_in_url, self.user_data)
 #         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         print(response)
-        # communicator = WebsocketCommunicator(NotificationConsumer.as_asgi(), "/notifications/")
-        # connected, subprotocol = await communicator.connect()
-        # await communicator.send_to(text_data="hello")
-        # response = await communicator.receive_from()
-        # assert response == "hello"
-        # # Close
-        # await communicator.disconnect()
+#         print(f"response: {response.data}")
+#         communicator = WebsocketCommunicator(NotificationConsumer.as_asgi(), "ws/notifications/")
+#         connected, subprotocol = await communicator.connect()
+#         await communicator.send_to(text_data="hello")
+#         response = await communicator.receive_from()
+#         assert response == "hello"
+#         # Close
+#         await communicator.disconnect()
