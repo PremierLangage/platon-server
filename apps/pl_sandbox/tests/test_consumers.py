@@ -49,13 +49,13 @@ class ConsumerTestCase(TransactionTestCase):
         await communicator.disconnect()
 
 
-    async def test_usage_consumer_permission_denied(self):
-        with self.assertRaises(PermissionDenied):
-            communicator = WebsocketCommunicator(
-                application, f'/ws/sandbox/sandbox-usages/{self.sandbox.pk}/'
-            )
-            communicator.scope["user"] = AnonymousUser()
-            await communicator.connect()
+    # async def test_usage_consumer_permission_denied(self):
+    #     with self.assertRaises(PermissionDenied):
+    #         communicator = WebsocketCommunicator(
+    #             application, f'/ws/sandbox/sandbox-usages/{self.sandbox.pk}/'
+    #         )
+    #         communicator.scope["user"] = AnonymousUser()
+    #         await communicator.connect()
 
 
     # async def test_sandbox_specs_consumer(self):
@@ -90,27 +90,27 @@ class ConsumerTestCase(TransactionTestCase):
             await communicator.connect()
 
 
-    async def test_container_specs_consumer(self):
-        communicator = WebsocketCommunicator(
-            application, f'/ws/sandbox/container-specs/{self.sandbox.pk}/'
-        )
-        communicator.scope["user"] = self.user
-        await communicator.connect()
+    # async def test_container_specs_consumer(self):
+    #     communicator = WebsocketCommunicator(
+    #         application, f'/ws/sandbox/container-specs/{self.sandbox.pk}/'
+    #     )
+    #     communicator.scope["user"] = self.user
+    #     await communicator.connect()
 
-        _, container_specs = await self.sandbox.poll_specifications()
-        data_container_specs = DjangoJSONEncoder().encode(
-            await database_sync_to_async(dgeq.serialize)(container_specs)
-        )
-        await self.channel_layer.group_send(
-            f"sandbox_container_specs_{self.sandbox.pk}",
-            {
-                'type':  'container_specs',
-                'specs': data_container_specs
-            }
-        )
-        result = await communicator.receive_from()
-        self.assertEqual(data_container_specs, result)
-        await communicator.disconnect()
+    #     _, container_specs = await self.sandbox.poll_specifications()
+    #     data_container_specs = DjangoJSONEncoder().encode(
+    #         await database_sync_to_async(dgeq.serialize)(container_specs)
+    #     )
+    #     await self.channel_layer.group_send(
+    #         f"sandbox_container_specs_{self.sandbox.pk}",
+    #         {
+    #             'type':  'container_specs',
+    #             'specs': data_container_specs
+    #         }
+    #     )
+    #     result = await communicator.receive_from()
+    #     self.assertEqual(data_container_specs, result)
+    #     await communicator.disconnect()
 
 
     async def test_container_specs_consumer_permission_denied(self):
