@@ -18,6 +18,7 @@ class Notification(models.Model):
         date (datetime): Creation date of the notification.
         data (dict): extra data on JSON format.    
     """
+
     type: models.CharField = models.CharField(max_length=20)
     data: models.JSONField = models.JSONField(default=dict, blank=True)
     date: models.DateTimeField = models.DateTimeField(auto_now_add=True)

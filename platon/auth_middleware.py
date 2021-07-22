@@ -26,7 +26,7 @@ class JwtAuthMiddleware(BaseMiddleware):
         self.inner = inner
 
     async def __call__(self, scope, receive, send):
-       # Close old database connections to prevent usage of timed out connections
+        # Close old database connections to prevent usage of timed out connections
         close_old_connections()
         headers = dict(scope["headers"])
         if b'authorization' not in headers:

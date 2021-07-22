@@ -7,7 +7,7 @@ app_name = 'pl_notifications'
 
 urlpatterns = [
     path('notifications/', NotificationViewSet.as_list(), name='notification-list'),
-    path('notifications/<int:pk>/', NotificationViewSet.as_detail(), name='notification-detail'),   
+    path('notifications/<int:pk>/', NotificationViewSet.as_detail(), name='notification-detail'),
 ]
 
 websocket_urlpatterns = [
