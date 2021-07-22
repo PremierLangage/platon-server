@@ -16,7 +16,7 @@ class Notification(models.Model):
         type (`str`): Type of the notification.
         user (`User`): The owner of the notification.
         date (datetime): Creation date of the notification.
-        data (dict): extra data on JSON format.    
+        data (dict): extra data on JSON format.
     """
 
     type: models.CharField = models.CharField(max_length=20)
