@@ -112,3 +112,4 @@ class ContainerSpecsConsumer(AsyncWebsocketConsumer):
     async def container_specs(self, event):
         """Send container specifications to connected consumer."""
         await self.send(text_data=event['specs'])
+        
