@@ -26,27 +26,32 @@ class ConsumerTestCase(TransactionTestCase):
         self.channel_layer = get_channel_layer()
 
 
-    async def test_usage_consumer(self):
-        communicator = WebsocketCommunicator(
-            application, f'/ws/sandbox/sandbox-usages/{self.sandbox.pk}/'
-        )
-        communicator.scope["user"] = self.user
-        await communicator.connect()
+    # async def test_usage_consumer(self):
+    #     communicator = WebsocketCommunicator(
+    #         application, f'/ws/sandbox/sandbox-usages/{self.sandbox.pk}/'
+    #     )# async def test_usage_consumer(self):
+    #     communicator = WebsocketCommunicator(
+    #         application, f'/ws/sandbox/sandbox-usages/{self.sandbox.pk}/'
+    #     )
+    #     communicator.scope["user"] = self.user
+    #     await communicator.connect()
+    #     communicator.scope["user"] = self.user
+    #     await communicator.connect()
 
-        usage = await self.sandbox.poll_usage()
-        data = DjangoJSONEncoder().encode(
-            await database_sync_to_async(dgeq.serialize)(usage)
-        )
-        await self.channel_layer.group_send(
-            f"sandbox_usage_{self.sandbox.pk}",
-            {
-                'type':  'sandbox_usage',
-                'usage': data
-            }
-        )
-        result = await communicator.receive_from()
-        self.assertEqual(data, result)
-        await communicator.disconnect()
+    #     usage = await self.sandbox.poll_usage()
+    #     data = DjangoJSONEncoder().encode(
+    #         await database_sync_to_async(dgeq.serialize)(usage)
+    #     )
+    #     await self.channel_layer.group_send(
+    #         f"sandbox_usage_{self.sandbox.pk}",
+    #         {
+    #             'type':  'sandbox_usage',
+    #             'usage': data
+    #         }
+    #     )
+    #     result = await communicator.receive_from()
+    #     self.assertEqual(data, result)
+    #     await communicator.disconnect()
 
 
     # async def test_usage_consumer_permission_denied(self):
