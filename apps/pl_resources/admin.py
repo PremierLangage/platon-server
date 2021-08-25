@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Circle, Level, Member, Resource, Topic, Version
+from .models import Circle, Level, Member, Resource, Topic
 
 
 @admin.register(Topic)
@@ -34,9 +34,5 @@ class CircleAdmin(admin.ModelAdmin):
 class ResourceAdmin(admin.ModelAdmin):
     """Admin interface for Resource."""
 
-    class VersionInline(admin.TabularInline):
-        model = Version
-
     list_display = ('pk', 'circle', 'name')
     readonly_fields = ('created_at', 'updated_at')
-    inlines = (VersionInline,)

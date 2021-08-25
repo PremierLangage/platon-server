@@ -12,32 +12,9 @@ from rest_framework import permissions
 from rest_framework.request import Request
 from rest_framework.viewsets import ViewSetMixin
 
-from .enums import CircleTypes, MemberStatus
 from .models import Circle, Member, Resource
 
 User = get_user_model()
-
-
-def is_circle_admin(user: User, circle_id: str) -> bool:
-    if user.is_admin:
-        return True
-
-    member = Member.objects.filter(
-        user_id=user.id,
-        circle_id=circle_id,
-    ).first()
-
-    return member and member.status == MemberStatus.ADMIN
-
-
-def is_circle_member(user: User, circle_id: str) -> bool:
-    if user.is_admin:
-        return True
-
-    return Member.objects.filter(
-        user_id=user.id,
-        circle_id=circle_id,
-    ).exists()
 
 
 class CirclePermission(permissions.BasePermission):
@@ -45,11 +22,11 @@ class CirclePermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        if not request.user.is_editor:
-            return False
-
         if request.user.is_admin:
             return True
+
+        if not request.user.is_editor:
+            return False
 
         if request.method in permissions.SAFE_METHODS:
             return True
@@ -62,11 +39,7 @@ class CirclePermission(permissions.BasePermission):
     def has_object_permission(self, request: Request, view: ViewSetMixin, obj: Circle):
         if request.method in permissions.SAFE_METHODS:
             return True
-
-        if request.method == 'DELETE' and obj.type == CircleTypes.PERSONAL:
-            return False
-
-        return is_circle_admin(request.user, obj.pk)
+        return request.user.is_admin
 
 
 class EventPermission(permissions.BasePermission):
@@ -74,16 +47,16 @@ class EventPermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        if not request.user.is_editor:
-            return False
-
         if request.user.is_admin:
             return True
+
+        if not request.user.is_editor:
+            return False
 
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        return is_circle_admin(request.user, view.kwargs.get("circle_id"))
+        return request.user.is_admin
 
 
 class MemberPermission(permissions.BasePermission):
@@ -91,11 +64,11 @@ class MemberPermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        if not request.user.is_editor:
-            return False
-
         if request.user.is_admin:
             return True
+
+        if not request.user.is_editor:
+            return False
 
         if request.method in permissions.SAFE_METHODS:
             return True
@@ -103,8 +76,7 @@ class MemberPermission(permissions.BasePermission):
         if request.user.username == view.kwargs.get("username"):
             return True
 
-        return is_circle_admin(request.user, view.kwargs.get("circle_id"))
-
+        return request.user.is_admin
 
 
 class ResourcePermission(permissions.BasePermission):
@@ -112,65 +84,42 @@ class ResourcePermission(permissions.BasePermission):
         if not bool(request.user and request.user.is_authenticated):
             return False
 
-        if not request.user.is_editor:
-            return False
-
         if request.user.is_admin:
             return True
+
+        if not request.user.is_editor:
+            return False
 
         if request.method in permissions.SAFE_METHODS:
             return True
 
         if view.action == "create":
-            return is_circle_member(request.user, request.data.get("circle"))
+            circle = Circle.objects.get(request.data.get("circle"))
+            return circle.opened or Circle.is_member(request.user, circle.id)
 
         return True
 
     def has_object_permission(self, request: Request, view: ViewSetMixin, obj: Resource):
-        if view.action == "partial_update" and not obj.is_editable_by(request.user):
+        if view.action == "destroy" and not obj.is_deletable_by(request.user):
             return False
 
-        if view.action == "destroy":
-            if obj.versions_count:
-                self.message = "This resource is published"
-                return False
-            if not obj.is_deletable_by(request.user):
-                return False
+        if view.action == "partial_update" and not obj.is_editable_by(request.user):
+            return False
 
         return True
 
 
-class VersionPermission(permissions.BasePermission):
-    def __init__(self, resource: Resource):
-        self.resource = resource
-
-    def has_permission(self,  request: Request, view: ViewSetMixin):
-        if request.method in ['DELETE', 'PUT']:
-            return False
-
-        if not bool(request.user and request.user.is_authenticated):
-            return False
-
-        if not request.user.is_editor:
-            return False
-
-        editable = self.resource.is_editable_by(request.user)
-        return editable or request.method in permissions.SAFE_METHODS
-
-
 class FilePermission(permissions.BasePermission):
-    def __init__(self, resource: Resource):
-        self.resource = resource
 
     def has_permission(self, request: Request, view: ViewSetMixin):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        if view.kwargs.get('version'):
-            self.message = 'Cannot update versions'
+        if request.query_params.get('version', 'master') != 'master':
+            self.message = 'Cannot update versioned file'
             return False
 
-        undeletable_paths = ['', 'resource-info.json']
+        undeletable_paths = ['', '.', 'resource-info.json']
         path = view.kwargs.get('path').strip()
         if request.method == 'DELETE' and path in undeletable_paths:
             self.message = f'Cannot delete "{path}"'
@@ -182,4 +131,15 @@ class FilePermission(permissions.BasePermission):
         if request.user.is_admin:
             return True
 
-        return self.resource.is_editable_by(request.user)
+        type, id = view.kwargs.get('directory').split(':')
+        if type == 'resource':
+            resource = Resource.objects.filter(pk=int(id)).first()
+            if not resource:
+                return False
+            return resource.is_editable_by(request.user)
+
+        circle = Circle.objects.filter(pk=int(id)).first()
+        if not circle:
+            return False
+
+        return Circle.is_member(request.user, id)

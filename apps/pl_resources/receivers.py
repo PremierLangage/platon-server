@@ -4,7 +4,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from pl_core.signals import create_defaults
 
-from pl_resources.enums import CircleTypes
+from pl_resources.files import Directory
 from pl_resources.models import Circle, Level, Member, Topic
 
 logger = logging.getLogger(__name__)
@@ -28,14 +28,28 @@ def on_delete_member(sender, instance: Member, **kwargs):
 def on_create_defaults(sender, config, **kwargs):
     logger.info(f'creating pl_resources defaults')
 
-    Circle.objects.get_or_create(
-        type=CircleTypes.PUBLIC,
+    general, created = Circle.objects.get_or_create(
         parent=None,
         defaults={
             'name': 'Général',
             'desc': 'Cercle principal de la plateforme.'
         }
     )
+    if created:
+        Directory.create(f'circle:{general.pk}')
+
+    draft, created = Circle.objects.get_or_create(
+        parent=general,
+        name='Drafts',
+        defaults={
+            'name': 'Drafts',
+            'opened': True,
+            'desc': 'Cercle ouvert pour faire des essais.'
+        }
+    )
+
+    if created:
+        Directory.create(f'circle:{draft.pk}')
 
     levels = config.get('levels', [])
     Level.objects.bulk_create(
