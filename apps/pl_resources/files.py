@@ -609,6 +609,7 @@ class Directory:
 
     # PRIVATE
 
+
     def __iterate(self, object: Union[Tree, Blob], version: str, request=None) -> TreeNode:
         node: TreeNode = {
             'path': object.path,

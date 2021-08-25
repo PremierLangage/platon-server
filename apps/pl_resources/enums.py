@@ -13,6 +13,7 @@ from django.db import models
 class MemberStatus(models.TextChoices):
     MEMBER = 'MEMBER'
 
+
 class EventTypes(models.TextChoices):
     MEMBER_CREATE = 'MEMBER_CREATE'
     MEMBER_REMOVE = 'MEMBER_REMOVE'
