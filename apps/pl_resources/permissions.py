@@ -115,6 +115,9 @@ class FilePermission(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
+        if not bool(request.user and request.user.is_authenticated):
+            return False
+
         if request.query_params.get('version', 'master') != 'master':
             self.message = 'Cannot update versioned file'
             return False
