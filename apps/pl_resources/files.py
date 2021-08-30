@@ -545,6 +545,9 @@ class Directory:
 
         return True
 
+    def describe(self) -> str:
+        return self.repo.git.describe('--always')
+
     def bundle(self, version: str = "master") -> HttpResponse:
         path = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()) + '.git')
         self.repo.git.bundle('create', path, 'HEAD', version)
@@ -649,7 +652,8 @@ class Directory:
         object['url'] = f'{url}?version={version}'
         object['download_url'] = f'{url}?version={version}&download'
         if object['path'] == '.':
-            object['bundle_url'] = f'{url}?version={version}&bundle'
+            object['bundle_url'] = f'{url}?version={version}&git-bundle'
+            object['describe_url'] = f'{url}?version={version}&git-describe'
 
     def __list_files(self, tree: Tree, path: str, version: str, request=None):
         relpath = str(self.root.joinpath(path).relative_to(self.root))

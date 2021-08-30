@@ -420,11 +420,14 @@ class FileViewSet(CrudViewSet):
         directory = kwargs.get('directory')
         directory = Directory.get(directory, request.user)
 
-        if 'bundle' in query_params:
-            return directory.bundle(version)
-
         if 'download' in query_params:
             return directory.download(path, version)
+
+        if 'git-bundle' in query_params:
+            return directory.bundle(version)
+
+        if 'git-describe' in query_params:
+            return Response({"hash": directory.describe()})
 
         search = query_params.get('search')
         if search:
@@ -450,7 +453,6 @@ class FileViewSet(CrudViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        path = kwargs.get('path', '.')
         bundle = serializer.validated_data.get('bundle')
         content = serializer.validated_data.get('content')
 
@@ -458,6 +460,7 @@ class FileViewSet(CrudViewSet):
             return Response(status=status.BAD_REQUEST)
 
         if content:
+            path = kwargs.get('path', '.')
             directory.write_text(path, content)
             return Response(status=status.HTTP_200_OK)
 
