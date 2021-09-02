@@ -31,7 +31,9 @@ class CircleSerializer(serializers.ModelSerializer):
 
     url = serializers.SerializerMethodField(read_only=True)
 
+    files_url = serializers.SerializerMethodField(read_only=True)
     events_url = serializers.SerializerMethodField(read_only=True)
+    permissions = serializers.SerializerMethodField(read_only=True)
     members_url = serializers.SerializerMethodField(read_only=True)
     watchers_url = serializers.SerializerMethodField(read_only=True)
     resources_url = serializers.SerializerMethodField(read_only=True)
@@ -39,12 +41,13 @@ class CircleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Circle
-        fields = [
-            'id', 'name', 'type', 'parent', 'opened', 'desc', 'topics', 'levels', 'created_at',
-            'updated_at', 'children_count', 'watchers_count', 'members_count', 'models_count',
-            'exercises_count', 'activities_count', 'resources_count', 'url', 'events_url',
-            'members_url', 'watchers_url', 'resources_url', 'invitations_url'
-        ]
+        exclude = ('watchers',)
+
+    def create(self, validated_data: dict):
+        instance = super().create(validated_data)
+        request = self.context['request']
+        Directory.create(f'circle:{instance.pk}', request.user)
+        return instance
 
     def to_representation(self, value):
         repr = super().to_representation(value)
@@ -55,7 +58,7 @@ class CircleSerializer(serializers.ModelSerializer):
             }
         return repr
 
-    def get_url(self, value):
+    def get_url(self, value: models.Circle):
         request = self.context['request']
         return reverse(
             'pl_resources:circle-detail',
@@ -63,7 +66,15 @@ class CircleSerializer(serializers.ModelSerializer):
             kwargs={'circle_id': value.pk}
         )
 
-    def get_events_url(self, value):
+    def get_files_url(self, value: models.Circle):
+        request = self.context['request']
+        return reverse(
+            'pl_resources:files',
+            request=request,
+            kwargs={'directory': f'circle:{value.pk}'}
+        )
+
+    def get_events_url(self, value: models.Circle):
         request = self.context['request']
         return reverse(
             'pl_resources:circle-event-list',
@@ -71,7 +82,14 @@ class CircleSerializer(serializers.ModelSerializer):
             kwargs={'circle_id': value.pk}
         )
 
-    def get_members_url(self, value):
+    def get_permissions(self, value: models.Circle):
+        request = self.context['request']
+        return {
+            'write': value.is_editable_by(request.user),
+            'delete': value.is_deletable_by(request.user)
+        }
+
+    def get_members_url(self, value: models.Circle):
         request = self.context['request']
         return reverse(
             'pl_resources:circle-member-list',
@@ -79,7 +97,7 @@ class CircleSerializer(serializers.ModelSerializer):
             kwargs={'circle_id': value.pk}
         )
 
-    def get_watchers_url(self, value):
+    def get_watchers_url(self, value: models.Circle):
         request = self.context['request']
         return reverse(
             'pl_resources:circle-watcher-list',
@@ -87,12 +105,12 @@ class CircleSerializer(serializers.ModelSerializer):
             kwargs={'circle_id': value.pk}
         )
 
-    def get_resources_url(self, value):
+    def get_resources_url(self, value: models.Circle):
         request = self.context['request']
         url = reverse('pl_resources:resource-list', request=request)
         return f'{url}?circle={value.pk}'
 
-    def get_invitations_url(self, value):
+    def get_invitations_url(self, value: models.Circle):
         request = self.context['request']
         return reverse(
             'pl_resources:circle-invitation-list',
@@ -109,7 +127,7 @@ class EventSerializer(serializers.ModelSerializer):
         fields = ['id', 'type', 'date', 'data', 'url']
 
 
-    def get_url(self, value):
+    def get_url(self, value: models.Event):
         request = self.context['request']
         return reverse(
             'pl_resources:circle-event-detail',
@@ -119,7 +137,7 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class MemberSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField('get_username', read_only=True)
+    username = serializers.SerializerMethodField(read_only=True)
 
     url = serializers.SerializerMethodField(read_only=True)
 
@@ -127,7 +145,7 @@ class MemberSerializer(serializers.ModelSerializer):
         model = models.Member
         fields = ['status', 'username', 'date_joined', 'url']
 
-    def get_url(self, value):
+    def get_url(self, value: models.Member):
         request = self.context['request']
         return reverse(
             'pl_resources:circle-member-detail',
@@ -135,7 +153,7 @@ class MemberSerializer(serializers.ModelSerializer):
             kwargs={'circle_id': value.circle_id, 'username': value.user}
         )
 
-    def get_username(self, value):
+    def get_username(self, value: models.Member):
         return value.user.username
 
 
@@ -148,7 +166,7 @@ class WatcherSerializer(UserSerializer):
         fields = ['username', 'url']
 
 
-    def get_url(self, value):
+    def get_url(self, value: User):
         kwargs = self.context['view'].kwargs
         request = self.context['request']
         return reverse(
@@ -161,17 +179,16 @@ class WatcherSerializer(UserSerializer):
 class InvitationSerializer(serializers.ModelSerializer):
     inviter = serializers.SlugRelatedField('username', read_only=True)
     invitee = serializers.SlugRelatedField('username', read_only=True)
-
     url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Invitation
         fields = ['inviter', 'invitee', 'date', 'status', 'url']
 
-    def update(self, instance, validated_data):
+    def update(self, instance: models.Invitation, validated_data: dict):
         return super().update(instance, validated_data)
 
-    def get_url(self, value):
+    def get_url(self, value: models.Invitation):
         request = self.context['request']
         return reverse(
             'pl_resources:circle-invitation-detail',
@@ -191,14 +208,14 @@ class InvitationCreateSerializer(serializers.ModelSerializer):
             'inviter': {'read_only': True}
         }
 
-    def save(self, inviter, circle):
+    def save(self, inviter: User, circle: models.Circle):
         return models.Invitation.objects.create(
             circle=circle,
             inviter=inviter,
             **self.validated_data
         )
 
-    def validate_invitee(self, value):
+    def validate_invitee(self, value: User):
         view = self.context['view']
         request = self.context['request']
         circle_id = view.kwargs.get('circle_id')
@@ -235,9 +252,9 @@ class InvitationCreateSerializer(serializers.ModelSerializer):
 class ResourceSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(slug_field='username', read_only=True)
     url = serializers.SerializerMethodField(read_only=True)
+    files = serializers.JSONField(required=False, write_only=True)
     files_url = serializers.SerializerMethodField(read_only=True)
-    versions_url = serializers.SerializerMethodField(read_only=True)
-    versions_count = serializers.IntegerField(read_only=True, default=0)
+    permissions = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Resource
@@ -248,14 +265,25 @@ class ResourceSerializer(serializers.ModelSerializer):
 
     def save(self, **kwargs):
         request = self.context['request']
-        return super().save(**{"author": request.user, **kwargs})
+        return super().save(**{'author': request.user, **kwargs})
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict):
+        files = validated_data.pop('files')
         instance = super().create(validated_data)
-        Directory.create(instance.pk, instance.author)
+
+        directory = Directory.create(f'resource:{instance.pk}', instance.author)
+        if files:
+            directory.ignore_commits = True
+            for k, v in files.items():
+                if v['type'] == 'folder':
+                    directory.create_dir(k)
+                else:
+                    directory.create_file(k, v['content'])
+            directory.ignore_commits = False
+            directory.commit('create files')
         return instance
 
-    def to_representation(self, value):
+    def to_representation(self, value: models.Resource):
         repr = super().to_representation(value)
         repr['circle'] = {
             'id': value.circle.id,
@@ -263,7 +291,7 @@ class ResourceSerializer(serializers.ModelSerializer):
         }
         return repr
 
-    def get_url(self, value):
+    def get_url(self, value: models.Resource):
         request = self.context['request']
         return reverse(
             'pl_resources:resource-detail',
@@ -271,61 +299,20 @@ class ResourceSerializer(serializers.ModelSerializer):
             kwargs={'resource_id': value.pk}
         )
 
-    def get_files_url(self, value):
+    def get_files_url(self, value: models.Resource):
         request = self.context['request']
         return reverse(
-            'pl_resources:resource-files-master',
+            'pl_resources:files',
             request=request,
-            kwargs={'resource_id': value.pk, 'path': ''}
+            kwargs={'directory': f'resource:{value.pk}'}
         )
 
-    def get_versions_url(self, value):
+    def get_permissions(self, value: models.Resource):
         request = self.context['request']
-        return reverse(
-            'pl_resources:resource-version-list',
-            request=request,
-            kwargs={'resource_id': value.pk}
-        )
-
-
-class VersionSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField('username', read_only=True)
-    number = serializers.IntegerField(read_only=True)
-
-    url = serializers.SerializerMethodField(read_only=True)
-    files_url = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = models.Version
-        fields = [
-            'number', 'author', 'status', 'message', 'created_at',
-            'url', 'files_url',
-        ]
-
-    def get_url(self, value):
-        view = self.context['view']
-        request = self.context['request']
-        return reverse(
-            'pl_resources:resource-version-detail',
-            request=request,
-            kwargs={
-                'resource_id': view.kwargs.get('resource_id'),
-                'version': value.number
-            }
-        )
-
-    def get_files_url(self, value):
-        view = self.context['view']
-        request = self.context['request']
-        return reverse(
-            'pl_resources:resource-version-files',
-            request=request,
-            kwargs={
-                'resource_id': view.kwargs.get('resource_id'),
-                'version': value.number,
-                'path': ''
-            }
-        )
+        return {
+            'write': value.is_editable_by(request.user),
+            'delete': value.is_deletable_by(request.user)
+        }
 
 
 class FileCreateSerializer(serializers.Serializer):
@@ -340,4 +327,5 @@ class FileRenameSerializer(serializers.Serializer):
 
 
 class FileUpdateSerializer(serializers.Serializer):
+    bundle = serializers.FileField(required=False)
     content = serializers.CharField(max_length=134217728, required=False)

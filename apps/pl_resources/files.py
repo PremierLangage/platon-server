@@ -7,11 +7,17 @@
 #       - Mamadou CISSE <mciissee.@gmail.com>
 #
 
+# https://azzamsa.com/n/gitpython-intro/
+# https://www.devdungeon.com/content/working-git-repositories-python
+# https://github.com/ishepard/pydriller/blob/master/pydriller/git.py
+
 import os
 import shutil
 import subprocess
+import tempfile
+import uuid
 from pathlib import Path
-from typing import List, Literal, Optional, Tuple, TypedDict, Union
+from typing import Any, List, Literal, Optional, Tuple, TypedDict, Union
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
@@ -25,7 +31,7 @@ from rest_framework.request import Request
 from rest_framework.reverse import reverse
 
 User = get_user_model()
-RESOURCES_ROOT = settings.RESOURCES_ROOT
+DIRECTORIES_ROOT = settings.DIRECTORIES_ROOT
 
 
 def uniquify_filename(directory, filename) -> Tuple[str, str]:
@@ -71,7 +77,7 @@ class TreeNode(TypedDict):
 
 
 class Directory:
-    """Representation of a resource directory.
+    """Representation of a versioned directory.
     """
 
     def __init__(self, root: Path, user: User):
@@ -80,17 +86,30 @@ class Directory:
         self.ignore_commits = False
         self.repo = Repo(root)
 
-        with self.repo.config_writer() as cw:
-            cw.set_value('user', 'name', user.username)
-            cw.set_value('user', 'email', getattr(user, 'email', 'no-email@platon'))
-            cw.release()
+        if user:
+            with self.repo.config_writer() as cw:
+                cw.set_value('user', 'name', user.username)
+                cw.set_value('user', 'email', getattr(user, 'email', 'admin@platon'))
+                cw.release()
+        else:
+            with self.repo.config_writer() as cw:
+                cw.set_value('user', 'name', 'admin')
+                cw.set_value('user', 'email', getattr(user, 'email', 'admin@platon'))
+                cw.release()
+
+
+    # STATIC
+
 
     @classmethod
-    def get(cls, name: Union[str, int], user) -> 'Directory':
+    def get(cls, name: str, user: User = None) -> 'Directory':
         """Finds the directory named `name`.
 
         Args:
-            name (`Union[str, int]`): Name of the directory to find.
+            name (`str`): Name of the directory to find.
+                A directory name is a string in the following format
+                `type:id` where `type` is one of '[r, c]' for resource and circle
+                and `id` is the identifier of a circle or resource.
 
         Raises:
             `FileNotFoundError`: If the directory does not exists.
@@ -99,24 +118,22 @@ class Directory:
             `Directory`: A Directory object.
         """
 
-        path = Path(os.path.join(RESOURCES_ROOT, str(name)))
+        path = Path(os.path.join(DIRECTORIES_ROOT, str(name)))
         if not path.exists():
             raise FileNotFoundError(f'{name}: No such file or directory')
-
         return cls(path, user)
 
     @classmethod
-    def create(cls, name: Union[str, int], user) -> 'Directory':
+    def create(cls, name: str, user: User = None) -> 'Directory':
         """Creates new directory tree.
 
         Args:
-            name (`Union[str, int]`): Name of the directory to create.
-
+            name (`str`): Name of the directory to create.
         Returns:
             `Directory`: A Directory object.
         """
 
-        path = Path(os.path.join(RESOURCES_ROOT, str(name)))
+        path = Path(os.path.join(DIRECTORIES_ROOT, str(name)))
         if path.exists():
             return cls.get(name, user)
 
@@ -132,40 +149,37 @@ class Directory:
         return directory
 
     @classmethod
-    def delete(cls, name: Union[str, int]):
-        """Recursively delete a the directory tree.
+    def delete(cls, name: str):
+        """Recursively delete a directory.
 
         Args:
-            name (`Union[str, int]`): Name of the directory to delete.
-
+            name (`str`): Name of the directory to delete.
         Returns:
             `bool`: `True` if deleted `False` otherwise.
         """
 
-        path = Path(os.path.join(RESOURCES_ROOT, str(name)))
+        path = Path(os.path.join(DIRECTORIES_ROOT, str(name)))
         if not path.exists():
             return False
-
         shutil.rmtree(path)
-
         return True
 
+
     def exists(self, path: str):
-        """Checks whether the given `path` exists.
+        """Checks whether the given `path` exists inside the directory.
 
         Args:
             path (`str`): A path relative to the directory.
 
         Raises:
             `TypeError`: If `path` is null or empty.
-            `PermissionError`: If `oldpath` or `newpath` points to a file outside of the current directory.
+            `PermissionError`: If `path` points to a file outside of the directory.
 
         Returns:
             `str`: `True` if the path exists.
         """
 
-        abspath = self._validate(path)
-        return abspath.exists()
+        return self.__as_abspath(path).exists()
 
     def is_dir(self, path: str):
         """Checks whether the given `path` points to a directory.
@@ -175,14 +189,13 @@ class Directory:
 
         Raises:
             `TypeError`: If `path` is null or empty.
-            `PermissionError`: If `oldpath` or `newpath` points to a file outside of the current directory.
+            `PermissionError`: If `path` points to a file outside of the current directory.
 
         Returns:
             `str`: `True` if the path points to a directory.
         """
 
-        abspath = self._validate(path)
-        return abspath.is_dir()
+        return self.__as_abspath(path).is_dir()
 
     def is_file(self, path: str):
         """Checks whether the given `path` points to a regular file.
@@ -192,14 +205,14 @@ class Directory:
 
         Raises:
             `TypeError`: If `path` is null or empty.
-            `PermissionError`: If `oldpath` or `newpath` points to a file outside of the current directory.
+            `PermissionError`: If `path` points to a file outside of the current directory.
 
         Returns:
             `str`: `True` if the path points to a regular file.
         """
 
-        abspath = self._validate(path)
-        return abspath.is_file()
+        return self.__as_abspath(path).is_file()
+
 
     def move(self, src: str, dst: str, copy: bool = False):
         """Moves the file/folder `src` to `dst`
@@ -214,12 +227,11 @@ class Directory:
             `PermissionError`: If the operation is not permitted.
         """
 
-        abs_src_path = self._validate(src)
-        abs_dst_path = self._validate(dst, authorize_root=True)
+        abs_src_path = self.__as_abspath(src)
+        abs_dst_path = self.__as_abspath(dst, authorize_root=True)
 
         if not abs_dst_path.is_dir():
-            raise NotADirectoryError(
-                f"NotADirectoryError: [Errno 20] No such directory: '{dst}'")
+            raise NotADirectoryError(f"[Errno 20] No such directory: '{dst}'")
 
         # move inside the same directory
         if not copy and abs_src_path.parent.samefile(abs_dst_path):
@@ -249,7 +261,7 @@ class Directory:
             `PermissionError`: If `oldpath` or `newpath` points to a file outside of the current directory.
         """
 
-        abspath = self._validate(path)
+        abspath = self.__as_abspath(path)
         if not abspath.exists():
             raise FileNotFoundError(f'{path}: does not points to a valid file')
 
@@ -276,8 +288,8 @@ class Directory:
             `PermissionError`: If `oldpath` and `newpath` does not have the same parent.
         """
 
-        oabspath = self._validate(oldpath)
-        nabspath = self._validate(newpath)
+        oabspath = self.__as_abspath(oldpath)
+        nabspath = self.__as_abspath(newpath)
 
         if not oabspath.exists():
             raise FileNotFoundError(
@@ -307,7 +319,7 @@ class Directory:
             `PermissionError`: If `path` points to a file outside of the current directory.
         """
 
-        abspath = self._validate(path)
+        abspath = self.__as_abspath(path)
         abspath.mkdir(parents=False, exist_ok=False)
         abspath.joinpath('./.keep').touch()  # allow to list empty directories
         self.commit(f'create {path}')
@@ -326,7 +338,7 @@ class Directory:
             `PermissionError`: If `path` points to a file outside of the current directory.
         """
 
-        abspath = self._validate(path)
+        abspath = self.__as_abspath(path)
         abspath.touch(exist_ok=False)
         if content:
             abspath.write_text(content)
@@ -349,7 +361,7 @@ class Directory:
             `PermissionError`: If `path` points to a file outside of the current directory.
         """
 
-        abspath = self._validate(path)
+        abspath = self.__as_abspath(path)
         abspath.write_text(data)
 
         self.commit(f'update {path}')
@@ -368,12 +380,17 @@ class Directory:
             `PermissionError`: If `path` points to a file outside of the current directory.
         """
 
-        abspath = self._validate(path)
+        abspath = self.__as_abspath(path)
         abspath.write_bytes(data)
 
         self.commit(f'update {path}')
 
-    def upload_file(self, path: str, data: InMemoryUploadedFile, unzip=True):
+    def write_file(
+        self,
+        path: str,
+        data: InMemoryUploadedFile,
+        unzip: bool = True
+    ):
         """Upload file at the given `path`
 
         Args:
@@ -387,12 +404,11 @@ class Directory:
             `PermissionError`: If `path` points to a file outside of the current directory.
         """
 
-        path = '.' if not path else path
-        abspath = self._validate(path, authorize_root=True)
+        path = "." if not path else path
+        abspath = self.__as_abspath(path, authorize_root=True)
 
         if not abspath.is_dir():
-            raise NotADirectoryError(
-                f"NotADirectoryError: [Errno 20] No such directory: '{path}'")
+            raise NotADirectoryError("[Errno 20] No such directory: '{path}'")
 
         abspath, _ = uniquify_filename(abspath, data.name)
         abspath = Path(abspath)
@@ -409,7 +425,12 @@ class Directory:
 
     # READ
 
-    def read(self, path='.', version="master", request: Request = None) -> Union[bytes, List[TreeNode]]:
+    def read(
+        self,
+        path: str = ".",
+        version: str = "master",
+        request: Request = None
+    ) -> Union[bytes, List[TreeNode]]:
         """Gets the file tree or the file at the given `path` for the given the `version`.
 
         Args:
@@ -420,37 +441,26 @@ class Directory:
             List[TreeNode]: A recursive list of TreeNode objects.
         """
 
-        path = '.' if not path else path
-        if path == '.':
-            object = self.repo.tree(version)
-        else:
-            object = self.repo.tree(version)[path]
+        path = "." if not path else path
+        object = self.repo.tree(version)
+
+        if path != ".":
+            object = object[path]
+
         if object.type == "tree":
-            return self._list_files(object, path, version, request=request)
+            return self.__list_files(object, path, version, request=request)
+
         return object.data_stream.read()
 
-    def download(self, path='.', version='master') -> HttpResponse:
-        path = '.' if not path else path
-        abspath = self._validate(path, authorize_root=True)
-        if abspath.is_file():
-            tree = self.repo.tree(version)
-            response = HttpResponse(content_type="application/force-download")
-            response['Content-Disposition'] = f'attachment; filename={os.path.basename(path)}'
-            response.write(tree[path].data_stream.read())
-            return response
-
-        relpath = str(abspath.relative_to(self.root))
-        with NamedTemporaryFile(suffix='.zip') as zip:
-            self.repo.archive(zip, version, path=None if relpath == '.' else relpath)
-
-            # https://docs.python.org/3/library/tempfile.html#examples
-            zip.seek(0)
-
-            response = HttpResponse(FileWrapper(zip), content_type='application/zip')
-            response['Content-Disposition'] = f'attachment; filename=archive.zip'
-            return response
-
-    def search(self, query, path='.', version='master', match_word=False, match_case=False, use_regex=False):
+    def search(
+        self,
+        query: str,
+        path: str = ".",
+        version: str = "master",
+        match_word: bool = False,
+        match_case: bool = False,
+        use_regex: bool = False
+    ):
         if not query:
             raise TypeError('argument "query" is missing')
 
@@ -471,7 +481,7 @@ class Directory:
         args.append(f'"{query}"')
         args.append(version)
 
-        if path != "." and path != "":
+        if path != "." and path != '':
             args.append("--")
             args.append(path)
 
@@ -507,7 +517,15 @@ class Directory:
         else:  # pragma: no cover
             raise Exception(f'{out}: {err}')
 
-    # VERSIONING
+    # GIT
+
+    def merge(self, bundle: InMemoryUploadedFile) -> Any:
+        path = os.path.join(DIRECTORIES_ROOT, str(uuid.uuid4()) + '.git')
+        with open(path, 'wb+') as file:
+            for chunk in bundle.chunks():
+                file.write(chunk)
+        self.repo.git.pull(path)
+        Path(path).unlink()
 
     def commit(self, message: str) -> bool:
         if self.ignore_commits:
@@ -527,20 +545,52 @@ class Directory:
 
         return True
 
-    def versions(self) -> List[Version]:
+    def describe(self) -> str:
+        return self.repo.git.describe('--always')
+
+    def bundle(self, version: str = "master") -> HttpResponse:
+        path = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()) + '.git')
+        self.repo.git.bundle('create', path, 'HEAD', version)
+        with open(path, 'rb') as file:
+            response = HttpResponse(content_type="application/force-download")
+            response['Content-Disposition'] = f'attachment; filename=bundle.git'
+            response.write(file.read())
+            return response
+
+    def download(self, path: str = '.', version: str = "master") -> HttpResponse:
+        abspath = self.__as_abspath(path, authorize_root=True)
+        if abspath.is_file():
+            tree = self.repo.tree(version)
+            response = HttpResponse(content_type="application/force-download")
+            response['Content-Disposition'] = f'attachment; filename={os.path.basename(path)}'
+            response.write(tree[path].data_stream.read())
+            return response
+
+        relpath = str(abspath.relative_to(self.root))
+        with NamedTemporaryFile(suffix='.zip') as zip:
+            self.repo.archive(zip, version, path=None if relpath == "." else relpath)
+
+            # https://docs.python.org/3/library/tempfile.html#examples
+            zip.seek(0)
+
+            response = HttpResponse(FileWrapper(zip), content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename=archive.zip'
+            return response
+
+    def list_versions(self) -> List[Version]:
         """List all versions of the directory.
         """
 
         return [
             {
-                "name": item.name,
-                "date": item.tag.tagged_date,
-                "message": item.tag.message
+                'name': item.name,
+                'date': item.tag.tagged_date,
+                'message': item.tag.message
             }
             for item in self.repo.tags
         ]
 
-    def release(self, name, message) -> str:
+    def create_version(self, name: str, message: str) -> Version:
         """Creates new version of the directory by tagging the current git index.
 
         Args:
@@ -548,29 +598,91 @@ class Directory:
             message (`str`): Message associated to the release.
 
         Returns:
-            `str`: The newly created version.
+            `Version`: The newly created version.
         """
 
         object = self.repo.create_tag(name, message=message)
 
         return {
-            "name": object.name,
-            "date": object.tag.tagged_date,
-            "message": object.tag.message
+            'name': object.name,
+            'date': object.tag.tagged_date,
+            'message': object.tag.message
         }
 
-    def _validate(self, path: str, authorize_root=False) -> Path:
-        if not path:
+
+    # PRIVATE
+
+
+    def __iterate(self, object: Union[Tree, Blob], version: str, request=None) -> TreeNode:
+        node: TreeNode = {
+            'path': object.path,
+            'size': object.size,
+            'type': 'folder' if object.type == 'tree' else 'file',
+            'hexsha': object.hexsha
+        }
+
+        if node['type'] == 'folder':
+            children: List[TreeNode] = []
+            for o in object:
+                if os.path.basename(o.path).startswith('.'):
+                    continue
+                children.append(self.__iterate(o, version, request))
+
+            node['children'] = sorted(
+                children,
+                key=lambda x: (x['type'], x['path'])
+            )
+        else:
+            node['mime'] = object.mime_type
+
+        if request:
+            self.__build_urls(node, version, request)
+
+        return node
+
+    def __build_urls(self, object: Any, version: str, request):
+        kwargs = {
+            'directory': self.root.name,
+        }
+
+        if object['path'] != '.':
+            kwargs['path'] = object['path']
+
+        url = reverse('pl_resources:files', request=request, kwargs=kwargs)
+        object['url'] = f'{url}?version={version}'
+        object['download_url'] = f'{url}?version={version}&download'
+        if object['path'] == '.':
+            object['bundle_url'] = f'{url}?version={version}&git-bundle'
+            object['describe_url'] = f'{url}?version={version}&git-describe'
+
+    def __list_files(self, tree: Tree, path: str, version: str, request=None):
+        relpath = str(self.root.joinpath(path).relative_to(self.root))
+
+        response = {
+            'path': relpath,
+            'hexsha': tree.hexsha,
+            'version': version,
+            'directory': self.root.name,
+        }
+
+        if request:
+            self.__build_urls(response, version, request)
+
+        response['files'] = self.__iterate(tree, version, request)['children']
+        return response
+
+    def __as_abspath(self, path: str = '.', authorize_root: bool = False) -> Path:
+        if path is None:
             raise TypeError('argument "path" is required')
 
         path = path.strip()
+        if path.startswith('/'):
+            raise PermissionError(f'{path}: should not starts with "/"')
+
         if path == '.':
             if authorize_root:
                 return self.root
-            raise TypeError('argument "path" should not point to the root')
-
-        if path.startswith('/'):
-            path = path[1:]
+            raise TypeError('argument "path" is required')
 
         abspath = Path(os.path.join(self.root, path)).resolve()
 
@@ -579,70 +691,3 @@ class Directory:
             raise PermissionError(f'{path}: points to an invalid file')
 
         return abspath
-
-    def _list_files(self, tree: Tree, path: str, version: str, request=None):
-        path = self.root.joinpath(path).relative_to(self.root)
-        response = {
-            "path": str(path),
-            "hexsha": tree.hexsha,
-            "version": version,
-            "directory": self.root.name,
-        }
-
-        if request:
-            response['url'] = self._build_urls(response["path"], version, request)
-            response["download_url"] = response["url"] + "?download"
-
-        response["files"] = self._iterate_tree(tree, version, request)["children"]
-
-        return response
-
-    def _iterate_tree(self, item: Union[Tree, Blob], version: str, request=None) -> TreeNode:
-        node: TreeNode = {
-            "path": item.path,
-            "hexsha": item.hexsha,
-            "size": item.size,
-            "type": "folder" if item.type == "tree" else "file"
-        }
-
-        if request:
-            node["url"] = self._build_urls(node["path"], version, request)
-            node["download_url"] = node["url"] + "?download"
-
-
-        if node["type"] == "folder":
-            children: List[TreeNode] = []
-            for entry in item:
-                if os.path.basename(entry.path).startswith("."):
-                    continue
-                children.append(self._iterate_tree(entry, version, request))
-
-            node["children"] = sorted(
-                children,
-                key=lambda x: (x["type"], x["path"])
-            )
-        else:
-            node["mime"] = item.mime_type
-
-        return node
-
-
-    def _build_urls(self, path: str, version: str, request):
-        if version == "master":
-            return reverse(
-                "pl_resources:resource-files-master",
-                request=request,
-                kwargs={
-                    "path": path,
-                    "resource_id": self.root.name
-                }
-            )
-        return reverse(
-            "pl_resources:resource-version-files",
-            request=request,
-            kwargs={
-                "path": path,
-                "resource_id": self.root.name,
-                "version": version[1:],  # remove the v prefix
-            }
-        )

@@ -11,13 +11,7 @@ from django.db import models
 
 
 class MemberStatus(models.TextChoices):
-    ADMIN = 'ADMIN'
     MEMBER = 'MEMBER'
-
-
-class CircleTypes(models.TextChoices):
-    PUBLIC = 'PUBLIC'
-    PERSONAL = 'PERSONAL'
 
 
 class EventTypes(models.TextChoices):

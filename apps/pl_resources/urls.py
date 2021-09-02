@@ -7,22 +7,43 @@ app_name = 'pl_resources'
 
 urlpatterns = [
     # Levels
-    path('levels/', views.LevelListViews.as_view(), name='level-list'),
+    path(
+        'levels/',
+        views.LevelListViews.as_view(),
+        name='level-list'
+    ),
 
     # Topics
-    path('topics/', views.TopicViewSet.as_list(), name='topic-list'),
-    path('topics/<str:name>/', views.TopicViewSet.as_detail(), name='topic-detail'),
+    path(
+        'topics/',
+        views.TopicViewSet.as_list(),
+        name='topic-list'
+    ),
+    path(
+        'topics/<str:name>/',
+        views.TopicViewSet.as_detail(),
+        name='topic-detail'
+    ),
 
     # Circles
-    path('circles/', views.CircleViewSet.as_list(), name='circle-list'),
-    path('circles/<int:circle_id>/', views.CircleViewSet.as_detail(), name='circle-detail'),
-
-    # Special circles
-    path('circles/me/', views.CircleViewSet.as_view({'get': 'get_me'}), name='circle-me'),
-    path('circles/tree/', views.CircleViewSet.as_view({'get': 'get_tree'}), name='circle-tree'),
+    path(
+        'circles/',
+        views.CircleViewSet.as_list(),
+        name='circle-list'
+    ),
+    path(
+        'circles/<int:circle_id>/',
+        views.CircleViewSet.as_detail(),
+        name='circle-detail'
+    ),
+    path(
+        'circles/tree/',
+        views.CircleViewSet.as_tree(),
+        name='circle-tree'
+    ),
     path(
         'circles/completion/',
-        views.CircleViewSet.as_view({'get': 'get_completion'}),
+        views.CircleViewSet.as_completion(),
         name='circle-completion'
     ),
 
@@ -81,14 +102,14 @@ urlpatterns = [
         name='resource-list'
     ),
     path(
-        'resources/recent-views/',
-        views.RecentViewSet.as_view({'get': "list"}),
-        name='resource-recent-views'
+        'resources/completion/',
+        views.ResourceViewSet.as_completion(),
+        name='resource-completion'
     ),
     path(
-        'resources/completion/',
-        views.ResourceViewSet.as_view({'get': 'get_completion'}),
-        name='resource-completion'
+        'resources/recent-views/',
+        views.ResourceViewSet.as_recent_views(),
+        name='resource-recent-views'
     ),
     path(
         'resources/<int:resource_id>/',
@@ -96,27 +117,10 @@ urlpatterns = [
         name='resource-detail'
     ),
 
-    # Versions
-    path(
-        'resources/<int:resource_id>/versions/',
-        views.VersionViewSet.as_list(),
-        name='resource-version-list'
-    ),
-    path(
-        'resources/<int:resource_id>/versions/<int:version>/',
-        views.VersionViewSet.as_detail(),
-        name='resource-version-detail'
-    ),
-
     # Files
     url(
-        r'resources/(?P<resource_id>\d+)/versions/(?P<version>\d+)?/files/(?P<path>[^\?]*)',
-        views.FileViewSet.as_version(),
-        name='resource-version-files'
-    ),
-    url(
-        r'resources/(?P<resource_id>\d+)/files/(?P<path>[^\?]*)',
-        views.FileViewSet.as_master(),
-        name='resource-files-master'
+        r'files/(?P<directory>(circle|resource):\d+)/(?P<path>[^\?]*)?',
+        views.FileViewSet.as_detail(),
+        name='files'
     ),
 ]

@@ -11,8 +11,7 @@ from django.contrib.auth import get_user_model
 from django.db import models, transaction
 from django.db.models.aggregates import Count
 
-from .enums import (CircleTypes, EventTypes, MemberStatus, ResourceStatus,
-                    ResourceTypes)
+from .enums import EventTypes, MemberStatus, ResourceStatus, ResourceTypes
 
 User = get_user_model()
 
@@ -58,7 +57,6 @@ class Circle(models.Model):
 
     Attributes:
         name (`str`): Name of the circle.
-        type (`CircleTypes`): Type of the circle.
         desc (`str`): Description of the circle.
         opened (`bool`): Indicates whether an invitation is required to add new member.
         updated_at (`datetime`): Update date of the resource.
@@ -77,47 +75,84 @@ class Circle(models.Model):
     """
 
     name = models.CharField(max_length=200)
-    type = models.CharField(max_length=20, choices=CircleTypes.choices, default=CircleTypes.PUBLIC)
     desc = models.CharField(max_length=300, blank=True, default='Aucune description')
-    topics = models.ManyToManyField(Topic, related_name='circles', blank=True)
     opened = models.BooleanField(default=False)
-    levels = models.ManyToManyField(Level, related_name='circles', blank=True)
-    watchers = models.ManyToManyField(User, related_name='watched_circles', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    parent = models.ForeignKey('self', related_name='children', on_delete=models.CASCADE, blank=True, null=True)
+    parent = models.ForeignKey(
+        'self',
+        related_name='children',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
+    )
+
+    topics = models.ManyToManyField(Topic, related_name='circles', blank=True)
+    levels = models.ManyToManyField(Level, related_name='circles', blank=True)
+    watchers = models.ManyToManyField(User, related_name='watched_circles', blank=True)
+
 
     def __str__(self):
         return self.name
+
+    def is_editable_by(self, user: User) -> bool:
+        """Indicates whether the given `user` can edit this circle.
+        A circle is editable by an user if:
+        - The user is an admin.
+        - The user is a member of the circle.
+        - The user is an editor and the circle is `opened`.
+
+        Args:
+            user (User): An user object.
+
+        Returns:
+            bool: `True` if the user can edit the circle `False` otherwise.
+        """
+
+        if user.is_admin:
+            return True
+
+        if Member.objects.filter(
+            user_id=user.id,
+            circle_id=self.id,
+        ).exists():
+            return True
+
+        return user.is_editor and self.opened
+
+    def is_deletable_by(self, user: User) -> bool:
+        """Indicates whether the given `user` can delete this circle.
+        A circle is detelable by an user if:
+        - The user is an admin.
+
+        Args:
+            user (User): An user object.
+
+        Returns:
+            bool: `True` if the user can delete the circle `False` otherwise.
+        """
+
+        return user.is_admin
+
 
     @classmethod
     def list_all(cls):
         return cls.__queryset()
 
     @classmethod
-    def list_publics(cls):
-        return cls.__queryset(type=CircleTypes.PUBLIC)
-
-    @classmethod
     def find_root(cls):
-        return cls.__queryset(type=CircleTypes.PUBLIC, parent=None).get()
+        return cls.__queryset(parent=None).get()
 
     @classmethod
-    def find_personal(cls, user: User):
-        circle = cls.__queryset(type=CircleTypes.PERSONAL, members__user=user).first()
-        if not circle:
-            circle = cls.objects.create(
-                type=CircleTypes.PERSONAL,
-                name=user.username,
-                desc='Aucune description'
-            )
-            Member.objects.create(
-                user=user,
-                circle=circle,
-                status=MemberStatus.ADMIN
-            )
-        return circle
+    def is_member(cls, user: User, circle_id: int) -> bool:
+        if user.is_admin:
+            return True
+
+        return Member.objects.filter(
+            user_id=user.id,
+            circle_id=circle_id,
+        ).exists()
 
     @classmethod
     def __queryset(cls, **kwargs):
@@ -157,6 +192,7 @@ class Member(models.Model):
         user (`User`): ForeignKey to the `User` model linked to the member.
         circle (`Circle`): ForeignKey to the `Circle` model on which the member belongs to.
         status (`MemberStatus`): Status of the member in the circle.
+        date_joined (`datetime`): Date on which the member joined the circle.
     """
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -228,7 +264,6 @@ class Resource(models.Model):
         created_at (`datetime`): Creation date of the resource.
         topics (`QuerySet`): List of topics associated to the resource.
         levels (`QuerySet`): List of levels associated to the resource.
-        versions (`QuerySet`): Versions of the resource (related_name in `Version`).
     """
 
     name = models.CharField(max_length=200)
@@ -256,10 +291,11 @@ class Resource(models.Model):
     def is_editable_by(self, user: User) -> bool:
         """Indicates whether the given `user` can edit this resource.
         A resource is editable by an user if:
-        - The user is an admin user of the platform.
+        - The user is an admin.
         - The user is the author of the resource.
-        - The user is a member of the circle where the resource is created.
         - The user is an editor and the resource is in a `opened` circle.
+        - The user is a member of the circle where the resource is created.
+
         Args:
             user (User): An user object.
 
@@ -270,73 +306,35 @@ class Resource(models.Model):
         if user.is_admin or user.id == self.author_id:
             return True
 
-        if Member.objects.filter(
-            user_id=user.id,
-            circle_id=self.circle_id,
-        ).exists():
+        if user.is_editor and self.circle.opened:
             return True
 
-        return user.is_editor and self.circle.opened
+        return Member.objects.filter(
+            user_id=user.id,
+            circle_id=self.circle_id,
+        ).exists()
+
 
     def is_deletable_by(self, user: User) -> bool:
         """Indicates whether the given `user` can delete this resource.
         A resource is detelable by an user if:
-        - The user is an admin user.
+        - The user is an admin.
         - The user is the author of the resource.
-        - The user is an admin member of the circle where the resource is created.
 
-        Note:
-        A resource that is already versioned cannot be deleted.
         Args:
             user (User): An user object.
 
         Returns:
-            bool: `True` if the user can edit the resource `False` otherwise.
+            bool: `True` if the user can delete the resource `False` otherwise.
         """
 
-        if self.versions.count():
-            return False
-
-        if user.is_admin:
-            return True
-
-        if user.id == self.author_id:
-            return True
-
-        member = Member.objects.filter(
-            user_id=user.id,
-            circle_id=self.circle_id,
-        ).first()
-
-        return member and member.status == MemberStatus.ADMIN
+        return user.is_admin or user.id == self.author_id
 
     @classmethod
     def list_all(cls, *args, **kwargs):
         return Resource.objects.filter(*args, **kwargs)\
             .select_related('author', 'circle')\
-            .prefetch_related('topics', 'levels')\
-            .annotate(versions_count=Count('versions', distinct=True))
-
-
-class Version(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    number = models.IntegerField(blank=False)
-    status = models.CharField(max_length=20, choices=ResourceStatus.choices)
-    message = models.CharField(max_length=255, blank=True, default='')
-    resource = models.ForeignKey(Resource, related_name="versions", on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = (('author', 'number', 'resource'))
-
-    def __str__(self):
-        return f'<Version resource="{self.resource.name}" number="{self.number}">'
-
-    @classmethod
-    def of_resource(cls, resource_id: int):
-        return Version.objects\
-            .select_related('author', 'resource')\
-            .filter(resource_id=resource_id)
+            .prefetch_related('topics', 'levels')
 
 
 class Event(models.Model):

@@ -392,8 +392,8 @@ SANDBOX_POLL_SPECS_EVERY = 60 * 10
 SANDBOX_URL = os.getenv('SANDBOX_URL', 'http://localhost:7000/')
 ################################################################################
 
-# Resources
-RESOURCES_ROOT = os.path.join(BASE_DIR, "resources")
+# Directories
+DIRECTORIES_ROOT = os.path.join(BASE_DIR, "directories")
 
 # Identicon (default avatar)
 IDENTICON_OPTIONS = {
