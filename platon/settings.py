@@ -79,6 +79,7 @@ PROJECT_APPS = [
     'pl_sandbox',
     'pl_resources',
     'pl_notifications',
+    'pl_runner',
 ]
 
 
