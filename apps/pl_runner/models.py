@@ -1,3 +1,3 @@
 from django.db import models
-
-# Create your models here.
+from jsonfield import JSONField
+from pl_resources.files import Directory
