@@ -416,9 +416,11 @@ IDENTICON_OPTIONS = {
     'output_format': 'png',
 }
 
+# Filebrowser settings
+FILEBROWSER_DISALLOWED_CHAR = ['/', ' ', '\t', '\n', ';', '#', '+', '&']
+
 if APPS_DIR not in sys.path:  # pragma: no cover
     sys.path.append(APPS_DIR)
-
 
 try:
     from .config import *
