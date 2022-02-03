@@ -27,6 +27,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http.response import HttpResponse
 from git import Actor, Repo
 from git.objects import Blob, Tree
+from git.exc import GitCommandError
 from rest_framework.request import Request
 from rest_framework.reverse import reverse
 
@@ -518,6 +519,10 @@ class Directory:
             raise Exception(f'{out}: {err}')
 
     # GIT
+    
+    def checkout(self, tag_name):
+        self.repo.git().checkout(tag_name)
+        
 
     def merge(self, bundle: InMemoryUploadedFile) -> Any:
         path = os.path.join(DIRECTORIES_ROOT, str(uuid.uuid4()) + '.git')
@@ -608,7 +613,7 @@ class Directory:
             'date': object.tag.tagged_date,
             'message': object.tag.message
         }
-
+ 
 
     # PRIVATE
 

@@ -281,6 +281,7 @@ class ResourceSerializer(serializers.ModelSerializer):
                     directory.create_file(k, v['content'])
             directory.ignore_commits = False
             directory.commit('create files')
+        directory.create_version("1","Init")
         return instance
 
     def to_representation(self, value: models.Resource):
