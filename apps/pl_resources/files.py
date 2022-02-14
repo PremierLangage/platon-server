@@ -18,7 +18,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-import time
+import datetime
 import uuid
 
 
@@ -73,7 +73,7 @@ def uniquify_filename(directory, filename) -> Tuple[str, str]:
 
 class Version(TypedDict):
     name: str
-    date: time.struct_time
+    date: datetime.datetime
     message: str
 
 
@@ -597,7 +597,7 @@ class Directory:
         return [
             {
                 'name': item.name,
-                'date': time.gmtime(item.tag.tagged_date),
+                'date': datetime.datetime.fromtimestamp(item.tag.tagged_date),
                 'message': item.tag.message
             }
             for item in self.repo.tags
@@ -618,7 +618,7 @@ class Directory:
 
         return {
             'name': object.name,
-            'date': time.gmtime(object.tag.tagged_date),
+            'date': datetime.datetime.fromtimestamp(object.tag.tagged_date),
             'message': object.tag.message
         }
         
