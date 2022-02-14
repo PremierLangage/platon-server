@@ -419,7 +419,7 @@ class FileViewSet(CrudViewSet):
 
         directory = kwargs.get('directory')
         directory = Directory.get(directory, request.user)
-
+        versions = directory.list_versions()
         if 'download' in query_params:
             return directory.download(path, version)
 
@@ -444,7 +444,7 @@ class FileViewSet(CrudViewSet):
                     use_regex=use_regex
                 )
             )
-        return Response(directory.read(path, version, request=request))
+        return Response(directory.read(path, version, versions, request=request))
 
     def put(self, request, *args, **kwargs):
         directory = kwargs.get('directory')

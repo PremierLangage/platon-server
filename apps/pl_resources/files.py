@@ -11,14 +11,21 @@
 # https://www.devdungeon.com/content/working-git-repositories-python
 # https://github.com/ishepard/pydriller/blob/master/pydriller/git.py
 
+from __future__ import annotations
+
+
 import os
 import shutil
 import subprocess
 import tempfile
+import time
 import uuid
+
+
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, TypedDict, Union
 from wsgiref.util import FileWrapper
+
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -66,7 +73,7 @@ def uniquify_filename(directory, filename) -> Tuple[str, str]:
 
 class Version(TypedDict):
     name: str
-    date: int
+    date: time.struct_time
     message: str
 
 
@@ -430,6 +437,7 @@ class Directory:
         self,
         path: str = ".",
         version: str = "master",
+        versions: list[Version] = [],
         request: Request = None
     ) -> Union[bytes, List[TreeNode]]:
         """Gets the file tree or the file at the given `path` for the given the `version`.
@@ -449,7 +457,7 @@ class Directory:
             object = object[path]
 
         if object.type == "tree":
-            return self.__list_files(object, path, version, request=request)
+            return self.__list_files(object, path, version, versions, request=request)
 
         return object.data_stream.read()
 
@@ -589,7 +597,7 @@ class Directory:
         return [
             {
                 'name': item.name,
-                'date': item.tag.tagged_date,
+                'date': time.gmtime(item.tag.tagged_date),
                 'message': item.tag.message
             }
             for item in self.repo.tags
@@ -610,10 +618,11 @@ class Directory:
 
         return {
             'name': object.name,
-            'date': object.tag.tagged_date,
+            'date': time.gmtime(object.tag.tagged_date),
             'message': object.tag.message
         }
- 
+        
+
 
     # PRIVATE
 
@@ -660,13 +669,19 @@ class Directory:
             object['bundle_url'] = f'{url}?version={version}&git-bundle'
             object['describe_url'] = f'{url}?version={version}&git-describe'
 
-    def __list_files(self, tree: Tree, path: str, version: str, request=None):
+    def __list_files(self,
+                     tree: Tree,
+                     path: str,
+                     version: str,
+                     versions: list[Version],
+                     request=None):
         relpath = str(self.root.joinpath(path).relative_to(self.root))
 
         response = {
             'path': relpath,
             'hexsha': tree.hexsha,
             'version': version,
+            'versions': versions,
             'directory': self.root.name,
         }
 
