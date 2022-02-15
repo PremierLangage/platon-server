@@ -590,11 +590,10 @@ class Directory:
             response['Content-Disposition'] = f'attachment; filename=archive.zip'
             return response
 
-    def list_versions(self) -> List[Version]:
+    def list_versions(self, request) -> List[Version]:
         """List all versions of the directory.
         """
-        url = reverse('pl_resources:versions', kwargs = {'directory': self.root.name})
-        
+        url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
         return [
             {
                 'name': item.name,
@@ -605,7 +604,7 @@ class Directory:
             for item in self.repo.tags
         ]
 
-    def create_version(self, name: str, message: str) -> Version:
+    def create_version(self, name: str, message: str, request= None) -> Version:
         """Creates new version of the directory by tagging the current git index.
 
         Args:
@@ -616,16 +615,17 @@ class Directory:
             `Version`: The newly created version.
         """
 
+        url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
+        
         object = self.repo.create_tag(name, message=message)
 
         return {
             'name': object.name,
             'date': datetime.datetime.fromtimestamp(object.tag.tagged_date),
-            'message': object.tag.message
+            'message': object.tag.message,
+            'url': f'{url}?version={object.name}'
         }
         
-
-
     # PRIVATE
 
 
@@ -664,10 +664,9 @@ class Directory:
         if object['path'] != '.':
             kwargs['path'] = object['path']
         url = reverse('pl_resources:files', request=request, kwargs=kwargs)
-        print("build_url", request, kwargs, url)
+        print("URL BUILD_URL", url)
         object['url'] = f'{url}?version={version}'
         object['download_url'] = f'{url}?version={version}&download'
-        object['versions'] = f'{url}versions'
         if object['path'] == '.':
             object['bundle_url'] = f'{url}?version={version}&git-bundle'
             object['describe_url'] = f'{url}?version={version}&git-describe'
@@ -683,6 +682,7 @@ class Directory:
             'path': relpath,
             'hexsha': tree.hexsha,
             'version': version,
+            'versions': self.list_versions(request),
             'directory': self.root.name,
         }
 
