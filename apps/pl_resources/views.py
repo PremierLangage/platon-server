@@ -412,6 +412,7 @@ class FileViewSet(CrudViewSet):
         return [permissions.FilePermission()]
 
     def get(self, request, *args, **kwargs):
+        print("GET ON FILEVIEWSET")
         query_params = request.query_params
 
         path = kwargs.get('path', '.')
@@ -419,7 +420,6 @@ class FileViewSet(CrudViewSet):
 
         directory = kwargs.get('directory')
         directory = Directory.get(directory, request.user)
-        versions = directory.list_versions()
         if 'download' in query_params:
             return directory.download(path, version)
 
@@ -444,7 +444,7 @@ class FileViewSet(CrudViewSet):
                     use_regex=use_regex
                 )
             )
-        return Response(directory.read(path, version, versions, request=request))
+        return Response(directory.read(path, version, request=request))
 
     def put(self, request, *args, **kwargs):
         directory = kwargs.get('directory')
@@ -534,4 +534,42 @@ class FileViewSet(CrudViewSet):
             'patch': 'patch',
             'post': 'post',
             'delete': 'delete'
+        })
+
+# VERSIONS
+
+class VersionsViewSet(CrudViewSet):
+
+    # def get_serializer_class(self):
+    #     if self.request.method == 'POST':
+    #         return serializers.FileCreateSerializer
+    #     if self.request.method == 'PATCH':
+    #         return serializers.FileRenameSerializer
+    #     if self.request.method == 'PUT':
+    #         return serializers.FileUpdateSerializer
+    #     return None
+
+    def get_permissions(self):
+        return [permissions.FilePermission()]
+
+    def get(self, request, *args, **kwargs):
+        print("GET ON VERSIONSVIEWSET")
+
+        query_params = request.query_params
+        print("info",query_params, request, kwargs)
+
+        # version = query_params.get('version', 'master')
+
+        directory = kwargs.get('directory')
+        print(directory)
+        directory = Directory.get(directory, request.user)
+        print("directory", directory)
+        versions = directory.list_versions()
+        print("versions", versions)
+        return Response(versions)
+    
+    @classmethod
+    def as_detail(cls):
+        return cls.as_view({
+            'get': 'get',
         })
