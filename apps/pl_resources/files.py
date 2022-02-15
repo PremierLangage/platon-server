@@ -75,6 +75,7 @@ class Version(TypedDict):
     name: str
     date: datetime.datetime
     message: str
+    url: str
 
 
 class TreeNode(TypedDict):
@@ -437,7 +438,6 @@ class Directory:
         self,
         path: str = ".",
         version: str = "master",
-        versions: list[Version] = [],
         request: Request = None
     ) -> Union[bytes, List[TreeNode]]:
         """Gets the file tree or the file at the given `path` for the given the `version`.
@@ -457,7 +457,7 @@ class Directory:
             object = object[path]
 
         if object.type == "tree":
-            return self.__list_files(object, path, version, versions, request=request)
+            return self.__list_files(object, path, version, request=request)
 
         return object.data_stream.read()
 
@@ -593,12 +593,14 @@ class Directory:
     def list_versions(self) -> List[Version]:
         """List all versions of the directory.
         """
-
+        url = reverse('pl_resources:versions', kwargs = {'directory': self.root.name})
+        
         return [
             {
                 'name': item.name,
                 'date': datetime.datetime.fromtimestamp(item.tag.tagged_date),
-                'message': item.tag.message
+                'message': item.tag.message,
+                'url': f'{url}?version={item.name}' 
             }
             for item in self.repo.tags
         ]
@@ -661,10 +663,11 @@ class Directory:
 
         if object['path'] != '.':
             kwargs['path'] = object['path']
-
         url = reverse('pl_resources:files', request=request, kwargs=kwargs)
+        print("build_url", request, kwargs, url)
         object['url'] = f'{url}?version={version}'
         object['download_url'] = f'{url}?version={version}&download'
+        object['versions'] = f'{url}versions'
         if object['path'] == '.':
             object['bundle_url'] = f'{url}?version={version}&git-bundle'
             object['describe_url'] = f'{url}?version={version}&git-describe'
@@ -673,7 +676,6 @@ class Directory:
                      tree: Tree,
                      path: str,
                      version: str,
-                     versions: list[Version],
                      request=None):
         relpath = str(self.root.joinpath(path).relative_to(self.root))
 
@@ -681,7 +683,6 @@ class Directory:
             'path': relpath,
             'hexsha': tree.hexsha,
             'version': version,
-            'versions': versions,
             'directory': self.root.name,
         }
 
