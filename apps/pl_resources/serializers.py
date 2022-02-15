@@ -280,8 +280,8 @@ class ResourceSerializer(serializers.ModelSerializer):
                 else:
                     directory.create_file(k, v['content'])
             directory.ignore_commits = False
-            directory.commit('create files')
-        directory.create_version("First version","Creating this resource for the first time")
+        directory.commit('Init')
+        directory.create_version("1","Creating this resource for the first time")
         return instance
 
     def to_representation(self, value: models.Resource):
@@ -328,5 +328,5 @@ class FileRenameSerializer(serializers.Serializer):
 
 
 class FileUpdateSerializer(serializers.Serializer):
-    bundle = serializers.FileField(required=False)
+    bundle = serializers.FileField(required=False, allow_null=True)
     content = serializers.CharField(max_length=134217728, required=False)

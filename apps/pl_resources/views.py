@@ -411,8 +411,7 @@ class FileViewSet(CrudViewSet):
     def get_permissions(self):
         return [permissions.FilePermission()]
 
-    def get(self, request, *args, **kwargs):
-        print("GET ON FILEVIEWSET")
+    def get(self, request, *args, **kwargs):   
         query_params = request.query_params
 
         path = kwargs.get('path', '.')
@@ -449,10 +448,8 @@ class FileViewSet(CrudViewSet):
     def put(self, request, *args, **kwargs):
         directory = kwargs.get('directory')
         directory = Directory.get(directory, request.user)
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         bundle = serializer.validated_data.get('bundle')
         content = serializer.validated_data.get('content')
 
@@ -462,9 +459,15 @@ class FileViewSet(CrudViewSet):
         if content:
             path = kwargs.get('path', '.')
             directory.write_text(path, content)
+            directory.commit("COMMIT PUT")
+            nbVersions = len(directory.list_versions())
+            directory.create_version(str(nbVersions), "Nouvelle version", request)
             return Response(status=status.HTTP_200_OK)
 
         directory.merge(bundle)
+        directory.commit("COMMIT PUT")
+        nbVersions = len(directory.list_versions())
+        directory.create_version(str(nbVersions), "Nouvelle version", request)
         return Response(status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
@@ -480,6 +483,9 @@ class FileViewSet(CrudViewSet):
         if file:
             path = self.kwargs.get('path')
             directory.write_file(path, file)
+            directory.commit(f'create file -> {path}')
+            nbVersions = len(directory.list_versions())
+            directory.create_version(str(nbVersions), "Nouvelle version", request)
             return Response(status=status.HTTP_201_CREATED)
 
         if files:
@@ -491,6 +497,8 @@ class FileViewSet(CrudViewSet):
                     directory.create_file(k, v['content'])
             directory.ignore_commits = False
             directory.commit('create files')
+            nbVersions = len(directory.list_versions())
+            directory.create_version(str(nbVersions), "Nouvelle version", request)
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -510,10 +518,16 @@ class FileViewSet(CrudViewSet):
         if action == "move":
             copy = serializer.validated_data.get('copy')
             directory.move(path, newpath, copy)
+            directory.commit(f"move {path} into {newpath}")
+            nbVersions = len(directory.list_versions())
+            directory.create_version(str(nbVersions), "Nouvelle version", request)
             return Response(status=status.HTTP_200_OK)
 
         if action == 'rename':
             directory.rename(path, newpath)
+            directory.commit(f"rename {path} into {newpath}")
+            nbVersions = len(directory.list_versions())
+            directory.create_version(str(nbVersions), "Nouvelle version", request)
             return Response(status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -524,7 +538,9 @@ class FileViewSet(CrudViewSet):
 
         directory = Directory.get(directory, request.user)
         directory.remove(path)
-
+        directory.commit(f"delete {path}")
+        nbVersions = len(directory.list_versions())
+        directory.create_version(str(nbVersions), "Nouvelle version", request)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @classmethod

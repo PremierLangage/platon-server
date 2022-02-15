@@ -590,7 +590,7 @@ class Directory:
             response['Content-Disposition'] = f'attachment; filename=archive.zip'
             return response
 
-    def list_versions(self, request) -> List[Version]:
+    def list_versions(self, request=None) -> List[Version]:
         """List all versions of the directory.
         """
         url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
@@ -616,7 +616,6 @@ class Directory:
         """
 
         url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
-        
         object = self.repo.create_tag(name, message=message)
 
         return {
@@ -664,7 +663,6 @@ class Directory:
         if object['path'] != '.':
             kwargs['path'] = object['path']
         url = reverse('pl_resources:files', request=request, kwargs=kwargs)
-        print("URL BUILD_URL", url)
         object['url'] = f'{url}?version={version}'
         object['download_url'] = f'{url}?version={version}&download'
         if object['path'] == '.':
