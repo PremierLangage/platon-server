@@ -604,7 +604,7 @@ class Directory:
             for item in self.repo.tags
         ]
 
-    def create_version(self, name: str, message: str, request= None) -> Version:
+    def create_version(self, message: str, request= None) -> Version:
         """Creates new version of the directory by tagging the current git index.
 
         Args:
@@ -616,7 +616,8 @@ class Directory:
         """
 
         url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
-        object = self.repo.create_tag(name, message=message)
+        n_versions = len(self.list_versions()) + 1
+        object = self.repo.create_tag(str(n_versions), message=message)
 
         return {
             'name': object.name,
@@ -624,6 +625,10 @@ class Directory:
             'message': object.tag.message,
             'url': f'{url}?version={object.name}'
         }
+        
+    def release(self, message: str, request=None):
+        self.commit(message)
+        self.create_version(message, request)
         
     # PRIVATE
 
