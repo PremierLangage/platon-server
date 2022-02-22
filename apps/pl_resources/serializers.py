@@ -317,7 +317,7 @@ class ResourceSerializer(serializers.ModelSerializer):
 
 class FileCreateSerializer(serializers.Serializer):
     file = serializers.FileField(required=False)
-    files = serializers.JSONField(required=False)
+    files = serializers.ListSerializer(child=serializers.FileField(), required=False)
     description = serializers.CharField(max_length=134217728)
 
 

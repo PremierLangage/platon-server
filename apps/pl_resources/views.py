@@ -477,20 +477,22 @@ class FileViewSet(CrudViewSet):
         file = serializer.validated_data.get('file')
         files = serializer.validated_data.get('files')
         description = serializer.validated_data.get('description')
+        path = self.kwargs.get('path')
 
         if file:
-            path = self.kwargs.get('path')
             directory.write_file(path, file)
             directory.release(f'create file -> {path}\n{description}', request)
             return Response(status=status.HTTP_201_CREATED)
 
         if files:
-            directory.ignore_commits = True
-            for k, v in files.items():
-                if v['type'] == 'folder':
-                    directory.create_dir(k)
-                else:
-                    directory.create_file(k, v['content'])
+            # directory.ignore_commits = True
+            # for k, v in files.items():
+            #     if v['type'] == 'folder':
+            #         directory.create_dir(k)
+            #     else:
+            #        directory.create_file(k, v['content'])
+            for f in files:
+                directory.write_file(path, f)
             directory.ignore_commits = False
             directory.release(description, request)
             return Response(status=status.HTTP_201_CREATED)
