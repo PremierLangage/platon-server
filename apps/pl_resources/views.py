@@ -443,7 +443,9 @@ class FileViewSet(CrudViewSet):
                     use_regex=use_regex
                 )
             )
-        return Response(directory.read(path, version, request=request))
+
+        data = directory.read(path, version, request=request)
+        return Response(data)
 
     def put(self, request, *args, **kwargs):
         directory = kwargs.get('directory')

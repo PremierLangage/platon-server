@@ -448,6 +448,7 @@ class Directory:
 
         Returns:
             List[TreeNode]: A recursive list of TreeNode objects.
+            Bytes: Content of the file.
         """
 
         path = "." if not path else path

@@ -395,7 +395,7 @@ SANDBOX_URL = os.getenv('SANDBOX_URL', 'http://localhost:7000/')
 
 # Directories
 # DIRECTORIES_ROOT = os.path.join(BASE_DIR, "directories")
-DIRECTORIES_ROOT = os.path.abspath(os.path.join(BASE_DIR, "../shared/directories"))
+DIRECTORIES_ROOT = os.path.abspath(os.path.join(BASE_DIR, "../api/shared/directories"))
 
 # Identicon (default avatar)
 IDENTICON_OPTIONS = {
