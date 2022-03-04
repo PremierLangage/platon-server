@@ -123,4 +123,5 @@ urlpatterns = [
         views.FileViewSet.as_detail(),
         name='files'
     ),
+    
 ]

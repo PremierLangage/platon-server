@@ -411,7 +411,7 @@ class FileViewSet(CrudViewSet):
     def get_permissions(self):
         return [permissions.FilePermission()]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):   
         query_params = request.query_params
 
         path = kwargs.get('path', '.')
@@ -419,7 +419,6 @@ class FileViewSet(CrudViewSet):
 
         directory = kwargs.get('directory')
         directory = Directory.get(directory, request.user)
-
         if 'download' in query_params:
             return directory.download(path, version)
 
@@ -444,17 +443,18 @@ class FileViewSet(CrudViewSet):
                     use_regex=use_regex
                 )
             )
-        return Response(directory.read(path, version, request=request))
+
+        data = directory.read(path, version, request=request)
+        return Response(data)
 
     def put(self, request, *args, **kwargs):
         directory = kwargs.get('directory')
         directory = Directory.get(directory, request.user)
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         bundle = serializer.validated_data.get('bundle')
         content = serializer.validated_data.get('content')
+        description = serializer.validated_data.get('description')
 
         if not bundle and not content:
             return Response(status=status.BAD_REQUEST)
@@ -462,9 +462,11 @@ class FileViewSet(CrudViewSet):
         if content:
             path = kwargs.get('path', '.')
             directory.write_text(path, content)
+            directory.release(description, request)
             return Response(status=status.HTTP_200_OK)
 
         directory.merge(bundle)
+        directory.release(description, request)
         return Response(status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
@@ -476,21 +478,25 @@ class FileViewSet(CrudViewSet):
 
         file = serializer.validated_data.get('file')
         files = serializer.validated_data.get('files')
+        description = serializer.validated_data.get('description')
+        path = self.kwargs.get('path')
 
         if file:
-            path = self.kwargs.get('path')
             directory.write_file(path, file)
+            directory.release(f'create file -> {path}\n{description}', request)
             return Response(status=status.HTTP_201_CREATED)
 
         if files:
-            directory.ignore_commits = True
-            for k, v in files.items():
-                if v['type'] == 'folder':
-                    directory.create_dir(k)
-                else:
-                    directory.create_file(k, v['content'])
+            # directory.ignore_commits = True
+            # for k, v in files.items():
+            #     if v['type'] == 'folder':
+            #         directory.create_dir(k)
+            #     else:
+            #        directory.create_file(k, v['content'])
+            for f in files:
+                directory.write_file(path, f)
             directory.ignore_commits = False
-            directory.commit('create files')
+            directory.release(description, request)
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -506,14 +512,17 @@ class FileViewSet(CrudViewSet):
 
         action = serializer.validated_data.get('action')
         newpath = serializer.validated_data.get('newpath')
+        description = serializer.validated_data.get('description')
 
         if action == "move":
             copy = serializer.validated_data.get('copy')
             directory.move(path, newpath, copy)
+            directory.release(f"move {path} into {newpath}", request)
             return Response(status=status.HTTP_200_OK)
 
         if action == 'rename':
             directory.rename(path, newpath)
+            directory.release(f"rename {path} into {newpath}", request)
             return Response(status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -524,7 +533,7 @@ class FileViewSet(CrudViewSet):
 
         directory = Directory.get(directory, request.user)
         directory.remove(path)
-
+        directory.release(f"delete {path}", request)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @classmethod
