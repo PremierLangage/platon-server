@@ -482,19 +482,19 @@ class FileViewSet(CrudViewSet):
         path = self.kwargs.get('path')
 
         if file:
-            directory.write_file(path, file)
-            directory.release(f'create file -> {path}\n{description}', request)
+            for f in file:
+                directory.write_file(path, f)
+            directory.ignore_commits = False
+            directory.release(description, request)
             return Response(status=status.HTTP_201_CREATED)
 
         if files:
-            # directory.ignore_commits = True
-            # for k, v in files.items():
-            #     if v['type'] == 'folder':
-            #         directory.create_dir(k)
-            #     else:
-            #        directory.create_file(k, v['content'])
-            for f in files:
-                directory.write_file(path, f)
+            directory.ignore_commits = True
+            for k, v in files.items():
+                if v['type'] == 'folder':
+                    directory.create_dir(k)
+                else:
+                   directory.create_file(k, v['content'])
             directory.ignore_commits = False
             directory.release(description, request)
             return Response(status=status.HTTP_201_CREATED)
