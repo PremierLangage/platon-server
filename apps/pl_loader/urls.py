@@ -6,11 +6,19 @@ from . import views
 app_name = 'pl_loader'
 
 urlpatterns = [
-    # Publisher
+    
+    # Loader
     url(
         r'loader/(?P<directory>(resource):\d+)/',
-        views.Publisher.as_detail(),
+        views.LoaderViewSet.as_load(),
+        name='loader'
+    ),
+
+    # Publisher
+    url(
+        r'publisher/(?P<directory>(resource):\d+)/',
+        views.PublisherViewSet.as_publish(),
         name='publisher'
-    )
+    ),
 ]
 

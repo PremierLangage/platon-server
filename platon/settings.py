@@ -30,11 +30,8 @@ SETTINGS_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SETTINGS_DIR)
 APPS_DIR = os.path.realpath(os.path.join(BASE_DIR, "apps"))
 
-# Just root dir
-ROOT_DIR = '/'
-
 # NFS Directory settings
-NFS_DISK = os.path.join(ROOT_DIR, 'disk-nfs')
+NFS_DISK = os.path.join(BASE_DIR, '../disk-nfs')
 if not os.path.isdir(NFS_DISK):
     os.makedirs(NFS_DISK)
 
@@ -97,6 +94,8 @@ PROJECT_APPS = [
     'pl_notifications',
     'pl_asset',
     'pl_loader',
+    'pl_properties',
+    'pl_runner',
 ]
 
 
