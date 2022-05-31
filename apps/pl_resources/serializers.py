@@ -255,6 +255,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     files = serializers.JSONField(required=False, write_only=True)
     files_url = serializers.SerializerMethodField(read_only=True)
     permissions = serializers.SerializerMethodField(read_only=True)
+    live_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Resource
@@ -313,6 +314,14 @@ class ResourceSerializer(serializers.ModelSerializer):
             'write': value.is_editable_by(request.user),
             'delete': value.is_deletable_by(request.user)
         }
+    
+    def get_live_url(self, value: models.Resource):
+        request = self.context['request']
+        return reverse(
+            'pl_runner:runner-live',
+            request=request,
+            kwargs={'directory': f'resource:{value.pk}'}
+        )
 
 
 class FileCreateSerializer(serializers.Serializer):
