@@ -38,6 +38,7 @@ from git.exc import GitCommandError
 from rest_framework.request import Request
 from rest_framework.reverse import reverse
 
+from .models import Version, Resource
 User = get_user_model()
 DIRECTORIES_ROOT = settings.DIRECTORIES_ROOT
 
@@ -69,14 +70,6 @@ def uniquify_filename(directory, filename) -> Tuple[str, str]:
         counter += 1
 
     return abspath, filename
-
-
-class Version(TypedDict):
-    name: str
-    date: datetime.datetime
-    message: str
-    url: str
-
 
 class TreeNode(TypedDict):
     path: str
@@ -128,6 +121,7 @@ class Directory:
         """
 
         path = Path(os.path.join(DIRECTORIES_ROOT, str(name)))
+
         if not path.exists():
             raise FileNotFoundError(f'{name}: No such file or directory')
         return cls(path, user)
@@ -595,15 +589,8 @@ class Directory:
         """List all versions of the directory.
         """
         url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
-        return [
-            {
-                'name': item.name,
-                'date': datetime.datetime.fromtimestamp(item.tag.tagged_date),
-                'message': item.tag.message,
-                'url': f'{url}?version={item.name}' 
-            }
-            for item in self.repo.tags
-        ]
+        return Version.objects.filter(resource=self.__get_resource()).values_list()
+
 
     def create_version(self, message: str, request= None) -> Version:
         """Creates new version of the directory by tagging the current git index.
@@ -616,16 +603,14 @@ class Directory:
             `Version`: The newly created version.
         """
 
-        url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
+
+        resource : Resource = self.__get_resource()
         n_versions = len(self.list_versions()) + 1
         object = self.repo.create_tag(str(n_versions), message=message)
-
-        return {
-            'name': object.name,
-            'date': datetime.datetime.fromtimestamp(object.tag.tagged_date),
-            'message': object.tag.message,
-            'url': f'{url}?version={object.name}'
-        }
+        return Version.objects.create(
+            name=object.name, 
+            description=message, 
+            resource=resource)
         
     def release(self, message: str, request=None):
         self.commit(message)
@@ -633,6 +618,8 @@ class Directory:
         
     # PRIVATE
 
+    def __get_resource(self) -> Resource:
+        return Resource.objects.get(pk=self.root.name.split(":", 2)[1])
 
     def __iterate(self, object: Union[Tree, Blob], version: str, request=None) -> TreeNode:
         node: TreeNode = {
