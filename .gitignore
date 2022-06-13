@@ -153,3 +153,7 @@ dmypy.json
 !.vscode/extensions.json
 
 .DS_Store
+
+#Ignore migrations
+apps/*/migrations/*.py
+!apps/*/migrations/__init__.py
