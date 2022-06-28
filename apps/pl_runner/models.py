@@ -48,6 +48,26 @@ class Runner(models.Model):
             self.user,
             config
         )
+    builded
+    def evaluer(self):
+        sandbox = Sandbox.objects.first()
+
+        base = self.asset.frozen.path
+        path = os.path.join(base, 'data/content.tgz')
+        export = os.path.join(os.path.join(base, self.user.username), 'build.tgz')
+        config = {
+            "commands" : [
+                "python3 eval.py pl.json process.json answer feedback"
+            ],
+            "path": path,
+            "export": export,
+            "result_path": "process.json"
+        }
+
+        self.evaluated : Request = async_to_sync(sandbox.execute)(
+            self.user,
+            config
+        )  
 
 
     def render(self) -> dict:
@@ -57,22 +77,22 @@ class Runner(models.Model):
 
     @classmethod
     def build(cls, request, asset):
-        runner = Runner(asset=asset, user=request.user)
+        runner = cls(asset=asset, user=request.user)
         runner.builder()
         return runner
+
+    @classmethod
+    def eval(cls, request, asset):
+        runner = cls(asset=asset, user=request.user)
+        runner.evaluer()
+        return runner 
         
     
     @property
     def is_builded(self) -> bool:
-        if self.builded:
-            if self.builded.success:
-                return True
-        return False
+        return self.builded and self.builded.success
 
     @property
     def is_evaluated(self) -> bool:
-        if self.evaluated:
-            if self.evaluated.success:
-                return True
-        return False
+        return self.evaluated and self.evaluated.success
     
