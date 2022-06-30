@@ -21,11 +21,24 @@ import dj_database_url
 #                              Django's Settings                               #
 ################################################################################
 
+# Filebrowser settings
+FILEBROWSER_DISALLOWED_CHAR = ['/', ' ', '\t', '\n', ';', '#', '+', '&']
+
 # Directories
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 SETTINGS_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SETTINGS_DIR)
 APPS_DIR = os.path.realpath(os.path.join(BASE_DIR, "apps"))
+
+# NFS Directory settings
+NFS_DISK = os.path.join(BASE_DIR, '../disk-nfs')
+if not os.path.isdir(NFS_DISK):
+    os.makedirs(NFS_DISK)
+
+# Directory where assets are stored
+ASSETS_ROOT = os.path.join(NFS_DISK, 'assets')
+if not os.path.isdir(ASSETS_ROOT):
+    os.makedirs(ASSETS_ROOT)
 
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -79,6 +92,9 @@ PROJECT_APPS = [
     'pl_sandbox',
     'pl_resources',
     'pl_notifications',
+    'pl_asset',
+    'pl_loader',
+    'pl_properties',
     'pl_runner',
 ]
 

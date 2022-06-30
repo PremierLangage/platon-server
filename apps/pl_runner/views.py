@@ -1,53 +1,98 @@
-import os
+import json
 from asgiref.sync import async_to_sync
-from rest_framework.request import Request
+
+from rest_framework.permissions import AllowAny
+from rest_framework import status
 from rest_framework.response import Response
-from pl_resources.files import Directory
-from pl_sandbox.models import Sandbox
-from rest_framework.views import APIView
-from pl_runner.parser import Parser
-from pl_runner.utils import extends_dict
 
-class Loader(APIView):
+from . import serializers, models
 
-    def get(self, request: Request, *args, **kwargs):
-        path = kwargs.get('path', '.')
-        version = 'master'
+from pl_core.mixins import CrudViewSet
+from pl_loader.models import Loader
+from pl_sandbox.models import Sandbox, Request
+
+# Create your views here.
+class RunnerViewSet(CrudViewSet):
+    
+    lookup_field = 'pk'
+
+    permission_classes = (AllowAny,)
+    serializer_class = serializers.RunnerSerializer
+
+    def get_queryset(self):
+        return models.Runner.objects.all()
+    
+    def get_view(self, request, *args, **kwargs):
+        if 'asset' not in kwargs:
+            return Response({
+                'detail': 'Invalid asset'
+            }, status.HTTP_404_NOT_FOUND)
+        asset = kwargs.get('asset')
+        asset = models.Asset.objects.filter(id=asset)
+        asset = asset[0]
+        
+        runner = models.Runner.build(request, asset)
+        if runner.is_builded:
+            return Response(runner.render(), status.HTTP_200_OK)
+
+        return Response({
+            'detail' : 'Unexpected error'
+        }, status.HTTP_404_NOT_FOUND)
+
+    def eval(self, request, *args, **kwargs):   
+        asset = kwargs.get('asset')
+        asset = models.Asset.objects.get(id=asset)
+        if not asset:
+            return Response("Asset id Invalid", status.HTTP_404_NOT_FOUND)
+        runner = models.Runner.eval(request, asset)
+        if runner.evaluated:
+            print("DEBUG", runner.evaluated)
+            eval_json = json.loads(runner.evaluated.response.result)
+            return Response(eval_json, status.HTTP_200_OK)
+
+        return Response({
+            'detail' : 'Unexpected error'
+        }, status.HTTP_404_NOT_FOUND)
+    
+        
+    def get_live(self, request, *args, **kwargs):
+        query_params = request.query_params
         directory = kwargs.get('directory')
-        directory = Directory.get(directory, request.user)
+        version = query_params.get('version', 'master')
 
-        parser = Parser(path, directory.read(path, version, request=request))
-        loader, warnings = parser.parse()
+        loader = Loader.get_loader(request, directory, version)
+        environment = loader.get_env(request, version)
 
-        for extends in loader['__extends']:
-            head, tail = os.path.split(extends)
-            directory = Directory.get(head, request.user)
-            file = directory.read(tail, version, request=request)
-            following = Parser(tail, file)
-            dic, new_warnings = following.parse()
-            extends_dict(loader, dic)
-            warnings = warnings + new_warnings
+        sandbox = Sandbox.objects.first()
 
         config = {
-            "commands" : [
-                "python3 builder.py pl.json process.json 2> stderr.log",
-                "echo 'Hello from sandbox'"
+            "commands": [
+                "python3 builder.py pl.json process.json"
             ],
-            "save" : False
+            "result_path" : "process.json"
         }
 
-        sandbox = Sandbox.objects.get(name="Default")
-        request = async_to_sync(sandbox.runner)(request.user, config, loader)
+        request: Request = async_to_sync(sandbox.execute)(
+            request.user,
+            config,
+            environment
+        )
 
-        return Response({"message" : "Wouaaa"})
-        
-        if path != '.':
-            
-            return Response(dic)
-        else:
-            return Response({"message" : "Not a valid file detected..."})
-        return Response(directory.read(path, version, request=request))
-        
+        if environment is not None:
+            environment.close()
 
+        return Response(json.loads(request.response.result), status.HTTP_200_OK)
 
-        
+    @classmethod
+    def as_runner(cls):
+        return cls.as_view({
+            'get' : 'get_view',
+            'post' : 'eval'
+        })
+
+    @classmethod
+    def as_live(cls):
+        return cls.as_view({
+            'get' : 'get_live'
+        })
+    

@@ -17,6 +17,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from sandbox_api import ASandbox
+from .sandbox_api import ASandbox2
 
 from pl_sandbox.exceptions import SandboxDisabledError
 from pl_sandbox.sandbox import ASandBox2
@@ -266,6 +267,51 @@ class Sandbox(models.Model):
 
         return request
 
+    async def assetor(self, user: Union[AnonymousUser, User], config: Dict[str, Any]) -> 'Request':
+        try:
+            if not self.enabled:
+                raise SandboxDisabledError("Cannot execute on a disabled sandbox")
+            
+            async with ASandbox2(self.url) as asandbox:
+                r = await asandbox.assetor(config)
+
+            response = await database_sync_to_async(Response.objects.create)(
+                status=r["status"], total_time=r["total_time"], result=r.get("result", ""),
+                environment=r.get("environment", ""),
+                expire=isoparse(r["expire"]) if "expire" in r else None
+            )
+
+            for e in r["execution"]:
+                await database_sync_to_async(CommandResult.objects.create)(
+                    response=response, command=e["command"], exit_code=e["exit_code"],
+                    stdout=e["stdout"], stderr=e["stderr"], time=e["time"]
+                )
+
+            request = await database_sync_to_async(Request.objects.create)(
+                sandbox=self, config=config, success=True, response=response,
+                user=user if user.is_authenticated else None
+            )
+
+        except ClientError as e:   # pragma: no cover
+            request = await database_sync_to_async(Request.objects.create)(
+                sandbox=self, config=config, success=False, traceback=traceback.format_exc(),
+                response=None, user=user if user.is_authenticated else None
+            )
+            logger.warning(
+                f"Execution failed on sandbox {self}, see request of id '{request.pk}'",
+                exc_info=e
+            )
+
+        except SandboxDisabledError:
+            request = await database_sync_to_async(Request.objects.create)(
+                sandbox=self, config=config, success=False, traceback=traceback.format_exc(),
+                response=None, user=user if user.is_authenticated else None
+            )
+            logger.warning(f"Execution failed on sandbox {self} because it was disabled,"
+                           f"see request of id '{request.pk}'")
+        
+        return request
+        
 
     async def retrieve(self, environment: str, file: str = None) -> Optional[BinaryIO]:
         """Download an environment of the Sandbox.

@@ -34,6 +34,10 @@ urlpatterns = [
     path('api/v1/', include('pl_sandbox.urls', namespace='pl_sandbox')),
     path('api/v1/', include('pl_resources.urls', namespace='pl_resources')),
     path('api/v1/', include('pl_notifications.urls', namespace='pl_notifications')),
+    path('api/v1/', include('pl_asset.urls', namespace='pl_asset')),
+    path('api/v1/', include('pl_loader.urls', namespace='pl_loader')),
+    path('api/v1/', include('pl_properties.urls', namespace='pl_properties')),
+    path('api/v1/', include('pl_runner.urls', namespace='pl_runner')),
 ]
 
 if settings.DEBUG and not settings.TESTING:

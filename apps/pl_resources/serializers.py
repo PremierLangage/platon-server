@@ -255,6 +255,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     files = serializers.JSONField(required=False, write_only=True)
     files_url = serializers.SerializerMethodField(read_only=True)
     permissions = serializers.SerializerMethodField(read_only=True)
+    live_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Resource
@@ -313,6 +314,14 @@ class ResourceSerializer(serializers.ModelSerializer):
             'write': value.is_editable_by(request.user),
             'delete': value.is_deletable_by(request.user)
         }
+    
+    def get_live_url(self, value: models.Resource):
+        request = self.context['request']
+        return reverse(
+            'pl_runner:runner-live',
+            request=request,
+            kwargs={'directory': f'resource:{value.pk}'}
+        )
 
 
 class FileCreateSerializer(serializers.Serializer):
@@ -332,3 +341,20 @@ class FileUpdateSerializer(serializers.Serializer):
     bundle = serializers.FileField(required=False, allow_null=True)
     content = serializers.CharField(max_length=134217728, required=False)
     description = serializers.CharField(max_length=134217728)
+
+class VersionSerializer(serializers.ModelSerializer):
+    resource = serializers.SlugRelatedField(slug_field='pk', read_only=True)
+    author = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    url = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.Version
+        fields = '__all__'
+
+    def get_url(self, value: models.Version):
+        request = self.context['request']
+        return reverse(
+            'pl_resources:version-detail',
+            request=request,
+            kwargs={'resource_id': value.resource.pk, 'version_id': value.pk}
+        )

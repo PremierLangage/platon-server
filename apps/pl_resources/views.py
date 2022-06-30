@@ -394,6 +394,21 @@ class ResourceViewSet(CrudViewSet):
     def as_recent_views(cls):
         return cls.as_view({'get': 'get_recent_views'})
 
+# VERSION
+class VersionViewSet(CrudViewSet):
+    serializer_class = serializers.VersionSerializer
+
+    lookup_field = 'pk'
+
+    def get(self, request, *args, **kwargs):
+        
+        
+
+        return Response(
+            models.Version.get_current(),
+            status=status.HTTP_200_OK
+        )
+
 
 # FILES
 
