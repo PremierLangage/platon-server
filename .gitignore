@@ -6,6 +6,10 @@ media/*
 tmp/*
 directories/*
 
+# Apps migrations
+apps/*/migrations/*.py
+!apps/*/migrations/__init__.py
+
 # Deepcode
 .dccache
 
