@@ -402,8 +402,6 @@ class VersionViewSet(CrudViewSet):
 
     def get(self, request, *args, **kwargs):
         
-        
-
         return Response(
             models.Version.get_current(),
             status=status.HTTP_200_OK

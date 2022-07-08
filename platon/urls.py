@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/v1/', include('pl_loader.urls', namespace='pl_loader')),
     path('api/v1/', include('pl_properties.urls', namespace='pl_properties')),
     path('api/v1/', include('pl_runner.urls', namespace='pl_runner')),
+    path('api/v1/', include('play.urls', namespace='play'))
 ]
 
 if settings.DEBUG and not settings.TESTING:

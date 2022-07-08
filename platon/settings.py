@@ -96,7 +96,7 @@ PROJECT_APPS = [
     'pl_loader',
     'pl_properties',
     'pl_runner',
-    'playexo',
+    'play',
 ]
 
 
