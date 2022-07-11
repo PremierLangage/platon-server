@@ -13,6 +13,10 @@ class PlayViewSet(APIView):
     """
     
     def get(self, request, *args, **kwargs):
+        # TODO
+        # Check the user and it's permission
+        # Retrieve the asset from its ID and build it
+        
         return Response(
             data={
                 'response': "Build Success",  
@@ -21,6 +25,9 @@ class PlayViewSet(APIView):
         )
         
     def post(self, request, *args, **kwargs):
+        # TODO  
+        # Check the user and it's permission
+        # R
         return Response(
             data={
                 'response': "Eval Success",
