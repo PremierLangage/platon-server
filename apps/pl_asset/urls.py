@@ -11,6 +11,11 @@ urlpatterns = [
         name='asset-list'
     ),
     path(
+        'asset/me/',
+        views.UserAssetViewSet.as_list(),
+        name='asset-me'  
+    ),
+    path(
         'asset/<str:slug_name>/',
         views.AssetViewSet.as_detail(),
         name='asset-detail'

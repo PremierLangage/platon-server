@@ -5,10 +5,15 @@ class AssetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Asset
-        fields = '__all__'
+        fields = [
+            'slug_name',
+            'type',
+            'properties',
+            'content'
+        ]
 
 class RunnableAssetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.RunnableAsset
-        fields = '__all__'
+        fields = ['asset']
