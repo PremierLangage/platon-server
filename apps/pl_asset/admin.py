@@ -6,7 +6,7 @@ from .models import Asset, RunnableAsset, RunnableAssetSession
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
 
-    list_display = ('slug_name', 'type', 'author',)
+    list_display = ('path', 'type', 'author',)
 
 
 @admin.register(RunnableAsset)

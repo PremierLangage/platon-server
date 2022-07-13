@@ -16,7 +16,7 @@ urlpatterns = [
         name='asset-me'  
     ),
     path(
-        'asset/<str:slug_name>/',
+        'asset/<str:path>/',
         views.AssetViewSet.as_detail(),
         name='asset-detail'
     ),

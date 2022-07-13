@@ -6,7 +6,7 @@ class AssetSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Asset
         fields = [
-            'slug_name',
+            'path',
             'type',
             'properties',
             'content'

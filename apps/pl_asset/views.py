@@ -8,7 +8,7 @@ from .import serializers, models, enums
 # Create your views here.
 class AssetViewSet(CrudViewSet):
     
-    lookup_field = 'slug_name'
+    lookup_field = 'path'
     serializer_class = serializers.AssetSerializer
 
     # Devloppement settings

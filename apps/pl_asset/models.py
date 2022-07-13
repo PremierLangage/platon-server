@@ -12,7 +12,7 @@ User = get_user_model()
 # Create your models here.
 class Asset(models.Model):
 
-    slug_name = models.SlugField(primary_key=True)
+    path = models.SlugField(primary_key=True)
     type = models.CharField(max_length=20, choices=AssetType.choices)
     properties = models.JSONField(default=dict, blank=True, null=True)
     content = models.JSONField(default=dict, blank=True, null=True)
@@ -30,7 +30,7 @@ class Asset(models.Model):
         return f'''
             <Asset
                 type="{self.type}"
-                name="{self.slug_name}"
+                name="{self.path}"
             >
         '''
 
@@ -44,7 +44,7 @@ class RunnableAsset(models.Model):
 
     @property
     def location(self) -> str:
-        return self.asset.slug_name
+        return self.asset.path
 
     def get_env(self):
         pass
