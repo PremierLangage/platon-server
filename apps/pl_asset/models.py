@@ -1,4 +1,5 @@
 import os
+import json
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -12,7 +13,8 @@ User = get_user_model()
 # Create your models here.
 class Asset(models.Model):
 
-    path = models.SlugField(primary_key=True)
+    path = models.CharField(max_length=1024, primary_key=True)
+    name = models.SlugField(max_length=25, unique=True)
     type = models.CharField(max_length=20, choices=AssetType.choices)
     properties = models.JSONField(default=dict, blank=True, null=True)
     content = models.JSONField(default=dict, blank=True, null=True)
@@ -49,9 +51,10 @@ class RunnableAsset(models.Model):
     def get_env(self):
         pass
 
-    # def get_or_create_session(self, user):
-    #     session = RunnableAssetSession.objects.get_or_create(asset=self, user=user)
-    #     return session
+    def get(self, request, *args, **kwargs):
+        (session, flag) = RunnableAssetSession.objects.get_or_create(asset=self,user=request.user)
+        session.build()
+        return session.content()
 
 class RunnableAssetSession(models.Model):
 
@@ -75,7 +78,7 @@ class RunnableAssetSession(models.Model):
 
     @property
     def is_build(self):
-        return False
+        return True
     
     @property
     def is_grader(self):
@@ -84,14 +87,24 @@ class RunnableAssetSession(models.Model):
     class Meta:
         unique_together = ('asset', 'user', 'session_id')
 
-    def render(self):
-        pass
+    def content(self) -> dict:
+        if not self.is_build:
+            return ''
 
-    def build(self):
         base = os.path.join(ASSETS, self.asset.location)
         path = os.path.join(base, os.path.join(self.user.username, "0bb2efc2-0569-4679-8fb6-c71985338534"))
         file = os.path.join(path, "process.json")
-        return file
+
+        with open(file) as process:
+            content = process.read()
+        
+        return json.loads(content)
+        
+
+    def build(self):
+        if self.is_build:
+            return
+        return
 
     def eval(self):
         pass
