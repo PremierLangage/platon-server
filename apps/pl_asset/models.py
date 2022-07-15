@@ -13,6 +13,7 @@ import os
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from nfs_asset import *
 
 ASSETS = settings.ASSETS_ROOT
 
@@ -78,8 +79,8 @@ class RunnableAsset(models.Model):
     def location(self) -> str:
         return self.asset.slug_name
 
-    def get_env(self):
-        pass
+    def get_env(self, user : User) -> Path:
+        return Path(get_path_user(self.asset, user), "env")
 
     # def get_or_create_session(self, user):
     #     session = RunnableAssetSession.objects.get_or_create(asset=self, user=user)
