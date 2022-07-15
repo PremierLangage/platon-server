@@ -37,3 +37,23 @@ class RunnableAssetViewSet(CrudViewSet):
 
     def get_queryset(self):
         return models.RunnableAsset.objects.all()
+
+    def get(self, request, *args, **kwargs):
+
+        try:
+            asset = models.RunnableAsset.objects.get(asset=kwargs.get('asset'))
+        except models.RunnableAsset.DoesNotExist:
+            return Response({"detail": "Pas trouvé."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            "path": asset.asset.path,
+            "name": asset.asset.name,
+            "type": asset.asset.type,
+            "properties": asset.asset.properties,
+            "content": asset.content(request, kwargs)
+        })
+        
+
+    @classmethod
+    def as_detail(cls):
+        return cls.as_view({'get':'get'})

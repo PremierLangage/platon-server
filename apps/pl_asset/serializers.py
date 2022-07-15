@@ -44,4 +44,4 @@ class RunnableAssetSerializer(serializers.ModelSerializer):
         return value.asset.properties
 
     def get_content(self, value: models.RunnableAsset):
-        return value.get(self.context.get('request'))
+        return value.content(self.context.get('request'))

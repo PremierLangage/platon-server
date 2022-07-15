@@ -1,10 +1,18 @@
 import os
 import json
+import io
+import tarfile
 
+from typing import Optional
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from asgiref.sync import async_to_sync
+
 from .enums import AssetType
+from . import exceptions
+
+from pl_sandbox.models import Sandbox, Request
 
 ASSETS = settings.ASSETS_ROOT
 
@@ -48,10 +56,25 @@ class RunnableAsset(models.Model):
     def location(self) -> str:
         return self.asset.path
 
-    def get_env(self):
-        pass
+    def get_env(self) -> Optional[io.BytesIO]:
+        environment = io.BytesIO()
 
-    def get(self, request, *args, **kwargs):
+        base = os.path.join(ASSETS, self.location)
+        env = os.path.join(base, 'env')
+
+        if not os.path.isdir(env):
+            return None
+
+
+        with tarfile.open(fileobj=environment, mode="w:gz") as tar:
+            for fn in os.listdir(env):
+                p = os.path.join(env, fn)
+                tar.add(p, arcname=fn)
+        
+        environment.seek(0)
+        return environment
+
+    def content(self, request, *args, **kwargs):
         (session, flag) = RunnableAssetSession.objects.get_or_create(asset=self,user=request.user)
         session.build()
         return session.content()
@@ -78,6 +101,14 @@ class RunnableAssetSession(models.Model):
 
     @property
     def is_build(self):
+        if not self.session_id:
+            return False
+        base = os.path.join(ASSETS, self.asset.location)
+        path = os.path.join(base, os.path.join(self.user.username, self.session_id))
+        process = os.path.join(path, "process.json")
+        
+        if not os.path.isfile(process):
+            return False
         return True
     
     @property
@@ -89,10 +120,13 @@ class RunnableAssetSession(models.Model):
 
     def content(self) -> dict:
         if not self.is_build:
-            return ''
+            return {'build': 'NOT BUILD'}
+        
+        if not self.session_id:
+            return {'build': 'SESSION ID MISSING'}
 
         base = os.path.join(ASSETS, self.asset.location)
-        path = os.path.join(base, os.path.join(self.user.username, "0bb2efc2-0569-4679-8fb6-c71985338534"))
+        path = os.path.join(base, os.path.join(self.user.username, self.session_id))
         file = os.path.join(path, "process.json")
 
         with open(file) as process:
@@ -102,9 +136,44 @@ class RunnableAssetSession(models.Model):
         
 
     def build(self):
+        
         if self.is_build:
             return
-        return
+
+        environment = self.asset.get_env()
+
+        try:
+            sandbox = Sandbox.objects.first()
+        except Sandbox.DoesNotExist:
+            raise exceptions.SandboxNotFoundError
+
+        if not sandbox.enabled:
+            raise exceptions.SandboxDisabledError
+        
+        request: Request = async_to_sync(sandbox.execute)(
+            user=self.user,
+            config={
+                "commands" : [
+                    "python3 builder.py pl.json process.json"
+                ],
+                "result_path" : "process.json"
+            },
+            environment=environment
+        )
+
+        self.session_id = request.response.environment
+        self.save()
+
+        base = os.path.join(ASSETS, self.asset.location)
+        path = os.path.join(base, os.path.join(self.user.username, self.session_id))
+        process = os.path.join(path, "process.json")
+
+        os.makedirs(os.path.dirname(process), exist_ok=True)
+
+        with open(process, mode="w") as file:
+            file.write(request.response.result)
+
+        environment.close()
 
     def eval(self):
         pass
