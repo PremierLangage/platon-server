@@ -34,6 +34,7 @@ urlpatterns = [
     path('api/v1/', include('pl_resources.urls', namespace='pl_resources')),
     path('api/v1/', include('pl_notifications.urls', namespace='pl_notifications')),
     path('api/v1/', include('pl_asset.urls', namespace='pl_asset')),
+    path('api/v1/', include('pl_loader.urls', namespace='pl_loader')),
 ]
 
 if settings.DEBUG and not settings.TESTING:

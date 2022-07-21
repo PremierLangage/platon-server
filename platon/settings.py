@@ -21,6 +21,9 @@ import dj_database_url
 #                              Django's Settings                               #
 ################################################################################
 
+# Filebrowser settings
+FILEBROWSER_DISALLOWED_CHAR = ['/', ' ', '\t', '\n', ';', '#', '+', '&']
+
 # Directories
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 SETTINGS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -90,6 +93,7 @@ PROJECT_APPS = [
     'pl_resources',
     'pl_notifications',
     'pl_asset',
+    'pl_loader',
 ]
 
 

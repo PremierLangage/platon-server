@@ -4,4 +4,4 @@ class AssetType(models.TextChoices):
 
     COURS    = 'COURS'
     ACTIVITY = 'ACTIVITY'
-    EXERCICE = 'EXERCICE'
+    EXERCICE = 'EXERCISE'
