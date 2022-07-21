@@ -1,4 +1,4 @@
-from django.db import models
+from pathlib import Path
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db.models.signals import post_init
@@ -13,7 +13,6 @@ import os
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
-from nfs_asset import *
 
 ASSETS = settings.ASSETS_ROOT
 
@@ -66,6 +65,8 @@ class Properties(models.Model):
 
     property_type = models.CharField(choices=PropertyName.choices, max_length=50, null=True)
     property = models.JSONField(null=False)
+
+from .nfs_asset import *
 
 class RunnableAsset(models.Model):
 
