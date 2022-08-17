@@ -18,6 +18,6 @@ def api_root(request, format=None):
         'resources': reverse('pl_resources:resource-list', request=request, format=format),
         'recently-viewed-resources': reverse('pl_resources:resource-recent-views', request=request, format=format),
         'notifications': reverse('pl_notifications:notification-list', request=request, format=format),
-        'asset': reverse('pl_asset:asset-list', request=request, format=format),
-        'asset/me': reverse('pl_asset:asset-me', request=request, format=format),
+        # 'asset': reverse('pl_asset:asset-list', request=request, format=format),
+        # 'asset/me': reverse('pl_asset:asset-me', request=request, format=format),
     })

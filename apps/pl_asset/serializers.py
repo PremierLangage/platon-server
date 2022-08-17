@@ -1,47 +1,31 @@
 from rest_framework import serializers
+
 from . import models
+from pl_users.serializers import UserSerializer
 
 class AssetSerializer(serializers.ModelSerializer):
 
+    author = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Asset
-        fields = [
-            'path',
+        fields = (
             'name',
             'type',
-            'properties',
-            'content'
-        ]
-
-class RunnableAssetSerializer(serializers.ModelSerializer):
-
-    path = serializers.SerializerMethodField(read_only=True)
-    name = serializers.SerializerMethodField(read_only=True)
-    type = serializers.SerializerMethodField(read_only=True)
-    properties = serializers.SerializerMethodField(read_only=True)
-    content = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = models.RunnableAsset
-        fields = [
-            'path',
-            'name',
+            'created_at',
+            'updated_at',
+            'author'
+        )
+        read_only_fields = (
             'type',
-            'properties',
-            'content'
-        ]
-    
-    def get_path(self, value: models.RunnableAsset):
-        return value.asset.path
+            'created_at',
+            'updated_at',
+        )
 
-    def get_name(self, value: models.RunnableAsset):
-        return value.asset.name
-
-    def get_type(self, value: models.RunnableAsset):
-        return value.asset.type
-    
-    def get_properties(self, value: models.RunnableAsset):
-        return value.asset.properties
-
-    def get_content(self, value: models.RunnableAsset):
-        return value.content(self.context.get('request'))
+    def get_author(self, obj):        
+        return UserSerializer(
+            models.User.objects.get(username=obj.author),
+            context={
+                'request': self.context['request']
+            }
+        ).data
