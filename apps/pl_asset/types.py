@@ -1,7 +1,9 @@
+import imp
 from django.db import models
 
 class AssetType(models.TextChoices):
 
-    COURS    = 'COURS'
+    COURS    = 'COURS'    
     ACTIVITY = 'ACTIVITY'
     EXERCISE = 'EXERSICE'
+    

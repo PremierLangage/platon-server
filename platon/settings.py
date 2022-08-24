@@ -94,7 +94,6 @@ PROJECT_APPS = [
     'pl_notifications',
     'pl_loader',
     'pl_asset',
-    'pl_asset_cours',
 ]
 
 

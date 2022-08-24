@@ -1,31 +1,58 @@
 from rest_framework import serializers
 
-from . import models
-from pl_users.serializers import UserSerializer
+from .models import Asset, AssetActivity, AssetCours, AssetExersice
 
 class AssetSerializer(serializers.ModelSerializer):
 
-    author = serializers.SerializerMethodField()
+    author = serializers.CharField(read_only=True, source='author.username')
+    path = serializers.CharField(read_only=True)
 
     class Meta:
-        model = models.Asset
+        model = Asset
         fields = (
             'name',
             'type',
             'created_at',
             'updated_at',
-            'author'
-        )
-        read_only_fields = (
-            'type',
-            'created_at',
-            'updated_at',
+            'author',
+            'parent',
+            'path'
         )
 
-    def get_author(self, obj):        
-        return UserSerializer(
-            models.User.objects.get(username=obj.author),
-            context={
-                'request': self.context['request']
-            }
-        ).data
+class AssetCoursSerializer(serializers.ModelSerializer):
+
+    asset = serializers.CharField(read_only=True, source='asset.name')
+    asset = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = AssetCours
+        fields = (
+            'asset',
+            'description',
+            'content'
+        )
+    
+    def get_asset(self, value: AssetCours):
+        return AssetSerializer(value.asset).data
+
+class AssetActivitySerializer(serializers.ModelSerializer):
+
+    asset = serializers.CharField(read_only=True, source='asset.name')
+
+    class Meta:
+        model = AssetActivity
+        fields = (
+            'asset',
+            'content'
+        )
+
+class AssetExersiceSerializer(serializers.ModelSerializer):
+
+    asset = serializers.CharField(read_only=True, source='asset.name')
+
+    class Meta:
+        model = AssetExersice
+        fields = (
+            'asset',
+            'content'
+        )
