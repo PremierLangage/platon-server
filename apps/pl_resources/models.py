@@ -288,6 +288,13 @@ class Resource(models.Model):
                 type="{self.type}">
         '''
 
+    @property
+    def dir_name(self) -> str:
+        return 'resource:' + str(self.pk)
+    
+    def is_loadable_by(self, user: User) -> bool:
+        return True
+
     def is_editable_by(self, user: User) -> bool:
         """Indicates whether the given `user` can edit this resource.
         A resource is editable by an user if:

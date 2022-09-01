@@ -1,65 +1,32 @@
+from rest_framework import status
+from rest_framework.exceptions import APIException
 
-class SyntaxErrorPL(Exception):
-    """Raised when a syntax error occured while parsing a file."""
-    
-    
-    def __init__(self, file_name, line, lineno, message="Syntax error"):
-        self.file_name = file_name
-        self.line = line
-        self.message = message
-        self.lineno = str(lineno)
-    
-    
-    def __str__(self):
-        return self.file_name + " - " + self.message + " at line " + str(
-            self.lineno) + ":\n" + self.line
+class LoaderError(APIException):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    default_detail = 'Loader error.'
+    default_code = 'loader_error'
 
+class LoaderInitError(LoaderError):
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    default_detail = 'Loader init failed.'
+    default_code = 'loader_unavailable'
 
+class LoaderInitErrorUserNotAuthanticated(LoaderInitError):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    default_detail = 'Not authanticated.'
+    default_code = 'loader_unauthorized'
 
-class SemanticError(Exception):
-    """Raised when a semantic error occured while parsing a file."""
-    
-    
-    def __init__(self, file_name, line, lineno, message="Semantic error"):
-        self.file_name = file_name
-        self.line = line
-        self.message = message
-        self.lineno = str(lineno)
-    
-    
-    def __str__(self):
-        return self.file_name + " -- " + self.message + " at line " + str(
-            self.lineno) + "\n" + self.line
+class LoaderInitErrorUserNotPermit(LoaderInitError):
+    pass
 
-class ComponentNotFound(Exception):
-    """Raised when a component cannot be found."""
-    
-    
-    def __init__(self, component):
-        self.component = component
-        print('-----errr2-----')
-    
-    
-    def __str__(self):
-        return 'ComponentNotFound: component "%s" is not defined' \
-               % (self.component)
+class LoaderInitErrorResourceDoesNotExist(LoaderInitError):
+    pass
 
-class LoaderException(Exception):
-    
-    def __init__(self, error: str, status: int) -> None:
-        self.error = error
-        self.status = status
-    
+class LoaderInitErrorResourceDirectoryDoesNotExist(LoaderInitError):
+    pass
 
-class LoaderInstenceException(LoaderException):
+class LoaderParseError(LoaderError):
+    pass
 
-    def __init__(self, error: str, status: int) -> None:
-        super().__init__(error, status)
-
-class LoaderStateException(LoaderException):
-    
-    def __init__(self, error: str, status: int) -> None:
-        super().__init__(error, status)
-    
-
-    
+class LoaderStateError(LoaderError):
+    pass

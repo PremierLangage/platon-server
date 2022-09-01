@@ -1,35 +1,58 @@
 from rest_framework import serializers
-from .models import Asset, AssetProperties
-from pl_properties.serializers import PropertiesSerializer
+
+from .models import Asset, AssetActivity, AssetCours, AssetExersice
 
 class AssetSerializer(serializers.ModelSerializer):
-    
-    #properties = serializers.SerializerMethodField(read_only=True)
+
+    author = serializers.CharField(read_only=True, source='author.username')
+    path = serializers.CharField(read_only=True)
 
     class Meta:
         model = Asset
-        fields = [
-            'id',
+        fields = (
             'name',
-            #'properties',
-            'date_creation',
+            'type',
+            'created_at',
+            'updated_at',
+            'author',
             'parent',
-            'resource',
-            'resource_version',
-        ]
+            'path'
+        )
 
-    def get_properties(self, asset: Asset):
-        query_set = AssetProperties.objects.filter(asset=asset)
-        properties = dict()
-        for asset_property in query_set:
-            query = PropertiesSerializer(queryset=property).to_representation(asset_property.property)
-            properties[query.get_field_name()] = query.data
-        return properties
-    
+class AssetCoursSerializer(serializers.ModelSerializer):
 
+    asset = serializers.CharField(read_only=True, source='asset.name')
+    asset = serializers.SerializerMethodField(read_only=True)
 
-class AssetPropertiesSerializer(serializers.ModelSerializer):
-    
     class Meta:
-        model = AssetProperties
-        fields = '__all__'
+        model = AssetCours
+        fields = (
+            'asset',
+            'description',
+            'content'
+        )
+    
+    def get_asset(self, value: AssetCours):
+        return AssetSerializer(value.asset).data
+
+class AssetActivitySerializer(serializers.ModelSerializer):
+
+    asset = serializers.CharField(read_only=True, source='asset.name')
+
+    class Meta:
+        model = AssetActivity
+        fields = (
+            'asset',
+            'content'
+        )
+
+class AssetExersiceSerializer(serializers.ModelSerializer):
+
+    asset = serializers.CharField(read_only=True, source='asset.name')
+
+    class Meta:
+        model = AssetExersice
+        fields = (
+            'asset',
+            'content'
+        )

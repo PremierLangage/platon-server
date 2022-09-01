@@ -92,10 +92,9 @@ PROJECT_APPS = [
     'pl_sandbox',
     'pl_resources',
     'pl_notifications',
-    'pl_asset',
     'pl_loader',
-    'pl_properties',
-    'pl_runner',
+    'pl_asset',
+    'pl_live'
 ]
 
 
