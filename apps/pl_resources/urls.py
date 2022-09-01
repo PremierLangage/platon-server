@@ -117,10 +117,18 @@ urlpatterns = [
         name='resource-detail'
     ),
 
+    # Version
+    path(
+        'resources/<int:resource_id>/<int:version_id>',
+        views.VersionViewSet.as_detail(),
+        name='version-detail'
+    ),
+
     # Files
     url(
         r'files/(?P<directory>(circle|resource):\d+)/(?P<path>[^\?]*)?',
         views.FileViewSet.as_detail(),
         name='files'
     ),
+    
 ]

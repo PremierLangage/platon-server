@@ -38,6 +38,22 @@ class RunnerViewSet(CrudViewSet):
         return Response({
             'detail' : 'Unexpected error'
         }, status.HTTP_404_NOT_FOUND)
+
+    def eval(self, request, *args, **kwargs):   
+        asset = kwargs.get('asset')
+        asset = models.Asset.objects.get(id=asset)
+        if not asset:
+            return Response("Asset id Invalid", status.HTTP_404_NOT_FOUND)
+        runner = models.Runner.eval(request, asset)
+        if runner.evaluated:
+            print("DEBUG", runner.evaluated)
+            eval_json = json.loads(runner.evaluated.response.result)
+            return Response(eval_json, status.HTTP_200_OK)
+
+        return Response({
+            'detail' : 'Unexpected error'
+        }, status.HTTP_404_NOT_FOUND)
+    
         
     def get_live(self, request, *args, **kwargs):
         query_params = request.query_params
@@ -70,7 +86,8 @@ class RunnerViewSet(CrudViewSet):
     @classmethod
     def as_runner(cls):
         return cls.as_view({
-            'get' : 'get_view'
+            'get' : 'get_view',
+            'post' : 'eval'
         })
 
     @classmethod

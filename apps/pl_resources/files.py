@@ -11,14 +11,21 @@
 # https://www.devdungeon.com/content/working-git-repositories-python
 # https://github.com/ishepard/pydriller/blob/master/pydriller/git.py
 
+from __future__ import annotations
+
+
 import os
 import shutil
 import subprocess
 import tempfile
+import datetime
 import uuid
+
+
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, TypedDict, Union
 from wsgiref.util import FileWrapper
+
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -27,6 +34,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http.response import HttpResponse
 from git import Actor, Repo
 from git.objects import Blob, Tree
+from git.exc import GitCommandError
 from rest_framework.request import Request
 from rest_framework.reverse import reverse
 
@@ -65,8 +73,9 @@ def uniquify_filename(directory, filename) -> Tuple[str, str]:
 
 class Version(TypedDict):
     name: str
-    date: int
+    date: datetime.datetime
     message: str
+    url: str
 
 
 class TreeNode(TypedDict):
@@ -439,6 +448,7 @@ class Directory:
 
         Returns:
             List[TreeNode]: A recursive list of TreeNode objects.
+            Bytes: Content of the file.
         """
 
         path = "." if not path else path
@@ -518,6 +528,10 @@ class Directory:
             raise Exception(f'{out}: {err}')
 
     # GIT
+    
+    def checkout(self, tag_name):
+        self.repo.git().checkout(tag_name)
+        
 
     def merge(self, bundle: InMemoryUploadedFile) -> Any:
         path = os.path.join(DIRECTORIES_ROOT, str(uuid.uuid4()) + '.git')
@@ -577,20 +591,21 @@ class Directory:
             response['Content-Disposition'] = f'attachment; filename=archive.zip'
             return response
 
-    def list_versions(self) -> List[Version]:
+    def list_versions(self, request=None) -> List[Version]:
         """List all versions of the directory.
         """
-
+        url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
         return [
             {
                 'name': item.name,
-                'date': item.tag.tagged_date,
-                'message': item.tag.message
+                'date': datetime.datetime.fromtimestamp(item.tag.tagged_date),
+                'message': item.tag.message,
+                'url': f'{url}?version={item.name}' 
             }
             for item in self.repo.tags
         ]
 
-    def create_version(self, name: str, message: str) -> Version:
+    def create_version(self, message: str, request= None) -> Version:
         """Creates new version of the directory by tagging the current git index.
 
         Args:
@@ -601,15 +616,21 @@ class Directory:
             `Version`: The newly created version.
         """
 
-        object = self.repo.create_tag(name, message=message)
+        url = reverse('pl_resources:files', request = request, kwargs = {'directory': self.root.name})
+        n_versions = len(self.list_versions()) + 1
+        object = self.repo.create_tag(str(n_versions), message=message)
 
         return {
             'name': object.name,
-            'date': object.tag.tagged_date,
-            'message': object.tag.message
+            'date': datetime.datetime.fromtimestamp(object.tag.tagged_date),
+            'message': object.tag.message,
+            'url': f'{url}?version={object.name}'
         }
-
-
+        
+    def release(self, message: str, request=None):
+        self.commit(message)
+        self.create_version(message, request)
+        
     # PRIVATE
 
 
@@ -647,7 +668,6 @@ class Directory:
 
         if object['path'] != '.':
             kwargs['path'] = object['path']
-
         url = reverse('pl_resources:files', request=request, kwargs=kwargs)
         object['url'] = f'{url}?version={version}'
         object['download_url'] = f'{url}?version={version}&download'
@@ -655,13 +675,18 @@ class Directory:
             object['bundle_url'] = f'{url}?version={version}&git-bundle'
             object['describe_url'] = f'{url}?version={version}&git-describe'
 
-    def __list_files(self, tree: Tree, path: str, version: str, request=None):
+    def __list_files(self,
+                     tree: Tree,
+                     path: str,
+                     version: str,
+                     request=None):
         relpath = str(self.root.joinpath(path).relative_to(self.root))
 
         response = {
             'path': relpath,
             'hexsha': tree.hexsha,
             'version': version,
+            'versions': self.list_versions(request),
             'directory': self.root.name,
         }
 

@@ -430,6 +430,15 @@ class Event(models.Model):
 
         return Event.objects.filter(circle_id=circle_id)
 
+class Version(models.Model) : 
+    name = models.CharField(max_length=50)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    description = models.CharField(max_length=250)
+    status = models.CharField(max_length=20, choices=ResourceStatus.choices, default=ResourceStatus.DRAFT)
+
+    class Meta : 
+        unique_together = (("name", "resource"),)
 
 class RecentView(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

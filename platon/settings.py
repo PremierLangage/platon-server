@@ -409,7 +409,8 @@ SANDBOX_URL = os.getenv('SANDBOX_URL', 'http://localhost:7000/')
 ################################################################################
 
 # Directories
-DIRECTORIES_ROOT = os.path.join(BASE_DIR, "directories")
+# DIRECTORIES_ROOT = os.path.join(BASE_DIR, "directories")
+DIRECTORIES_ROOT = os.path.abspath(os.path.join(BASE_DIR, "../api/shared/directories"))
 
 # Identicon (default avatar)
 IDENTICON_OPTIONS = {
@@ -430,9 +431,11 @@ IDENTICON_OPTIONS = {
     'output_format': 'png',
 }
 
+# Filebrowser settings
+FILEBROWSER_DISALLOWED_CHAR = ['/', ' ', '\t', '\n', ';', '#', '+', '&']
+
 if APPS_DIR not in sys.path:  # pragma: no cover
     sys.path.append(APPS_DIR)
-
 
 try:
     from .config import *
