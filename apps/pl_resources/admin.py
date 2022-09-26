@@ -1,6 +1,7 @@
+from typing import Sequence
 from django.contrib import admin
 
-from .models import Circle, Level, Member, Resource, Topic
+from .models import Circle, Level, Member, Resource, Topic, Version
 
 
 @admin.register(Topic)
@@ -36,3 +37,10 @@ class ResourceAdmin(admin.ModelAdmin):
 
     list_display = ('pk', 'circle', 'name')
     readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(Version)
+class VersionAdmin(admin.ModelAdmin):
+    """Admin interface for Version"""
+
+    list_display = ('pk', 'resource')
+    readonly_fields: Sequence[str] = ('date',)
