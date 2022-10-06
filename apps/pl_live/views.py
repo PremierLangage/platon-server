@@ -100,3 +100,80 @@ class LiveView(APIView):
             'answer': response.response.result
         })
     
+# NEW
+
+class LiveBuild(APIView):
+
+    def post(self, request: Request, *args, **kwargs):
+        loader = Loader.get(request, kwargs.get('id'))
+        loader.parse()
+        sandbox = Sandbox.objects.first()
+
+        config = {
+            "commands": [
+                "python3 builder.py pl.json process.json"
+            ],
+            "save": True
+        }
+
+        loader.build(sandbox, config)
+        return Response({
+            "id": kwargs.get('id'),
+            "env": str(loader.environment)
+        }, status=status.HTTP_200_OK)
+        
+
+class LiveRetrieve(APIView):
+
+    def get(self, request: Request, *args, **kwargs):
+        resource = Resource.objects.get(pk=kwargs.get('id'))
+        sandbox = Sandbox.objects.first()
+
+        try:
+            process = async_to_sync(sandbox.retrieve)(
+                kwargs.get('env'),
+                kwargs.get('path')
+            )
+            output = json.loads(process.read())
+            process.close()
+        except:
+            output = {}
+
+        return Response({
+            "id": kwargs.get('id'),
+            "env": kwargs.get('env'),
+            "name": resource.name,
+            "type": resource.type,
+            "content": output
+        })
+
+class LiveGrade(APIView):
+
+    def post(self, request: Request, *args, **kwargs):
+        resource = Resource.objects.get(pk=kwargs.get('id'))
+        answer = request.data.get('answers', {})
+        environment = io.BytesIO()
+        with tarfile.open(fileobj=environment, mode="w:gz") as env:
+            json_file = json.dumps(answer, indent=4)
+            tar_file, tar_info = utils.string_to_tarfile('answers.json', json_file)
+            env.addfile(fileobj=tar_file, tarinfo=tar_info)
+        environment.seek(0)
+        config = {
+            "commands": [
+                "cat process.json > processed.json",
+                "python3 grader.py pl.json answers.json processed.json feedback.html"
+            ],
+            "environment": str(kwargs.get('env')),
+            "save": True
+        }
+        sandbox = Sandbox.objects.first()
+        req = async_to_sync(sandbox.execute)(
+            request.user,
+            config,
+            environment
+        )
+        environment.close()
+        return Response({
+            "id": kwargs.get('id'),
+            "env": req.response.environment
+        }, status=status.HTTP_200_OK)
