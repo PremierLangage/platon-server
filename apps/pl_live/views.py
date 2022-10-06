@@ -149,10 +149,31 @@ class LiveRetrieve(APIView):
 
 class LiveGrade(APIView):
 
+    def _serialize_answer(self, answer : dict) -> dict:
+        res = {}
+
+        def aux(dic :dict):
+            print(dic)
+            if isinstance(dic, dict):
+                if all(map(str.isnumeric,dic.keys())) and list(sorted(map(int, dic.keys()))) == list(range(len(dic))):
+                    return [dic[str(i)] for i in range(len(dic))]
+                else:
+                    return {k: aux(v) for k, v in dic.items()}
+            else:
+                return dic
+
+        for key, value in answer.items():
+            if isinstance(value, dict):
+                res[key] = aux(value)
+            else:
+                res[key] = value
+        return res
+
     def post(self, request: Request, *args, **kwargs):
         resource = Resource.objects.get(pk=kwargs.get('id'))
-        answer = request.data.get('answers', {})
+        answer = self._serialize_answer(request.data.get('answers', {}))
         environment = io.BytesIO()
+
         with tarfile.open(fileobj=environment, mode="w:gz") as env:
             json_file = json.dumps(answer, indent=4)
             tar_file, tar_info = utils.string_to_tarfile('answers.json', json_file)
