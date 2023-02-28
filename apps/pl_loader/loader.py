@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import os, io, tarfile, json
 from asgiref.sync import async_to_sync
 
@@ -12,6 +13,10 @@ from pl_sandbox.models import Sandbox
 from . import exceptions, utils
 from .parser.parser import Parser
 
+from platonparser.parser.parser import parse_file
+from platonparser.parser.utils import base_get_location, FullPath
+from platonparser.parser.parser_exceptions import ParserException
+
 
 User = get_user_model()
 
@@ -25,7 +30,6 @@ class Loader:
         self.version = version
         self.user = user
         self.json = dict
-        self.warnings = { 'errors' : [] }
         self.parsed = False
         self.build_request = None
 
@@ -58,12 +62,17 @@ class Loader:
         except FileNotFoundError:
             raise exceptions.LoaderInitErrorResourceDirectoryDoesNotExist()
 
-        query_params = request.query_params
-        version = query_params.get('version', 'master')
+        # query_params = request.query_params
+        # version = query_params.get('version', 'master')
+        version = 'master'
         
         return cls(resource, directory, version, request.user)
 
     def get_env(self) -> io.BytesIO:
+        """
+        Returns in binary form a tar file containing the environnement of the resource.
+        Must have been parsed before.
+        """
         if not self.parsed:
             raise exceptions.LoaderStateError()
         environment = io.BytesIO()
@@ -103,29 +112,47 @@ class Loader:
             raise exceptions.LoaderParseError()
         self.parsed = True
 
-    def parse_pl(self) -> bool:
+    def parse_pl(self):
+        """Parses the main file of a pl resource"""
         try:
             self.directory.exists('main.pl')
             self.directory.is_file('main.pl')
             file = self.directory.read('main.pl', self.version)
         except (TypeError, PermissionError):
             raise exceptions.LoaderParseError()
-        
+
         try:
-            parser = Parser('main.pl', file)
-            self.json, self.warnings = parser.parse()
-            if '__extends' in self.json:
-                for extends in self.json['__extends']:
-                    head, tail = os.path.split(extends)
-                    extends_file = Directory.get(head, self.user).read(tail, self.version)
-                    extends_json, extends_warnings = Parser(tail, extends_file).parse()
-                    utils.extends_dict(self.json, extends_json)
-                    self.warnings += extends_warnings
-        except Exception as e:
-            self.warnings['errors'].append(str(e))
-            return False
-        
+            output = parse_file(file, FullPath(self.resource.id, "/main.pl"), self.resource.circle.id,
+                                base_get_location)
+            self.json = asdict(output) 
+        except ParserException as e:
+            raise e
+
         return True
+
+    # def parse_pl(self) -> bool:
+    #     try:
+    #         self.directory.exists('main.pl')
+    #         self.directory.is_file('main.pl')
+    #         file = self.directory.read('main.pl', self.version)
+    #     except (TypeError, PermissionError):
+    #         raise exceptions.LoaderParseError()
+        
+    #     try:
+    #         parser = Parser('main.pl', file)
+            # self.json, self.warnings = parser.parse()
+    #         if '__extends' in self.json:
+    #             for extends in self.json['__extends']:
+    #                 head, tail = os.path.split(extends)
+    #                 extends_file = Directory.get(head, self.user).read(tail, self.version)
+    #                 extends_json, extends_warnings = Parser(tail, extends_file).parse()
+    #                 utils.extends_dict(self.json, extends_json)
+    #                 self.warnings += extends_warnings
+    #     except Exception as e:
+    #         self.warnings['errors'].append(str(e))
+    #         return False
+        
+    #     return True
 
     def parse_pla(self):
         pass
