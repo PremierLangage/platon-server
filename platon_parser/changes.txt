@@ -1,0 +1,10 @@
+Multiline now also evaluates expressions like for single line matches.
+Newline character is removed in each multiline line
+
+%@ added to parse file as json
+
+parser now immediately recursively parses other files and merges the corresponding output when "extends=" lines are encountered, instead of after finishing the current parse
+
+Expected mandatory keys are checked directly inside the parser
+
+Output of the parse method is now a dataclass called ParserOutput, allowing for better structured output

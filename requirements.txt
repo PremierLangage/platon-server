@@ -35,3 +35,4 @@ uvicorn~=0.13.4
 pl-sandbox-api~=1.1.0
 tox~=3.23.0
 whitenoise~=5.2.0
+-e platon_parser/
