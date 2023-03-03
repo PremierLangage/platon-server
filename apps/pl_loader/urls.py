@@ -6,7 +6,7 @@ app_name = 'pl_loader'
 urlpatterns = [
     path(
         'loader/parse/<int:resource_id>/',
-        views.testParseView,
+        views.testParseView.as_view(),
         name = 'testParse'
     ),
 ]
