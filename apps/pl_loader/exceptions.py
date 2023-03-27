@@ -26,7 +26,7 @@ class LoaderInitErrorResourceDirectoryDoesNotExist(LoaderInitError):
     pass
 
 class LoaderParseError(LoaderError):
-    pass
+    default_detail = "Loader parse error."
 
 class LoaderStateError(LoaderError):
     pass

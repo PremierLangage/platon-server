@@ -17,6 +17,13 @@ from platonparser.parser.parser import parse_file
 from platonparser.parser.utils import base_get_location, FullPath
 from platonparser.parser.parser_exceptions import ParserException
 
+class SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
 
 User = get_user_model()
 
@@ -32,6 +39,7 @@ class Loader:
         self.json = dict
         self.parsed = False
         self.build_request = None
+        self.warnings = {'errors': []}
 
     @property
     def environment(self) -> str:
@@ -77,15 +85,22 @@ class Loader:
             raise exceptions.LoaderStateError()
         environment = io.BytesIO()
         with tarfile.open(fileobj=environment, mode="w:gz") as env:
-            for includes in self.json['__includes']:
-                head, tail = os.path.split(includes['src_path'])
-                if self.directory.is_file(tail):
-                    file = self.directory.read(tail, self.version)
-                    tar_file, tar_info = utils.bytes_to_tarfile(includes['exp_path'], file)
+            # Add dependencies
+            for (resource_id, path), alias in self.json['dependencies']:
+                directory = self.directory
+                if resource_id != self.resource.id and resource_id != -1:
+                    # TODO: other resource
+                    pass
+
+                if directory.is_file(path):
+                    file = self.directory.read(path, self.version)
+                    tar_file, tar_info = utils.bytes_to_tarfile(alias, file)
                     env.addfile(fileobj=tar_file, tarinfo=tar_info)
                 else:
-                    self.warnings['errors'].append('File %s not exist.' % tail)
-            json_file = json.dumps(self.json, indent=4)
+                    self.warnings['errors'].append(f'File {path} not exist in resouerce {resource_id}.')
+            
+            # Add JSON
+            json_file = json.dumps(self.json, indent=2, cls=SetEncoder)
             tar_file, tar_info = utils.string_to_tarfile('pl.json', json_file)
             env.addfile(fileobj=tar_file, tarinfo=tar_info)
 
@@ -103,13 +118,14 @@ class Loader:
             environment.close()
 
     def parse(self):
+        """Attempts to parse the resource"""
         if self.resource.type == ResourceTypes.EXERCISE:
             if not self.parse_pl():
-                raise exceptions.LoaderParseError()
+                raise exceptions.LoaderParseError(detail=f"Parsing failed: {self.warnings['errors']}")
         elif self.resource.type == ResourceTypes.ACTIVITY:
             self.parse_pla()
         else:
-            raise exceptions.LoaderParseError()
+            raise exceptions.LoaderParseError(detail=f"Resource type {self.resource_type} cannot be parsed.")
         self.parsed = True
 
     def parse_pl(self):
@@ -119,40 +135,18 @@ class Loader:
             self.directory.is_file('main.pl')
             file = self.directory.read('main.pl', self.version)
         except (TypeError, PermissionError):
-            raise exceptions.LoaderParseError()
+            raise exceptions.LoaderParseError(detail=f"Cannot read main.pl file")
 
         try:
             output = parse_file(file, FullPath(self.resource.id, "/main.pl"), self.resource.circle.id,
                                 base_get_location)
             self.json = asdict(output) 
+            self.warnings['warnings'] = output.warnings
         except ParserException as e:
-            raise e
+            self.warnings['errors'].append(str(e))
+            return False
 
         return True
-
-    # def parse_pl(self) -> bool:
-    #     try:
-    #         self.directory.exists('main.pl')
-    #         self.directory.is_file('main.pl')
-    #         file = self.directory.read('main.pl', self.version)
-    #     except (TypeError, PermissionError):
-    #         raise exceptions.LoaderParseError()
-        
-    #     try:
-    #         parser = Parser('main.pl', file)
-            # self.json, self.warnings = parser.parse()
-    #         if '__extends' in self.json:
-    #             for extends in self.json['__extends']:
-    #                 head, tail = os.path.split(extends)
-    #                 extends_file = Directory.get(head, self.user).read(tail, self.version)
-    #                 extends_json, extends_warnings = Parser(tail, extends_file).parse()
-    #                 utils.extends_dict(self.json, extends_json)
-    #                 self.warnings += extends_warnings
-    #     except Exception as e:
-    #         self.warnings['errors'].append(str(e))
-    #         return False
-        
-    #     return True
 
     def parse_pla(self):
         pass
